@@ -1,0 +1,15 @@
+{
+  "name": "copious-blog-service",
+  "version": "1.0.0",
+  "description": "Intermediate relays and endpoints connecting database services and publication services",
+  "main": "service.js",
+  "scripts": {
+    "test": "node ./test/index.js"
+  },
+  "author": "R. Leddy",
+  "license": "ISC",
+  "dependencies": {
+    "xxhash-addon": "^1.3.0",
+    "message-relay-services" : "https://github.com/copious-world/message-relay-services.git"
+  }
+}
