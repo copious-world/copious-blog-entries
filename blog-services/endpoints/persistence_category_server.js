@@ -76,10 +76,7 @@ class TransitionsPersistenceEndpoint extends PersistenceMessageEndpoint {
             console.dir(u_obj)
             return(false)
         }
-console.log(key_field)
-console.log(asset_info)
         asset_info = asset_info.split('+')
-console.dir(asset_info)
         let user_path = this.user_directory
         let user_id = asset_info.pop()
         //
@@ -93,7 +90,6 @@ console.dir(asset_info)
         } else {
             user_path += ".json"
         }
-console.log(user_path)
         return(user_path)
     }
 
@@ -159,179 +155,136 @@ console.log(user_path)
         }
     }
 
+    async get_entries_record(user_path,entry_type) {
+        let producer_of_type = map_entry_type_to_producer(entry_type)
+        let entries_file = user_path + `/${producer_of_type}.json`
+        try {
+            let entries_record = await fsPromises.readFile(entries_file)
+            entries_record = JSON.parse(entries_record.toString())
+            return [entries_record, producer_of_type, entries_file]    
+        } catch (e) {}
+        return false
+    }
+
+    async write_entry_file(entries_file,entries_record,producer_of_type) {
+        let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
+        await fsPromises.writeFile(entries_file,entries_record_str)
+        let topic = 'user-' + producer_of_type
+        let pub_obj = {
+            "email" : user_id,
+        }
+        pub_obj[producer_of_type] = encodeURIComponent(entries_record_str)        
+        this.app_publish(topic,pub_obj)               // send the dashboard or profile back to DB closers to the UI client
+    }
+
+    create_entry_type(u_obj,user_path,entries_record,entry_type) {
+        u_obj.file_name = user_path
+        if ( entries_record.entries[entry_type] === undefined ) {
+            entries_record.entries[entry_type] = []
+        }
+        entries_record.entries[entry_type].push(u_obj)
+    }
+
+    update_entry_type(u_obj,user_path,entries_record,entry_type) {
+        u_obj.file_name = user_path
+        if ( entries_record.entries[entry_type] !== undefined ) {
+            let entry_list = entries_record.entries[entry_type]
+            for ( let i = 0; i < entry_list.length; i++ ) {
+                let entry = entry_list[i]
+                if ( entry._id == u_obj._id ) {
+                    entry_list[i] = u_obj               // EDITED change the right object == _id match (overwrite)
+                    break;
+                }
+            }
+        }
+    }
+
+    update_entry_type_field(u_obj,user_path,entries_record,entry_type,field) {
+        u_obj.file_name = user_path
+        if ( entries_record.entries[entry_type] !== undefined ) {
+            let entry_list = entries_record.entries[entry_type]
+            for ( let i = 0; i < entry_list.length; i++ ) {
+                let entry = entry_list[i]
+                if ( entry._id == u_obj._id ) {
+                    entry[field] = value     // entry has been edited EDITED change value
+                    break;
+                }
+            }
+        }
+    }
+
+    delete_entry_type(u_obj,entries_record,entry_type) {
+        //
+        if ( entries_record.entries[entry_type] !== undefined ) {
+            let entry_list = entries_record.entries[entry_type]
+            let del_index = -1
+            for ( let i = 0; i < entry_list.length; i++ ) {
+                let entry = entry_list[i]
+                if ( entry._id == u_obj._id ) {
+                    del_index = i
+                    break;
+                }
+            }
+            if ( del_index >= 0 ) {
+                entry_list.splice(del_index,1)      // entries have been edited EDITED delete
+            }
+        }
+        //
+    }
+
     // ----
     async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
+        //
+        let key_field = u_obj.key_field ? u_obj.key_field : u_obj._transition_path
+        let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
+        asset_info = asset_info.split('+')
+        let user_path = this.user_directory
+        let user_id = asset_info.pop()
+        let entry_type = asset_info.pop()
+        let asset_file_base = asset_info.pop()
+        user_path += '/' + user_id
+        //
         switch ( op ) {
             case 'C' : {
-                let key_field = u_obj.key_field ? u_obj.key_field : u_obj._transition_path
-                let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
-        
-                asset_info = asset_info.split('+')
                 //
-                let user_path = this.user_directory
-                let user_id = asset_info.pop()
-                let entry_type = asset_info.pop()
-                let asset_file_base = asset_info.pop()
+                let [entries_record, producer_of_type, entries_file] = await get_entries_record(user_path,entry_type)
+                user_path += `/${entry_type}/${asset_file_base}.json`
                 //
-                user_path += '/' + user_id
+                this.create_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
-                let producer_of_type = map_entry_type_to_producer(entry_type)
-                let entries_file = user_path + `/${producer_of_type}.json`
-                let entries_record = await fsPromises.readFile(entries_file)
-                entries_record = JSON.parse(entries_record.toString())
-                //
-                user_path += '/' + entry_type
-                user_path += '/' + asset_file_base + ".json"
-                //
-                u_obj.file_name = user_path
-                if ( entries_record.entries[entry_type] === undefined ) {
-                    entries_record.entries[entry_type] = []
-                }
-                entries_record.entries[entry_type].push(u_obj)
-                let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
-                await fsPromises.writeFile(entries_file,entries_record_str)
-                let topic = 'user-' + producer_of_type
-                //
-                let pub_obj = {
-                    "email" : user_id,
-                }
-                pub_obj[producer_of_type] = encodeURIComponent(entries_record_str)        
-                this.app_publish(topic,pub_obj)
+                await write_entry_file(entries_file,entries_record,producer_of_type)
                 break;
             }
             case 'U' : {    // update (read asset_file_base, change, write new)
-                let key_field = u_obj.key_field ?  u_obj.key_field : u_obj._transition_path
-                let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
-
-                asset_info = asset_info.split('+')
                 //
-                let user_path = this.user_directory
-                let user_id = asset_info.pop()
-                let entry_type = asset_info.pop()
-                let asset_file_base = asset_info.pop()
+                let [entries_record, producer_of_type, entries_file] = await get_entries_record(user_path,entry_type)
+                user_path += `/${entry_type}/${asset_file_base}.json`
                 //
-                user_path += '/' + user_id
+                this.update_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
-                let producer_of_type = map_entry_type_to_producer(entry_type)
-                let entries_file = user_path + `/${producer_of_type}.json`
-                let entries_record = await fsPromises.readFile(entries_file)
-                entries_record = JSON.parse(entries_record.toString())
-                //
-                user_path += '/' + entry_type
-                user_path += '/' + asset_file_base + ".json"
-                //
-                u_obj.file_name = user_path
-                if ( entries_record.entries[entry_type] !== undefined ) {
-                    let entry_list = entries_record.entries[entry_type]
-                    for ( let i = 0; i < entry_list.length; i++ ) {
-                        let entry = entry_list[i]
-                        if ( entry._id == u_obj._id ) {
-                            entry_list[i] = u_obj               // EDITED change the right object == _id match (overwrite)
-                            break;
-                        }
-                    }
-                }
-                //
-                let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
-                await fsPromises.writeFile(entries_file,entries_record_str)
-                let topic = 'user-' + producer_of_type
-                let pub_obj = {
-                    "email" : user_id,
-                }
-                pub_obj[producer_of_type] = encodeURIComponent(entries_record_str)        
-                this.app_publish(topic,pub_obj)               // send the dashboard or profile back to DB closers to the UI client
+                await write_entry_file(entries_file,entries_record,producer_of_type)
                 break;
             }
             case 'F' : {        // change one field
-                let key_field = u_obj.key_field ?  u_obj.key_field : u_obj._transition_path
-                let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
                 //
-                asset_info = asset_info.split('+')
+                let [entries_record, producer_of_type, entries_file] = await get_entries_record(user_path,entry_type)
+                user_path += `/${entry_type}/${asset_file_base}.json`
                 //
-                let user_path = this.user_directory
-                let user_id = asset_info.pop()
-                let entry_type = asset_info.pop()
-                let asset_file_base = asset_info.pop()
+                this.update_entry_type_field(u_obj,user_path,entries_record,entry_type,field)
                 //
-                user_path += '/' + user_id
-                //
-                let producer_of_type = map_entry_type_to_producer(entry_type)
-                let entries_file = user_path + `/${producer_of_type}.json`
-                let entries_record = await fsPromises.readFile(entries_file)
-                entries_record = JSON.parse(entries_record.toString())
-                //
-                user_path += '/' + entry_type
-                user_path += '/' + asset_file_base + ".json"
-                //
-                u_obj.file_name = user_path
-                if ( entries_record.entries[entry_type] !== undefined ) {
-                    let entry_list = entries_record.entries[entry_type]
-                    for ( let i = 0; i < entry_list.length; i++ ) {
-                        let entry = entry_list[i]
-                        if ( entry._id == u_obj._id ) {
-                            entry[field] = value     // entry has been edited EDITED change value
-                            break;
-                        }
-                    }
-                }
-                //
-                let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
-                await fsPromises.writeFile(entries_file,entries_record_str)
-                let topic = 'user-' + producer_of_type
-                let pub_obj = {
-                    "email" : user_id,
-                }
-                pub_obj[producer_of_type] = encodeURIComponent(entries_record_str)        
-                this.app_publish(topic,pub_obj)               // send the dashboard or profile back to DB closers to the UI client
+                await write_entry_file(entries_file,entries_record,producer_of_type)
                 break;
             }
             case 'D' : {
-                let key_field = u_obj.key_field ?  u_obj.key_field : u_obj._transition_path
-                let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
-
-                asset_info = asset_info.split('+')  // split the name of the dashboard file
-
-                let user_path = this.user_directory // configured user directory -- see persistenceMessageEndpoint
-                let user_id = asset_info.pop()      // from back e.g. striking@pp.com
-                let entry_type = asset_info.pop()   // what's left e.g. dashbarod
-                let asset_file_base = asset_info.pop()  // uuid of the asset.. or maybe ifps hash
                 //
-                user_path += '/' + user_id
+                let [entries_record, producer_of_type, entries_file] = await get_entries_record(user_path,entry_type)
                 //
-                let producer_of_type = map_entry_type_to_producer(entry_type)
-                let entries_file = user_path + `/${producer_of_type}.json`      // the dashboard and profile are kept at the root of the directory...
-                //  READ DASHBOARD OR PROFILE (or other)
-                let entries_record = await fsPromises.readFile(entries_file)
-                entries_record = JSON.parse(entries_record.toString())          // JSON object....
+                this.delete_entry_type(u_obj,entries_record,entry_type)
                 //
-                if ( entries_record.entries[entry_type] !== undefined ) {
-                    let entry_list = entries_record.entries[entry_type]
-                    let del_index = -1
-                    for ( let i = 0; i < entry_list.length; i++ ) {
-                        let entry = entry_list[i]
-                        if ( entry._id == u_obj._id ) {
-                            del_index = i
-                            break;
-                        }
-                    }
-                    if ( del_index >= 0 ) {
-                        entry_list.splice(del_index,1)      // entries have been edited EDITED delete
-                    }
-                }
-                //
-                let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
-                await fsPromises.writeFile(entries_file,entries_record_str)     // WRITE FILE 
-                let topic = 'user-' + producer_of_type
-                let pub_obj = {
-                    "email" : user_id,
-                }
-                pub_obj[producer_of_type] = encodeURIComponent(entries_record_str)              // PUBLISH
-                this.app_publish(topic,pub_obj)               // send the dashboard or profile back to DB closers to the UI client
+                await write_entry_file(entries_file,entries_record,producer_of_type)
                 break;
             }
         }
-        /*
-        */
     }
 }
 
