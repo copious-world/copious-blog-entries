@@ -1,5 +1,5 @@
 
-const UserMessageEndpoint = require("categorical-handlers/users.js")
+const {UserMessageEndpoint} = require("categorical-handlers")
 const user_dashboard_generator = require("../transitions/dashboard").generator
 const user_profile_generator = require("../transitions/profile").generator
 
@@ -18,8 +18,7 @@ let conf = JSON.parse(fs.readFileSync(conf_file).toString())
 // _gen_targets is used each time a new user is created...
 conf.user_endpoint._gen_targets = {
     "profile" : user_profile_generator,         // generator function...
-    "dashboard" : user_dashboard_generator,     // generator function...
-    "extension" : ".json"
+    "dashboard" : user_dashboard_generator     // generator function...
 }
 
 
@@ -44,6 +43,21 @@ class TransitionsUserEndpoint extends UserMessageEndpoint {
         let uobj_str = JSON.stringify(u_obj)
         return(do_hash(uobj_str))
     }
+
+    app_asset_generator(u_obj,gen_targets) {
+        console.log("the application class should implement app_generate_tracking")
+        // 
+        let storables = {}
+        if ( gen_targets ) {
+            for ( let target in gen_targets ) {
+                let generator = gen_targets[target]
+                let output = generator(u_obj,path_key)
+                storables[target] = output
+            }    
+        }
+        return storables
+    }
+
 }
 
 new TransitionsUserEndpoint(conf.user_endpoint)
