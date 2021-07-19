@@ -1,5 +1,5 @@
-
-const {UserMessageEndpoint} = require("categorical-handlers")
+//
+const {UserCategory} = require("categorical-handlers")
 const user_dashboard_generator = require("../transitions/dashboard").generator
 const user_profile_generator = require("../transitions/profile").generator
 
@@ -33,7 +33,7 @@ function do_hash (text) {
 
 
 
-class TransitionsUserEndpoint extends UserMessageEndpoint {
+class TransitionsUserEndpoint extends UserCategory {
 
     constructor(conf) {
         super(conf)

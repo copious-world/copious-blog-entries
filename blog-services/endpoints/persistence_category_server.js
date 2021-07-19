@@ -1,5 +1,5 @@
 
-const PersistenceMessageEndpoint = require("categorical-handlers/persistence.js")
+const {PersistenceCategory} = require("categorical-handlers")
 //
 const fs = require('fs')
 const fsPromises = require('fs/promises')
@@ -26,7 +26,7 @@ function map_entry_type_to_producer(entry_type) {
 
 // -- -- -- --
 
-class TransitionsPersistenceEndpoint extends PersistenceMessageEndpoint {
+class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     //
     constructor(conf) {
@@ -171,10 +171,10 @@ class TransitionsPersistenceEndpoint extends PersistenceMessageEndpoint {
         await fsPromises.writeFile(entries_file,entries_record_str)
         let topic = 'user-' + producer_of_type
         let pub_obj = {
-            "email" : user_id,
+            "_id" : user_id,
         }
         pub_obj[producer_of_type] = encodeURIComponent(entries_record_str)        
-        this.app_publish(topic,pub_obj)               // send the dashboard or profile back to DB closers to the UI client
+        this.app_publish(topic,pub_obj)     // send the dashboard or profile back to DB closers to the UI client
     }
 
     create_entry_type(u_obj,user_path,entries_record,entry_type) {
@@ -247,41 +247,41 @@ class TransitionsPersistenceEndpoint extends PersistenceMessageEndpoint {
         switch ( op ) {
             case 'C' : {
                 //
-                let [entries_record, producer_of_type, entries_file] = await get_entries_record(user_path,entry_type)
+                let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 user_path += `/${entry_type}/${asset_file_base}.json`
                 //
                 this.create_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
-                await write_entry_file(entries_file,entries_record,producer_of_type)
+                await this.write_entry_file(entries_file,entries_record,producer_of_type)
                 break;
             }
             case 'U' : {    // update (read asset_file_base, change, write new)
                 //
-                let [entries_record, producer_of_type, entries_file] = await get_entries_record(user_path,entry_type)
+                let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 user_path += `/${entry_type}/${asset_file_base}.json`
                 //
                 this.update_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
-                await write_entry_file(entries_file,entries_record,producer_of_type)
+                await this.write_entry_file(entries_file,entries_record,producer_of_type)
                 break;
             }
             case 'F' : {        // change one field
                 //
-                let [entries_record, producer_of_type, entries_file] = await get_entries_record(user_path,entry_type)
+                let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 user_path += `/${entry_type}/${asset_file_base}.json`
                 //
                 this.update_entry_type_field(u_obj,user_path,entries_record,entry_type,field)
                 //
-                await write_entry_file(entries_file,entries_record,producer_of_type)
+                await this.write_entry_file(entries_file,entries_record,producer_of_type)
                 break;
             }
             case 'D' : {
                 //
-                let [entries_record, producer_of_type, entries_file] = await get_entries_record(user_path,entry_type)
+                let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 //
                 this.delete_entry_type(u_obj,entries_record,entry_type)
                 //
-                await write_entry_file(entries_file,entries_record,producer_of_type)
+                await this.write_entry_file(entries_file,entries_record,producer_of_type)
                 break;
             }
         }

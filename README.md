@@ -28,7 +28,7 @@ The app optionally stores media in IPFS and will encrypt data before storage.
 
 ## blog-services
 
-This is a service node, running a tpc/ip service built on top of node.js. This service makes use of [message-relay-services](https://www.github.com/message-relay-services). The specialization of the classes provided by the message-relay-services module is that of an end-point.
+This is a service node, running a tpc/ip service built on top of node.js. This service makes use of [categorical-handlers](https://www.github.com/cooious-world/categorical-handlers). The specialization of the classes provided by the message-relay-services module is that of an end-point.
 
 This implements two types of end-points. One is a user entry management node. The other is a persistence managment node, which makes a record of links for access by the blogs. This service does not serve media. All this service does is write entries to directories that may bve accessed by [mini-link-servers](https://www.github.com/copious-world/mini_link_servers).
 

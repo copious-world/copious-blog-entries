@@ -27,6 +27,7 @@
     ]
   },
   "dependencies": {
+    "categorical-handlers": "^0.1.2",
     "file-type": "^16.3.0"
   }
 }

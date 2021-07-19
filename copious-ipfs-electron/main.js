@@ -9,6 +9,8 @@ const crypto = require('crypto')
 
 const FileType = require('file-type');
 
+const {MessageRelayer} = require("category-handlers")
+
 
 let g_algorithm = 'aes-256-cbc';
 let g_key = '7x!A%D*G-JaNdRgUkXp2s5v8y/B?E(H+';
@@ -21,6 +23,12 @@ try {
 } catch (e) {
   console.log("COULD NOT READ CONFIG FILE " + 'desk_app.config')
 }
+
+var g_user_data = false
+
+
+
+
 
 function check_crypto_config(conf) {
   if ( conf.crypto ) {
@@ -162,8 +170,10 @@ function createWindow () {
 }
 
 var g_ipfs_node = false
+var g_message_relay = false
 
 app.on('ready', async () => {
+  g_message_relay = new MessageRelayer(g_conf.relayer)
   createWindow()
   try {
     //
@@ -192,12 +202,15 @@ app.on('activate', () => {
 // In the Main process
 const { ipcMain } = require('electron')
 
-ipcMain.handle('pyth', (event,x,y) => {
-  // ... do actions on behalf of the Renderer
-  console.log(Math.sqrt(x*x + y*y))
-})
+function alert_page(ui_msg) {
+  //
+}
 
 ipcMain.handle('new-entry', async (event,data) => {
+  if ( g_user_data === false ) {
+    alert_page("user not ready")
+    return;
+  }
   //
   // ... do actions on behalf of the Renderer
   //
@@ -312,3 +325,24 @@ console.log(out_file)
 
 })
 
+
+// // // // // // // // // //
+ipcMain.handle('user-ready', async (event,data) => {
+  if ( g_message_relay === false ) return
+  if ( data && data._id ) {
+    let u_data = g_message_relay.get_on_path(data,'user')
+    // { "status" : stat, "data" : data,  "explain" : "get", "when" : Date.now() }
+    if ( u_data && u_data.status !== "ERR" ) {
+      g_user_data = Object.assign({},u_data) 
+    } else {
+      let resp = g_message_relay.create_on_path(data,'user')
+      if ( resp.status === "OK" ) {
+        u_data = g_message_relay.get_on_path(data,'user')
+        // { "status" : stat, "data" : data,  "explain" : "get", "when" : Date.now() }
+        if ( u_data && u_data.status !== "ERR" ) {
+          g_user_data = Object.assign({},u_data) 
+        }
+      }
+    }
+  }
+})

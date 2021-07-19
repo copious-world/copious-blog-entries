@@ -53,49 +53,59 @@
 
   </style>
   <body>
-    <h1>IPFS in electron!</h1>
-    <h2>now check your console</h2>
-    <button id="pythagorus" >PYTH</button>
-    <div class = "mat-back" >
-      <div class = "mat-back-2" >
-        <div class = "form" >
-          <div class = "field" >
-            <label>media_type</label>
-            <select id="rec-file-mtype" onchange="set_view_fields(this)">
-              <option value="streams/audio" >audio</option>
-              <option value="streams/video" >movie</option>
-              <option value="streams/images" >image</option>
-              <option value="blog/text" >blog</option>
-              <option value="music_buzz/text">music_buzz</option>
-            </select>
-          </div>
-          <div class = "field">
-            <label>Title:</label> <input id="rec-title" type="text" />
-          </div>
-          <div class = "field">
-            <label>Subject:</label> <input id="rec-subject" type="text" />
-          </div>
-          <div class = "field">
-            <label>Keys:</label> <input id="rec-keys" type="text" />
-          </div>
-          <div class = "field">
-            <label>Abstract:</label>
-            <textarea id="rec-abstract" ></textarea>  
-          </div>
-          <div id="when-loading-blog-text" class="field" style="visibility: hidden;display:none;">
-            <label>Full Text:</label>
-            <textarea id="rec-full-text" ></textarea>  
-          </div>
-          <div id="when-loading-streams" class = "field">
-            <label>Media File:</label> <input id="rec-file-name" type="file" />
-          </div>
-          <div class = "field">
-            <label>Poster Image:</label> <input id="rec-poster-name" type="file" />
+    <h2>Copious World <h3>Blog Editing App</h3> </h2>
+    <div class = "mat-back mat-back-2 form ">
+      User ID: <input type="text" id="user-id" > <button id="user-id-btn">User Ready</button>
+    </div>
+  
+    <div> 
+
+      <button id="upload" >Upload</button>
+      <button id="publish" >Publish</button>
+      <button id="unpublish" >Unpublish</button>
+      <button id="delete" >Delete</button>
+  
+      <div class = "mat-back" >
+        <div class = "mat-back-2" >
+          <div class = "form" >
+            <div class = "field" >
+              <label>media_type</label>
+              <select id="rec-file-mtype" onchange="set_view_fields(this)">
+                <option value="streams/audio" >audio</option>
+                <option value="streams/video" >movie</option>
+                <option value="streams/images" >image</option>
+                <option value="blog/text" >blog</option>
+                <option value="music_buzz/text">music_buzz</option>
+              </select>
+            </div>
+            <div class = "field">
+              <label>Title:</label> <input id="rec-title" type="text" />
+            </div>
+            <div class = "field">
+              <label>Subject:</label> <input id="rec-subject" type="text" />
+            </div>
+            <div class = "field">
+              <label>Keys:</label> <input id="rec-keys" type="text" />
+            </div>
+            <div class = "field">
+              <label>Abstract:</label>
+              <textarea id="rec-abstract" ></textarea>  
+            </div>
+            <div id="when-loading-blog-text" class="field" style="visibility: hidden;display:none;">
+              <label>Full Text:</label>
+              <textarea id="rec-full-text" ></textarea>  
+            </div>
+            <div id="when-loading-streams" class = "field">
+              <label>Media File:</label> <input id="rec-file-name" type="file" />
+            </div>
+            <div class = "field">
+              <label>Poster Image:</label> <input id="rec-poster-name" type="file" />
+            </div>
           </div>
         </div>
       </div>
     </div>
-    
+  
   </body>
 </html>
 <script>require('./renderer.js')</script>

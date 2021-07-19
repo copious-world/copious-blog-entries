@@ -100,6 +100,24 @@ export let id;
 */
 
 
+async function gather_user_data() {
+    let upload_record = {}
+    try {
+        let uid_fld = document.getElementById('user-id')
+        if ( uid_fld ) {
+            let uid = uid_fld.value
+            if ( uid.length ) {
+                upload_record = {
+                    "_id" : uid_fld
+                }
+                return upload_record
+            }
+        }
+    } catch (e) {
+        return false
+    }
+    return false
+}
 
 async function gather_fields() {
     //
@@ -170,20 +188,35 @@ async function gather_fields() {
         }
         //    
     } catch (e) {
+        return false
     }
 
     return(upload_record)
 }
 
+// ---- ---- ---- ---- ---- ---- ---- ----
+
 async function when_i_say() {
-    let good_data = await gather_fields() 
-    let x = 10
-    let y = 6
-    ipcRenderer.invoke('pyth',x,y)
-    ipcRenderer.invoke('new-entry',good_data)
+    let good_data = await gather_fields()
+    if ( good_data ) {
+        ipcRenderer.invoke('new-entry',good_data)
+    }
 }
 
-let p_button = document.getElementById("pythagorus")
+async function when_user_says() {
+    let good_data = await gather_user_data()
+    if ( good_data ) {
+        ipcRenderer.invoke('user-ready',good_data)
+    }
+}
+
+// ---- ---- ---- ---- ---- ---- ---- ----
+
+let p_button = document.getElementById("Upload")
 if ( p_button ) {
     p_button.addEventListener('click',() => { when_i_say() })
+}
+let u_button = document.getElementById("user-id-btn")
+if ( u_button ) {
+    u_button.addEventListener('click',() => { when_user_says() })
 }
