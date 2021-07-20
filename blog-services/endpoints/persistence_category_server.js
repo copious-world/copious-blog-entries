@@ -4,7 +4,8 @@ const {PersistenceCategory} = require("categorical-handlers")
 const fs = require('fs')
 const fsPromises = require('fs/promises')
 
-
+// connect to a relay service...
+// set by configuration (only one connection, will have two paths.)
 
 function faux_random_enough() {
     let rr = Math.random()
@@ -14,7 +15,7 @@ function faux_random_enough() {
 
 // -- -- -- --
 
-let g_type_to_producer = {}
+let g_type_to_producer = {}    // e.g a dashboard will produce blog entries.
 
 function map_entry_type_to_producer(entry_type) {
     let producer_of_type = g_type_to_producer[entry_type]
@@ -40,8 +41,21 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         this.add_to_topic("command-recind",'self',false)
         this.add_to_topic("command-delete",'self',false)
         this.add_to_topic("command-send",'self',false)
+        //
+        this.topic_producer = this.topic_producer_user
+        if ( conf.system_wide_topics ) {
+            this.topic_producer = this.topic_producer_system
+        }
     }
     //
+
+    topic_producer_user(producer_of_type,user_id) {
+        return  `user-${producer_of_type}-${user_id}`
+    }
+
+    topic_producer_system(producer_of_type,user_id) {
+        return `user-${producer_of_type}`
+    }
 
     // app_subscription_handler
     //  -- Handle state changes...
@@ -166,10 +180,10 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         return false
     }
 
-    async write_entry_file(entries_file,entries_record,producer_of_type) {
+    async write_entry_file(entries_file,entries_record,producer_of_type,user_id) {
         let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
         await fsPromises.writeFile(entries_file,entries_record_str)
-        let topic = 'user-' + producer_of_type
+        let topic = this.topic_producer(producer_of_type,user_id)
         let pub_obj = {
             "_id" : user_id,
         }
@@ -252,7 +266,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
                 //
                 this.create_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type)
+                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
             }
             case 'U' : {    // update (read asset_file_base, change, write new)
@@ -262,7 +276,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
                 //
                 this.update_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type)
+                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
             }
             case 'F' : {        // change one field
@@ -272,7 +286,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
                 //
                 this.update_entry_type_field(u_obj,user_path,entries_record,entry_type,field)
                 //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type)
+                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
             }
             case 'D' : {
@@ -281,7 +295,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
                 //
                 this.delete_entry_type(u_obj,entries_record,entry_type)
                 //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type)
+                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
             }
         }

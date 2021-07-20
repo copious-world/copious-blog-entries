@@ -57,6 +57,9 @@
     <div class = "mat-back mat-back-2 form ">
       User ID: <input type="text" id="user-id" > <button id="user-id-btn">User Ready</button>
     </div>
+    <div class = "mat-back mat-back-2 form ">
+      Asset ID: <input type="text" id="asset-id" >
+    </div>
   
     <div> 
 
@@ -73,7 +76,7 @@
               <select id="rec-file-mtype" onchange="set_view_fields(this)">
                 <option value="streams/audio" >audio</option>
                 <option value="streams/video" >movie</option>
-                <option value="streams/images" >image</option>
+                <option value="streams/image" >image</option>
                 <option value="blog/text" >blog</option>
                 <option value="music_buzz/text">music_buzz</option>
               </select>
@@ -173,7 +176,7 @@
         stash_full_text('rec-full-text')
         break;
       }
-      case 'streams/images' : {
+      case 'streams/image' : {
         hide_field('when-loading-streams')
         hide_field('when-loading-blog-text')
         stash_full_text('rec-full-text')

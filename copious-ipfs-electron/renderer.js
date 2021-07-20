@@ -7,7 +7,6 @@
 const { ipcRenderer } = require('electron')
 
 
-
 let g_punctuation = ".,;:\'\"~\~\`@#$%^&*()+=|\\][}{?/><"
 
 function ispunct(c,add_dash) {
@@ -99,6 +98,7 @@ export let score;
 export let id;
 */
 
+let g_user_id = false
 
 async function gather_user_data() {
     let upload_record = {}
@@ -108,8 +108,9 @@ async function gather_user_data() {
             let uid = uid_fld.value
             if ( uid.length ) {
                 upload_record = {
-                    "_id" : uid_fld
+                    "_id" : uid
                 }
+                g_user_id = uid
                 return upload_record
             }
         }
@@ -136,6 +137,13 @@ async function gather_fields() {
 
         let asset_pair = opt_fld.value
         let [asset_type,media_type] = asset_pair.split('/')
+        /*
+            streams/audio
+            streams/video
+            streams/image
+            blog/text
+            music_buzz/text
+        */
 
         let poster = await get_file(poster_name_fld)        // file names for stream type media
         let media_data = await get_file(file_name_fld)
@@ -169,6 +177,7 @@ async function gather_fields() {
         //
         upload_record = {
           "_tracking" : "",
+          "_id" : g_user_id,
           "title" : encodeURIComponent(title_fld.value),
           "subject" : encodeURIComponent(subject_fld.value),
           "keys" : keys,
@@ -194,6 +203,19 @@ async function gather_fields() {
     return(upload_record)
 }
 
+
+async function gather_fields() {
+    //
+    let upload_record = {}
+    try {
+        let asset_fld = document.getElementById('asset-id')
+        upload_record._id = asset_fld.value
+    } catch (e) {
+        return false
+    }
+    return upload_record
+}
+
 // ---- ---- ---- ---- ---- ---- ---- ----
 
 async function when_i_say() {
@@ -203,6 +225,21 @@ async function when_i_say() {
     }
 }
 
+async function when_i_publish() {
+    let good_data = await gather_fields()
+    if ( good_data ) {
+        ipcRenderer.invoke('publish-entry',good_data)
+    }
+}
+
+async function when_i_unpublish() {
+    let good_data = await gather_fields()
+    if ( good_data ) {
+        ipcRenderer.invoke('unpublish-entry',good_data)
+    }
+}
+
+
 async function when_user_says() {
     let good_data = await gather_user_data()
     if ( good_data ) {
@@ -211,12 +248,18 @@ async function when_user_says() {
 }
 
 // ---- ---- ---- ---- ---- ---- ---- ----
-
-let p_button = document.getElementById("Upload")
-if ( p_button ) {
-    p_button.addEventListener('click',() => { when_i_say() })
-}
 let u_button = document.getElementById("user-id-btn")
 if ( u_button ) {
     u_button.addEventListener('click',() => { when_user_says() })
 }
+//
+let p_button = document.getElementById("upload")
+if ( p_button ) {
+    p_button.addEventListener('click',() => { when_i_say() })
+}
+let u_button = document.getElementById("publish")
+if ( u_button ) {
+    u_button.addEventListener('click',() => { when_i_publish() })
+}
+
+

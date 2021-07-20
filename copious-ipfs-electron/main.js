@@ -3,13 +3,15 @@
 const { app, BrowserWindow } = require('electron')
 const IPFS = require('ipfs')
 const fs = require('fs')
-const uuid = require('uuid/v4')
+const {nanoid} = require('nanoid')
 const crypto = require('crypto')
 
 
 const FileType = require('file-type');
 
-const {MessageRelayer} = require("category-handlers")
+// MultiPathRelayClient will make a connection for each configured path 
+// in this case 2 one for user, the other for the meta data store, persistence.
+const {MultiPathRelayClient} = require("category-handlers")
 
 
 let g_algorithm = 'aes-256-cbc';
@@ -26,7 +28,141 @@ try {
 
 var g_user_data = false
 
+/*  [asset_type,media_type]
+    streams/audio
+    streams/video
+    streams/image
+    blog/text
+    music_buzz/text
+*/
 
+var g_media_types = {
+  "audio" : { "ecrypted" : true, "store_local" : true, "store_ipfs" : true },
+  "video" : { "ecrypted" : false, "store_local" : true, "store_ipfs" : true },
+  "image" : { "ecrypted" : true, "store_local" : true, "store_ipfs" : true },
+  "text" : { "ecrypted" : true, "store_local" : true, "store_ipfs" : true }
+}
+
+var g_asset_types = {
+  "streams" : { "dir" : "." },
+  "blog" : { "dir" : "." },
+  "music_buzz" : { "dir" : "." },
+}
+
+
+function user_dashboard_update(message) {
+
+}
+
+
+class MediaHandler {
+  //
+  constructor(conf) {
+    //
+    this.media_types = conf && conf.media_type ? conf.media_type : g_media_types 
+    this.ifps = g_ipfs_node
+    for ( let mt in this.media_types ) {
+      this.media_types[mt].dir =  this.media_dir.replace('$media_type',mt)
+    }
+    //
+  }
+
+
+  _media_storage(media_name,media_type,blob) {
+      //
+      try {
+        let media_dir = this.media_types[media_type].dir
+        let out_file = media_dir + media_name
+        //      some types are encrypted
+        let do_encrypt = this.media_types[media_type].encrypted
+        let enc_blob = do_encrypt ? encryptMedia(blob) : blob
+        // 
+        // store to the local drive
+        let store_local = this.media_types[media_type].store_local
+        if ( store_local ) {
+          fs.writeFileSync(out_file,enc_blob)
+        }
+        // store to the local drive
+        let store_ipfs = this.media_types[media_type].store_ipfs
+        if ( store_ipfs ) {
+          const file = await this.ifps.add({
+              "path": media_name,
+              "content": enc_blob
+          })
+          //
+          let cid = file.cid.toString()
+          return {
+            "protocol" : 'ipfs',
+            "id" : cid
+          }
+        }
+        return true
+      } catch (e) {
+        return false
+      }
+      //
+  }
+
+  // store_media
+  //      ---- store the actual data... and edit the fields of the meta data object
+  store_media(media,media_type) {
+    // 
+    if ( media_type in this.media_types ) {
+      //
+      let source = media.source
+      let media_name = source.file.name
+      let blob_data = source.blob_url
+      delete source.blob_url  // this is only used to go from the interface to storage 
+      //
+      let bdata_parts = blob_data.split(',')
+      let blob_bytes = bdata_parts[1]
+      const blob = Buffer.from(blob_bytes, 'base64');
+
+      let result = this._media_storage(media_name,media_type,blob)
+      if ( typeof result === 'boolean' ) {
+        return result
+      } else {
+        media.protocol = result.protocol
+        media.ipfs = result.id
+      }
+      return true
+    }
+    return false
+  }
+
+
+  store_image(media,media_type) {   // the image may be a poster for another media type e.g. audio or video
+    //
+    if ( this.media_types.image !== undefined ) {
+      //
+      let poster = media.poster
+      let blob_data = poster.blob_url
+      delete poster.blob_url
+      //
+      let bdata_parts = blob_data.split(',')
+      let blob_bytes = bdata_parts[1]
+      const blob = Buffer.from(blob_bytes, 'base64');
+      //
+      let image_name = poster.file.name
+      let result = this._media_storage(image_name,"image",blob)
+      if ( typeof result === 'boolean' ) {
+        return result
+      } else {
+        if ( media_type === 'image' ) {
+          media.protocol = result.protocol
+          media.ipfs = result.id  
+        } else {
+          poster.protocol = result.protocol
+          poster.ipfs = result.id  
+        }
+      }
+      return true
+    }
+    return false
+  }
+
+
+}
 
 
 
@@ -63,90 +199,14 @@ function encryptMedia(data) {
 }
 
 
-function decryptMedia(data) {
-  try {
-      const decipher = crypto.createDecipheriv(g_algorithm, g_key, g_iv);
-      const decrpyted = Buffer.concat([decipher.update(data), decipher.final()]);
-      return decrpyted
-  } catch (e) {
-      throw e;
-  }
-}
-//
-
-class DecryptStream {
-  constructor() {
-    this.decipher = crypto.createDecipheriv(g_algorithm, g_key, g_iv);
-  }
-
-  decrypt_chunk(data) {
-    const decrpyted = Buffer.concat([this.decipher.update(data)]);   //, decipher.final()
-    return decrpyted
-  }
-
-  decrypt_chunk_last() {
-    const decrpyted = Buffer.concat([this.decipher.final()]); 
-    return decrpyted
-  }
-}
+// decryption in back directory....
 
 
 check_crypto_config(g_conf)
-/*
-async function test_decrypt() {
-  let media_name = 'clip_0012.mp4' //'cloudsdrift_cdb.mp3'
-  let in_file = g_conf.media_dir + media_name
 
-  try {
-    let enc_blob = fs.readFileSync(in_file)
-
-    let clear_blob = decryptMedia(enc_blob)
-
-    let out_file = g_conf.media_dir + "clear_" + media_name
-    fs.writeFileSync(out_file,clear_blob)
-
-    let cid = "QmPC4L1b4fwWQ7As6joafAo2ezvF2K9a3un8YPgoTV7dmi" //"Qme18G3xXNW9qDgkTGsrvFieEbfnjDhHzHs7f7CA5yRwbk"
-
-    let out_file_2 = g_conf.media_dir + "ipfs_clear_" + media_name
-    let decrypt_eng = new DecryptStream()
-    let writeStream = fs.createWriteStream(out_file_2)
-
-    let detected = false
-    let chunk_wait = []
-    let mime_type = "nothing"
-    for await ( const chunk of g_ipfs_node.cat(cid) ) {
-      //chunks.push(chunk)
-      let dec_chunk = decrypt_eng.decrypt_chunk(chunk)
-      if ( !detected ) {
-        mime_type = await FileType.fromBuffer(dec_chunk)
-        if ( mime_type === undefined ) {
-          chunk_wait.push(dec_chunk)
-        } else {
-          detected = true
-          for ( let chunk of chunk_wait ) {
-            writeStream.write(chunk)
-          }
-          writeStream.write(dec_chunk)
-          console.log(mime_type)
-        }
-      } else {
-        writeStream.write(dec_chunk)
-      }
-    }
-    let dec_chunk = decrypt_eng.decrypt_chunk_last()
-    writeStream.write(dec_chunk)
-    writeStream.close()
-    
-
-  } catch (e) {
-    console.error("did not write media")
-  }
-
-}
-*/
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-let mainWindow
+let mainWindow = false
 
 function createWindow () {
   mainWindow = new BrowserWindow({
@@ -171,10 +231,15 @@ function createWindow () {
 
 var g_ipfs_node = false
 var g_message_relay = false
+var g_media_handler = false
 
 app.on('ready', async () => {
-  g_message_relay = new MessageRelayer(g_conf.relayer)
+  //
+  g_message_relay = new MultiPathRelayClient(g_conf.relayer)  
+  g_media_handler = new MediaHandler()
+  //
   createWindow()
+
   try {
     //
     g_ipfs_node = await IPFS.create()
@@ -207,122 +272,102 @@ function alert_page(ui_msg) {
 }
 
 ipcMain.handle('new-entry', async (event,data) => {
+  //
   if ( g_user_data === false ) {
     alert_page("user not ready")
     return;
   }
-  //
   // ... do actions on behalf of the Renderer
   //
-  let _tracking =  uuid()
-  //
-  // 
-  let do_encrypt = true
   let asset_type = data.asset_type
   let media_type = data.media_type
 
-console.log(data.asset_type)
-console.log(data.media_type)
-
-  if ( data.media_type === 'video' ) {
-    do_encrypt = false
-  }
-  let blob_data = false
-  let media_dir = g_conf.media_dir
-  media_dir = media_dir.replace('$media_type',media_type)
-  //
-  if ( data.media && data.media.source && (data.media_type !== 'image') ) {
-    console.log(data.media.source.file)
-    //
-    blob_data = data.media.source.blob_url
-    delete data.media.source.blob_url
-    //
-    let bdata_parts = blob_data.split(',')
-    let blob_bytes = bdata_parts[1]
-    //
-    const blob = Buffer.from(blob_bytes, 'base64');
-    //
-    let media_name = data.media.source.file.name
-  
-    let out_file = media_dir + media_name
-    try {
-      //
-      let enc_blob = do_encrypt ? encryptMedia(blob) : blob
-      fs.writeFileSync(out_file,enc_blob)
-      //
-      const file = await g_ipfs_node.add({
-          "path": media_name,
-          "content": enc_blob
-      })
-      //
-      let cid = file.cid.toString()
-      data.media.protocol = 'ipfs'
-      data.media.ipfs = cid
-
-    } catch (e) {
-      console.error("did not write media")
-    }
-    //
-
-    //
-  } else if ( data.media && data.media.source && (data.media_type === 'image') ) {
-    delete data.media.source  // only storing the image
-  }
-
-  if ( data.media && data.media.poster ) {
-    //
-    blob_data = data.media.poster.blob_url
-    delete data.media.poster.blob_url
-    //
-    let bdata_parts = blob_data.split(',')
-    let blob_bytes = bdata_parts[1]
-    //
-    const blob = Buffer.from(blob_bytes, 'base64');
-    //
-    let image_name = data.media.poster.file.name
-    let out_file = media_dir + image_name
-    try {
-      //
-      let enc_blob = do_encrypt ? encryptMedia(blob) : blob
-      fs.writeFileSync(out_file,enc_blob)
-      //
-      const file = await g_ipfs_node.add({
-          "path": image_name,
-          "content": enc_blob
-      })
-      //
-      let cid = file.cid.toString()
-      if ( data.media_type === 'image' ) {
-        data.media.protocol = 'ipfs'
-        data.media.ipfs = cid  
-      } else {
-        data.media.poster.protocol = 'ipfs'
-        data.media.poster.ipfs = cid  
+  // STORE MAIN MEDIA 
+  if ( data.media && data.media.source) {
+    if ( data.media_type !== 'image' ) {
+      if ( !(g_media_handler.store_media(media,media_type)) ) {
+        console.error("did not write media")
       }
-
-    } catch (e) {
+    } else {
+      delete data.media.source  // only storing the image .. field is 'poster'
+    }
+  }
+  // STORE POSTER 
+  if ( data.media && data.media.poster ) {
+    if ( !(g_media_handler.store_image(media,media_type)) ) {
       console.error("did not write media")
     }
-
   }
 
-  data._tracking = _tracking
-  let email = data.email
-  if ( email === undefined ) {
-    email = 'admin'
+  // IF ADMIN GO AHEAD AN STORE IN PUBLICATION DIRECTORY
+  // OTHERWISE SEND IT TO THE ENDPOINT AND STORE IT IN THE USER DIRECTORY
+  //
+  let id = data._id
+  if (  id === undefined || id == 'admin' ) {
+    let _tracking =  nanoid()
+    data._tracking = _tracking
+    id = 'admin'
   }
   //
-  try {
-    let dir = g_conf.entries_dir
-    dir = dir.replace("$asset_type",asset_type)
-    let out_file = dir + _tracking + '+' + email + ".json"
-
-console.log(out_file)
-    fs.writeFileSync(out_file,JSON.stringify(data,false,2))
-  } catch (e) {
-    console.error("did not write image")
+  if ( id === 'admin' ) {
+    try {
+      let dir = g_conf.entries_dir
+      dir = dir.replace("$asset_type",asset_type)
+      let out_file = dir + _tracking + '+' + id + ".json"
+      //
+      fs.writeFileSync(out_file,JSON.stringify(data,false,2))
+    } catch (e) {
+      console.error("did not write image")
+    }  
+  } else {
+    let resp = g_message_relay.create_on_path(data,'persistence')
+    if ( resp.status === "OK" ) {
+      add_to_manifest(resp.data)
+      console.log("stored")
+      // 
+    }
   }
 
+})
+
+
+ipcMain.handle('publish-entry', async (event,data) => {
+  //
+  if ( g_message_relay === false ) return
+  if ( g_user_data === false ) {
+    alert_page("user not ready")
+    return;
+  }
+  // ... do actions on behalf of the Renderer
+  if ( data && data._id ) {
+    let resp = g_message_relay.publication_on_path(data,'persistence')
+    if ( resp.status === "OK" ) {
+      add_to_manifest(resp.data)
+      console.log("published")
+    }
+    //
+  }
+  //
+})
+
+
+ipcMain.handle('unpublish-entry', async (event,data) => {
+  //
+  if ( g_message_relay === false ) return
+  if ( g_user_data === false ) {
+    alert_page("user not ready")
+    return;
+  }
+  // ... do actions on behalf of the Renderer
+  if ( data && data._id ) {
+    let resp = g_message_relay.unpublish_on_path(data,'persistence')
+    if ( resp.status === "OK" ) {
+      add_to_manifest(resp.data)
+      console.log("unpublish")
+    }
+    //
+  }
+  //
 })
 
 
@@ -341,6 +386,7 @@ ipcMain.handle('user-ready', async (event,data) => {
         // { "status" : stat, "data" : data,  "explain" : "get", "when" : Date.now() }
         if ( u_data && u_data.status !== "ERR" ) {
           g_user_data = Object.assign({},u_data) 
+          g_message_relay.subscribe(`user-dashboard-${g_user_data._id}`,'persistence',user_dashboard_update)
         }
       }
     }
