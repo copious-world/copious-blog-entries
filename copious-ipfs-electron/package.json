@@ -17,7 +17,7 @@
   "license": "MIT",
   "devDependencies": {
     "electron": "^11.2.1",
-    "electron-rebuild": "^2.3.4",
+    "electron-rebuild": "^2.3.5",
     "ipfs": "^0.54.4",
     "test-ipfs-example": "^3.0.0"
   },
@@ -27,7 +27,7 @@
     ]
   },
   "dependencies": {
-    "categorical-handlers": "^0.1.2",
+    "categorical-handlers": "^0.1.5",
     "file-type": "^16.3.0",
     "nanoid": "^3.1.23"
   }

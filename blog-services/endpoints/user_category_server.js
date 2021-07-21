@@ -15,6 +15,8 @@ if ( conf_par !== undefined ) {
 
 let conf = JSON.parse(fs.readFileSync(conf_file).toString())
 
+console.dir(conf)
+
 // _gen_targets is used each time a new user is created...
 conf.user_endpoint._gen_targets = {
     "profile" : user_profile_generator,         // generator function...
@@ -27,7 +29,7 @@ conf.user_endpoint._gen_targets = {
 function do_hash (text) {
     const hash = crypto.createHash('sha256');
     hash.update(text);
-    let ehash = hash.digest('hex');
+    let ehash = hash.digest('base64');
     return(ehash)
 }
 

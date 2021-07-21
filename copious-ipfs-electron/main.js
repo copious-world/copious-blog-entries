@@ -3,6 +3,7 @@
 const { app, BrowserWindow } = require('electron')
 const IPFS = require('ipfs')
 const fs = require('fs')
+const fsPromise = require('fs/promises')
 const {nanoid} = require('nanoid')
 const crypto = require('crypto')
 
@@ -10,8 +11,8 @@ const crypto = require('crypto')
 const FileType = require('file-type');
 
 // MultiPathRelayClient will make a connection for each configured path 
-// in this case 2 one for user, the other for the meta data store, persistence.
-const {MultiPathRelayClient} = require("category-handlers")
+// in this case 2: 1) one for user; 2) the other for the meta data store, persistence.
+const {MultiPathRelayClient} = require("categorical-handlers")
 
 
 let g_algorithm = 'aes-256-cbc';
@@ -68,7 +69,7 @@ class MediaHandler {
   }
 
 
-  _media_storage(media_name,media_type,blob) {
+  async _media_storage(media_name,media_type,blob) {
       //
       try {
         let media_dir = this.media_types[media_type].dir
@@ -105,7 +106,7 @@ class MediaHandler {
 
   // store_media
   //      ---- store the actual data... and edit the fields of the meta data object
-  store_media(media,media_type) {
+  async store_media(media,media_type) {
     // 
     if ( media_type in this.media_types ) {
       //
@@ -118,7 +119,7 @@ class MediaHandler {
       let blob_bytes = bdata_parts[1]
       const blob = Buffer.from(blob_bytes, 'base64');
 
-      let result = this._media_storage(media_name,media_type,blob)
+      let result = await this._media_storage(media_name,media_type,blob)
       if ( typeof result === 'boolean' ) {
         return result
       } else {
@@ -131,7 +132,7 @@ class MediaHandler {
   }
 
 
-  store_image(media,media_type) {   // the image may be a poster for another media type e.g. audio or video
+  async store_image(media,media_type) {   // the image may be a poster for another media type e.g. audio or video
     //
     if ( this.media_types.image !== undefined ) {
       //
@@ -144,7 +145,7 @@ class MediaHandler {
       const blob = Buffer.from(blob_bytes, 'base64');
       //
       let image_name = poster.file.name
-      let result = this._media_storage(image_name,"image",blob)
+      let result = await this._media_storage(image_name,"image",blob)
       if ( typeof result === 'boolean' ) {
         return result
       } else {
@@ -285,7 +286,7 @@ ipcMain.handle('new-entry', async (event,data) => {
   // STORE MAIN MEDIA 
   if ( data.media && data.media.source) {
     if ( data.media_type !== 'image' ) {
-      if ( !(g_media_handler.store_media(media,media_type)) ) {
+      if ( !(await g_media_handler.store_media(media,media_type)) ) {
         console.error("did not write media")
       }
     } else {
@@ -294,7 +295,7 @@ ipcMain.handle('new-entry', async (event,data) => {
   }
   // STORE POSTER 
   if ( data.media && data.media.poster ) {
-    if ( !(g_media_handler.store_image(media,media_type)) ) {
+    if ( !(await g_media_handler.store_image(media,media_type)) ) {
       console.error("did not write media")
     }
   }
