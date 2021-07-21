@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>IPFS</title>
+  </head>
+  <style>
+    button {
+      cursor: pointer;
+      font-size: 101%;
+      font-weight: bold;
+      color: darkblue;
+      margin: 2px;
+      width:120px;
+    }
+
+    button:hover {
+      background-color : #CACAFF;
+      color: darkred;
+    }
+
+    .button-hit-once {
+      box-shadow: blanchedalmond;
+    }
+
+    .button-hit-once:disabled {
+      cursor:none;
+      color:lightsteelblue;
+      background-color:antiquewhite;
+    }
+
+    .mat-back {
+      padding:2px;
+      border: solid 1px rgb(80, 2, 80);
+      background-color: rebeccapurple;
+    }
+    .mat-back-2 {
+      padding: 6px;
+      border: solid 1px rgb(41, 156, 147);
+      background-color: snow;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    .field {
+      padding : 4px;
+      border: solid 1px rgb(253, 253, 253);
+      display: block;
+      visibility: visible;
+    }
+
+  </style>
+  <body>
+    <h2>Copious World <h3>Blog Editing App</h3> </h2>
+    <div class = "mat-back mat-back-2 form ">
+      User ID: <input type="text" id="user-id" > <button id="user-id-btn">User Ready</button>
+    </div>
+    <div class = "mat-back mat-back-2 form ">
+      Asset ID: <input type="text" id="asset-id" >
+    </div>
+  
+    <div> 
+
+      <button id="upload" >Upload</button>
+      <button id="publish" >Publish</button>
+      <button id="unpublish" >Unpublish</button>
+      <button id="delete" >Delete</button>
+  
+      <div class = "mat-back" >
+        <div class = "mat-back-2" >
+          <div class = "form" >
+            <div class = "field" >
+              <label>media_type</label>
+              <select id="rec-file-mtype" onchange="set_view_fields(this)">
+                <option value="streams/audio" >audio</option>
+                <option value="streams/video" >movie</option>
+                <option value="streams/image" >image</option>
+                <option value="blog/text" >blog</option>
+                <option value="music_buzz/text">music_buzz</option>
+              </select>
+            </div>
+            <div class = "field">
+              <label>Title:</label> <input id="rec-title" type="text" />
+            </div>
+            <div class = "field">
+              <label>Subject:</label> <input id="rec-subject" type="text" />
+            </div>
+            <div class = "field">
+              <label>Keys:</label> <input id="rec-keys" type="text" />
+            </div>
+            <div class = "field">
+              <label>Abstract:</label>
+              <textarea id="rec-abstract" ></textarea>  
+            </div>
+            <div id="when-loading-blog-text" class="field" style="visibility: hidden;display:none;">
+              <label>Full Text:</label>
+              <textarea id="rec-full-text" ></textarea>  
+            </div>
+            <div id="when-loading-streams" class = "field">
+              <label>Media File:</label> <input id="rec-file-name" type="file" />
+            </div>
+            <div class = "field">
+              <label>Poster Image:</label> <input id="rec-poster-name" type="file" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+<p>'Right click' here to show context menu.</p>
+
+<div style="border: 2px solid green;">
+HEY EVERYONE I RELOADED (ALMOST HOT)
+</div>
+
+<script>
+// Create an empty context menu
+var menu = new nw.Menu();
+
+// Add some items with label
+menu.append(new nw.MenuItem({
+  label: 'Item A',
+  click: function(){
+    alert('You have clicked at "Item A"');
+  }
+}));
+menu.append(new nw.MenuItem({ label: 'Item B' }));
+menu.append(new nw.MenuItem({ type: 'separator' }));
+menu.append(new nw.MenuItem({ label: 'Item C' }));
+
+// Hooks the "contextmenu" event
+document.body.addEventListener('contextmenu', function(ev) {
+  // Prevent showing default context menu
+  ev.preventDefault();
+  // Popup the native context menu at place you click
+  menu.popup(ev.x, ev.y);
+
+  return false;
+}, false);
+
+</script>
+
+<script>
+    // get the system platform using node.js
+    var os = require('os');
+    document.write('You are running on ', os.platform());
+    const fsPromises = require('fs/promises')
+
+    async function doWrite() {
+        let user_path = "./test.json"
+        let msg_obj = { "test" : "A", "b" : "C" }
+        await fsPromises.writeFile(user_path,JSON.stringify(msg_obj),{ 'flag' : 'w' })
+    }
+
+    doWrite()
+    
+</script>
+
+</body>
+</html>
+
+<script>
+
+    //
+    function set_view_fields(sel_el) {
+      let value = sel_el.value
+      select_view(value)
+    }
+  
+    function hide_field(fname) {
+      let fld = document.getElementById(fname)
+      if ( fld ) {
+        fld.style.display = "none"
+        fld.style.visibility = "hidden"
+      }
+    }
+  
+  
+    function show_field(fname) {
+      let fld = document.getElementById(fname)
+      if ( fld ) {
+        fld.style.display = "block"
+        fld.style.visibility = "visible"
+      }
+    }
+  
+  
+    var g_stashed_txt = ''
+    function stash_full_text(t_field_name) {
+      if ( t_field_name ) {
+        let t_field = document.getElementById(t_field_name)
+        if ( t_field ) {
+          g_stashed_txt = t_field.value
+        }
+      }
+    }
+  
+    function unstash_full_text(t_field_name) {
+      if ( t_field_name ) {
+        let t_field = document.getElementById(t_field_name)
+        if ( t_field ) {
+          t_field.value = g_stashed_txt
+        }
+      }
+    }
+  
+    //
+    function select_view(vtype) {
+      let opt = document.getElementById('rec-file-mtype')
+      if ( opt ) {
+        opt.value = vtype
+      }
+      switch ( vtype ) {
+        case 'streams/audio' : {
+          show_field('when-loading-streams')
+          hide_field('when-loading-blog-text')
+          stash_full_text('rec-full-text')
+          break;
+        }
+        case 'streams/video' : {
+          show_field('when-loading-streams')
+          hide_field('when-loading-blog-text')
+          stash_full_text('rec-full-text')
+          break;
+        }
+        case 'streams/image' : {
+          hide_field('when-loading-streams')
+          hide_field('when-loading-blog-text')
+          stash_full_text('rec-full-text')
+          break;
+        }
+        case 'blog/text' :
+        case 'music_buzz/text' : {
+          hide_field('when-loading-streams')
+          show_field('when-loading-blog-text')
+          unstash_full_text('rec-full-text')
+          break;
+        }
+      }
+    }
+  
+    function initialize_view() {
+      select_view('blog/text')
+    }
+  
+    initialize_view()
+  </script>
+  
