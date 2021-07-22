@@ -30,6 +30,7 @@ function do_hash (text) {
     const hash = crypto.createHash('sha256');
     hash.update(text);
     let ehash = hash.digest('base64');
+    ehash = ehash.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
     return(ehash)
 }
 
@@ -47,13 +48,11 @@ class TransitionsUserEndpoint extends UserCategory {
     }
 
     app_asset_generator(u_obj,gen_targets) {
-        console.log("the application class should implement app_generate_tracking")
-        // 
         let storables = {}
         if ( gen_targets ) {
             for ( let target in gen_targets ) {
                 let generator = gen_targets[target]
-                let output = generator(u_obj,path_key)
+                let output = generator(u_obj,target)
                 storables[target] = output
             }    
         }

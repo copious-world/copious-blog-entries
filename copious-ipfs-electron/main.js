@@ -1,18 +1,11 @@
 //'use strict'
 
 const { app, BrowserWindow } = require('electron')
-const IPFS = require('ipfs')
-const fs = require('fs')
-const fsPromise = require('fs/promises')
-const {nanoid} = require('nanoid')
-const crypto = require('crypto')
-
-
-const FileType = require('file-type');
 
 // MultiPathRelayClient will make a connection for each configured path 
 // in this case 2: 1) one for user; 2) the other for the meta data store, persistence.
 const {MultiPathRelayClient} = require("categorical-handlers")
+const {nanoid} = require('nanoid')
 
 
 let g_algorithm = 'aes-256-cbc';

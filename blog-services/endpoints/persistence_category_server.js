@@ -13,6 +13,14 @@ function faux_random_enough() {
     return "dashing" + rr
 }
 
+function do_hash (text) {
+    const hash = crypto.createHash('sha256');
+    hash.update(text);
+    let ehash = hash.digest('base64');
+    ehash = ehash.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    return(ehash)
+}
+
 // -- -- -- --
 
 let g_type_to_producer = {}    // e.g a dashboard will produce blog entries.
@@ -78,6 +86,11 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             let value = msg_obj.published
             this.user_action_keyfile(op,msg_obj,field,value)
         }
+    }
+
+    app_generate_tracking(p_obj) {
+        let pobj_str = JSON.stringify(p_obj)
+        return(do_hash(pobj_str))
     }
 
     // ----

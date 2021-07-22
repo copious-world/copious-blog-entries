@@ -241,7 +241,7 @@ async function when_i_unpublish() {
 
 
 async function when_user_says() {
-    let good_data = await gather_user_data()
+    let good_data = await gather_user_field()
     if ( good_data ) {
         ipcRenderer.invoke('user-ready',good_data)
     }

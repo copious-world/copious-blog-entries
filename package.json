@@ -1,0 +1,33 @@
+{
+  "name": "copious-blog-entries",
+  "version": "1.0.0",
+  "description": "The endpoint project with a clients (focusing on NW.js client) for storing meta data about user-business relationships and user assets.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/copious-world/copious-blog-entries.git"
+  },
+  "keywords": [
+    "NW-app",
+    "meta",
+    "data",
+    "management",
+    "asset-management"
+  ],
+  "author": "R. Leddy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/copious-world/copious-blog-entries/issues"
+  },
+  "homepage": "https://github.com/copious-world/copious-blog-entries#readme",
+  "dependencies": {
+    "categorical-handlers": "^0.1.9",
+    "ipfs": "^0.55.4"
+  }
+}

@@ -108,60 +108,15 @@
         </div>
       </div>
     </div>
-<p>'Right click' here to show context menu.</p>
-
-<div style="border: 2px solid green;">
-HEY EVERYONE I RELOADED (ALMOST HOT)
-</div>
-
-<script>
-// Create an empty context menu
-var menu = new nw.Menu();
-
-// Add some items with label
-menu.append(new nw.MenuItem({
-  label: 'Item A',
-  click: function(){
-    alert('You have clicked at "Item A"');
-  }
-}));
-menu.append(new nw.MenuItem({ label: 'Item B' }));
-menu.append(new nw.MenuItem({ type: 'separator' }));
-menu.append(new nw.MenuItem({ label: 'Item C' }));
-
-// Hooks the "contextmenu" event
-document.body.addEventListener('contextmenu', function(ev) {
-  // Prevent showing default context menu
-  ev.preventDefault();
-  // Popup the native context menu at place you click
-  menu.popup(ev.x, ev.y);
-
-  return false;
-}, false);
-
-</script>
-
-<script>
-    // get the system platform using node.js
-    var os = require('os');
-    document.write('You are running on ', os.platform());
-    const fsPromises = require('fs/promises')
-
-    async function doWrite() {
-        let user_path = "./test.json"
-        let msg_obj = { "test" : "A", "b" : "C" }
-        await fsPromises.writeFile(user_path,JSON.stringify(msg_obj),{ 'flag' : 'w' })
-    }
-
-    doWrite()
-    
-</script>
 
 </body>
 </html>
 
 <script>
 
+    let app_code = require('./app.js')
+    let ui_entry = require('./ui_entry.js')
+    //
     //
     function set_view_fields(sel_el) {
       let value = sel_el.value
@@ -176,7 +131,6 @@ document.body.addEventListener('contextmenu', function(ev) {
       }
     }
   
-  
     function show_field(fname) {
       let fld = document.getElementById(fname)
       if ( fld ) {
@@ -184,7 +138,6 @@ document.body.addEventListener('contextmenu', function(ev) {
         fld.style.visibility = "visible"
       }
     }
-  
   
     var g_stashed_txt = ''
     function stash_full_text(t_field_name) {
@@ -245,5 +198,57 @@ document.body.addEventListener('contextmenu', function(ev) {
     }
   
     initialize_view()
+
+
+    async function when_i_say() {
+        let good_data = await ui_entry.gather_fields()
+        if ( good_data ) {
+          app_code.new_entry(good_data)
+        }
+    }
+
+    async function when_i_publish() {
+        let good_data = await ui_entry.gather_fields()
+        if ( good_data ) {
+          app_code.publish_entry(good_data)
+        }
+    }
+
+    async function when_i_unpublish() {
+        let good_data = await ui_entry.gather_fields()
+        if ( good_data ) {
+          app_code.unpublish_entry(good_data)
+        }
+    }
+
+
+    async function when_user_says() {
+        let good_data = await ui_entry.gather_user_fields()
+        if ( good_data ) {
+          app_code.user_ready(good_data)
+        }
+    }
+
+    // ---- ---- ---- ---- ---- ---- ---- ----
+    let u_button = document.getElementById("user-id-btn")
+    if ( u_button ) {
+        u_button.addEventListener('click',() => { when_user_says() })
+    }
+    //
+    let up_button = document.getElementById("upload")
+    if ( up_button ) {
+      up_button.addEventListener('click',() => { when_i_say() })
+    }
+    let p_button = document.getElementById("publish")
+    if ( p_button ) {
+      p_button.addEventListener('click',() => { when_i_publish() })
+    }
+
+    window.addEventListener("load", (event) => {
+      app_code.startup()
+    })
+
+
+
   </script>
   
