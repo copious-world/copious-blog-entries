@@ -75,7 +75,10 @@ nwjs-sdk-v0.54.1-osx-x64
 # FuseBox cache
 .fusebox/
 
+!*/test/index.js
 */test/*
-test
+!blog-services/test/index.js
+test/*
 back
 test-output
+
