@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/copious-world/copious-blog-entries#readme",
   "dependencies": {
-    "categorical-handlers": "^0.1.9",
+    "categorical-handlers": "^0.2.1",
     "ipfs": "^0.55.4"
   }
 }

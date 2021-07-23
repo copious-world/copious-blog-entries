@@ -56,6 +56,7 @@
     <h2>Copious World <h3>Blog Editing App</h3> </h2>
     <div class = "mat-back mat-back-2 form ">
       User ID: <input type="text" id="user-id" > <button id="user-id-btn">User Ready</button>
+      Tracking: <input type="text" id="user-tracking" >
     </div>
     <div class = "mat-back mat-back-2 form ">
       Asset ID: <input type="text" id="asset-id" >
@@ -203,21 +204,21 @@
     async function when_i_say() {
         let good_data = await ui_entry.gather_fields()
         if ( good_data ) {
-          app_code.new_entry(good_data)
+          await app_code.new_entry(good_data)
         }
     }
 
     async function when_i_publish() {
         let good_data = await ui_entry.gather_fields()
         if ( good_data ) {
-          app_code.publish_entry(good_data)
+          await app_code.publish_entry(good_data)
         }
     }
 
     async function when_i_unpublish() {
         let good_data = await ui_entry.gather_fields()
         if ( good_data ) {
-          app_code.unpublish_entry(good_data)
+          await app_code.unpublish_entry(good_data)
         }
     }
 
@@ -225,7 +226,13 @@
     async function when_user_says() {
         let good_data = await ui_entry.gather_user_fields()
         if ( good_data ) {
-          app_code.user_ready(good_data)
+          let t_num = await app_code.user_ready(good_data)
+          if ( t_num !== false ) {
+            let tracker = document.getElementById("user-tracking")
+            if ( tracker ) {
+              tracker.value = t_num
+            }
+          }
         }
     }
 

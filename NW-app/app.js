@@ -353,19 +353,26 @@ class AppLogic {
             let u_data = await this.msg_relay.get_on_path(data,'user')
             // { "status" : stat, "data" : data,  "explain" : "get", "when" : Date.now() }
             if ( u_data && u_data.status !== "ERR" ) {
-                g_user_data = Object.assign({},u_data) 
+                let u_obj = JSON.parse(u_data.data)
+                g_user_data = Object.assign({},u_obj) 
+                this.msg_relay.subscribe(`user-dashboard-${g_user_data._id}`,'persistence',u_obj)
+                return u_obj._tracking
             } else {
                 let resp = await this.msg_relay.create_on_path(data,'user')
                 if ( resp.status === "OK" ) {
+                    data._tracking = resp._tracking
                     u_data = await this.msg_relay.get_on_path(data,'user')
                     // { "status" : stat, "data" : data,  "explain" : "get", "when" : Date.now() }
                     if ( u_data && u_data.status !== "ERR" ) {
-                        g_user_data = Object.assign({},u_data) 
-                        this.msg_relay.subscribe(`user-dashboard-${g_user_data._id}`,'persistence',user_dashboard_update)
+                        let u_obj = JSON.parse(u_data.data)
+                        g_user_data = Object.assign({},u_obj) 
+                        this.msg_relay.subscribe(`user-dashboard-${g_user_data._id}`,'persistence',u_obj)
+                        return u_obj._tracking
                     }
                 }
             }
         }
+        return false
     }
 }
 

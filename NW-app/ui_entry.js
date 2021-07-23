@@ -72,10 +72,19 @@ class DataFromUi {
         try {
             let uid_fld = document.getElementById('user-id')
             if ( uid_fld ) {
+                let tracking = ""
+                let tracker = document.getElementById("user-tracking")
+                if ( tracker ) {
+                    let t = tracker.value
+                    if ( t.length ) tracking = t
+                }
+                //
+    
                 let uid = uid_fld.value
                 if ( uid.length ) {
                     upload_record = {
-                        "_id" : uid
+                        "_id" : uid,
+                        "_tracking" : tracking,
                     }
                     this._user_id = uid
                     return upload_record
@@ -142,25 +151,32 @@ class DataFromUi {
                 return(key)
             })
             //
-            upload_record = {
-            "_tracking" : "",
-            "_id" :  this._user_id,
-            "title" : encodeURIComponent(title_fld.value),
-            "subject" : encodeURIComponent(subject_fld.value),
-            "keys" : keys,
-            "asset_type" : asset_type,        // blog, stream, link-package, contact, ownership, etc...
-            "media_type" : media_type,        // text, audio, video, image
-            "abstract" : encodeURIComponent(abstract_fld.value),
-            "media" : {
-                "poster" : poster,
-                "source" : media_data
-            },
-            "encode" : true,
-            "txt_full" : encodeURIComponent(full_text_fld.value),
-            "dates" : {
-                "created" : Date.now(),
-                "updated" : modDate
+            let tracking = ""
+            let tracker = document.getElementById("user-tracking")
+            if ( tracker ) {
+                let t = tracker.value
+                if ( t.length ) tracking = t
             }
+            //
+            upload_record = {
+                "_tracking" : tracking,
+                "_id" :  this._user_id,
+                "title" : encodeURIComponent(title_fld.value),
+                "subject" : encodeURIComponent(subject_fld.value),
+                "keys" : keys,
+                "asset_type" : asset_type,        // blog, stream, link-package, contact, ownership, etc...
+                "media_type" : media_type,        // text, audio, video, image
+                "abstract" : encodeURIComponent(abstract_fld.value),
+                "media" : {
+                    "poster" : poster,
+                    "source" : media_data
+                },
+                "encode" : true,
+                "txt_full" : encodeURIComponent(full_text_fld.value),
+                "dates" : {
+                    "created" : Date.now(),
+                    "updated" : modDate
+                }
             }
             //    
         } catch (e) {

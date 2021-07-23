@@ -376,6 +376,7 @@ ipcMain.handle('user-ready', async (event,data) => {
     } else {
       let resp = g_message_relay.create_on_path(data,'user')
       if ( resp.status === "OK" ) {
+        data._tracking = resp._tracking
         u_data = g_message_relay.get_on_path(data,'user')
         // { "status" : stat, "data" : data,  "explain" : "get", "when" : Date.now() }
         if ( u_data && u_data.status !== "ERR" ) {

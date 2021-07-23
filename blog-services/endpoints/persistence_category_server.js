@@ -2,7 +2,6 @@
 const {PersistenceCategory} = require("categorical-handlers")
 //
 const fs = require('fs')
-const fsPromises = require('fs/promises')
 const crypto = require('crypto')
 
 // connect to a relay service...
@@ -76,7 +75,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     // ----
     make_path(u_obj) {
-        let key_field = u_obj.key_field ?  u_obj.key_field : u_obj._transition_path
+        let key_field = u_obj.key_field ? u_obj.key_field : u_obj._transition_path
         let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
         if ( !(asset_info) ) return(false)
         if ( asset_info.indexOf('+') < 0 ) {
@@ -156,8 +155,6 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         return(data)
     }
 
-
-
     // ---- user_manage_date
     // ---- ---- ---- ----   always call this before writing the file... The parent class should be like this.
     user_manage_date(op,u_obj) {
@@ -191,7 +188,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     async get_entries(entries_file) {
         try {
-            let entries_record =  await fsPromises.readFile(entries_file)
+            let entries_record =  await this.data_reader(entries_file)
             entries_record = JSON.parse(entries_record.toString())
             return entries_record    
         } catch (e) {}
@@ -200,7 +197,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     async put_entries(entries_file,entries_record) {
         let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
-        await fsPromises.writeFile(entries_file,entries_record_str)
+        await this.write_out_string(entries_file,entries_record_str,false)
         return entries_record_str
     }
 
@@ -288,8 +285,6 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-
-    // ----
     async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
         //
         let key_field = u_obj.key_field ? u_obj.key_field : u_obj._transition_path
