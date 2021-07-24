@@ -253,7 +253,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategoryTest {
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-    create_entry_type(entry_obj,user_path,entries_record,entry_type) {
+    create_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] === undefined ) {
             entries_record.entries[entry_type] = []
@@ -261,7 +261,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategoryTest {
         entries_record.entries[entry_type].push(entry_obj)
     }
 
-    update_entry_type(entry_obj,user_path,entries_record,entry_type) {
+    update_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] !== undefined ) {
             let entry_list = entries_record.entries[entry_type]
@@ -275,7 +275,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategoryTest {
         }
     }
 
-    update_entry_type_field(entry_obj,user_path,entries_record,entry_type,field) {
+    update_producer_entry_type_field(entry_obj,user_path,entries_record,entry_type,field) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] !== undefined ) {
             let entry_list = entries_record.entries[entry_type]
@@ -290,7 +290,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategoryTest {
         }
     }
 
-    delete_entry_type(entry_obj,entries_record,entry_type) {
+    delete_producer_entry_type(entry_obj,entries_record,entry_type) {
         //
         if ( entries_record.entries[entry_type] !== undefined ) {
             let entry_list = entries_record.entries[entry_type]
@@ -332,7 +332,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategoryTest {
                 let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 user_path += `/${entry_type}/${asset_file_base}.json`
                 //
-                this.create_entry_type(u_obj,user_path,entries_record,entry_type)
+                this.create_producer_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
                 await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
@@ -342,7 +342,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategoryTest {
                 let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 user_path += `/${entry_type}/${asset_file_base}.json`
                 //
-                this.update_entry_type(u_obj,user_path,entries_record,entry_type)
+                this.update_producer_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
                 await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
@@ -352,7 +352,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategoryTest {
                 let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 user_path += `/${entry_type}/${asset_file_base}.json`
                 //
-                this.update_entry_type_field(u_obj,user_path,entries_record,entry_type,field)
+                this.update_producer_entry_type_field(u_obj,user_path,entries_record,entry_type,field)
                 //
                 await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
@@ -361,7 +361,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategoryTest {
                 //
                 let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 //
-                this.delete_entry_type(u_obj,entries_record,entry_type)
+                this.delete_producer_entry_type(u_obj,entries_record,entry_type)
                 //
                 await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
@@ -539,13 +539,13 @@ test("entry record", async t => {
         "_id" : 1,
         "title" : "this is a thing with a title"
     }
-    testObj.create_entry_type(entry_obj_1,user_path,entries_record,entry_type)
+    testObj.create_producer_entry_type(entry_obj_1,user_path,entries_record,entry_type)
     t.is(entries_record.entries[entry_type].length,1)
     let entry_obj_2 = {
         "_id" : 2,
         "title" : "this is a thing with a title, too"
     }
-    testObj.create_entry_type(entry_obj_2,user_path,entries_record,entry_type)
+    testObj.create_producer_entry_type(entry_obj_2,user_path,entries_record,entry_type)
     t.is(entries_record.entries[entry_type].length,2)
     //
     console.dir(entries_record.entries[entry_type])
@@ -553,7 +553,7 @@ test("entry record", async t => {
         "_id" : 3,
         "title" : "this is a thing with a title, three"
     }
-    testObj.create_entry_type(entry_obj_3,user_path,entries_record,entry_type)
+    testObj.create_producer_entry_type(entry_obj_3,user_path,entries_record,entry_type)
     t.is(entries_record.entries[entry_type].length,3)
     //
     entry_obj_2 = {
@@ -561,24 +561,24 @@ test("entry record", async t => {
         "title" : "this is a thing with a title, too",
         "added" : "this is added"
     }
-    testObj.update_entry_type(entry_obj_2,user_path,entries_record,entry_type)
+    testObj.update_producer_entry_type(entry_obj_2,user_path,entries_record,entry_type)
     console.dir(entries_record.entries[entry_type])
     t.is(entries_record.entries[entry_type][1].added,"this is added")
     //
     let field = "added"
     entry_obj_2.added = "THIS IS TOTALLY CHANGED"
-    testObj.update_entry_type_field(entry_obj_2,user_path,entries_record,entry_type,field)
+    testObj.update_producer_entry_type_field(entry_obj_2,user_path,entries_record,entry_type,field)
     console.dir(entries_record.entries[entry_type])
     t.is(entries_record.entries[entry_type][1].added, "THIS IS TOTALLY CHANGED")
 
     field = "added"
     entry_obj_3.added = "AND THIS WAS LEFT BEHIND"
-    testObj.update_entry_type_field(entry_obj_3,user_path,entries_record,entry_type,field)
+    testObj.update_producer_entry_type_field(entry_obj_3,user_path,entries_record,entry_type,field)
     console.dir(entries_record.entries[entry_type])
     t.is(entries_record.entries[entry_type][2].added, "AND THIS WAS LEFT BEHIND")
     //
 
-    testObj.delete_entry_type(entry_obj_2,entries_record,entry_type)
+    testObj.delete_producer_entry_type(entry_obj_2,entries_record,entry_type)
     t.is(entries_record.entries[entry_type][1].added, "AND THIS WAS LEFT BEHIND")
 
     //

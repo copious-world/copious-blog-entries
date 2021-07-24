@@ -65,6 +65,8 @@
     <div> 
 
       <button id="upload" >Upload</button>
+      <button id="get-button" >Get</button>
+      <button id="update" >Update</button>
       <button id="publish" >Publish</button>
       <button id="unpublish" >Unpublish</button>
       <button id="delete" >Delete</button>
@@ -204,7 +206,49 @@
     async function when_i_say() {
         let good_data = await ui_entry.gather_fields()
         if ( good_data ) {
-          await app_code.new_entry(good_data)
+          let t_num = await app_code.new_entry(good_data)
+          if ( t_num !== false ) {
+            let tracker = document.getElementById("asset-id")
+            if ( tracker ) {
+              tracker.value = t_num
+            }
+          }
+        }
+    }
+
+    async function when_i_get() {
+      let good_data = await ui_entry.gather_fields()
+        if ( good_data ) {
+          let obj = await app_code.get_entry(good_data)
+          let t_num = obj._tracking
+          if ( t_num !== false ) {
+            let tracker = document.getElementById("asset-id")
+            if ( tracker ) {
+              tracker.value = t_num
+            }
+          }
+          ui_entry.put_fields(obj)
+        }
+    }
+  
+    async function when_i_say_update() {
+        let good_data = await ui_entry.gather_fields()
+        if ( good_data ) {
+          let t_num = await app_code.update_entry(good_data)
+          if ( t_num !== false ) {
+            let tracker = document.getElementById("asset-id")
+            if ( tracker ) {
+              tracker.value = t_num
+            }
+          }
+        }
+    }
+
+    
+    async function when_i_delete()  {
+      let good_data = await ui_entry.gather_fields()
+        if ( good_data ) {
+          await app_code.delete_entry(good_data)
         }
     }
 
@@ -246,10 +290,32 @@
     if ( up_button ) {
       up_button.addEventListener('click',() => { when_i_say() })
     }
+    //
+    let get_button = document.getElementById("get-button")
+    if ( get_button ) {
+      get_button.addEventListener('click',() => { when_i_get() })
+    }
+    //
+    let upd_button = document.getElementById("update")
+    if ( upd_button ) {
+      upd_button.addEventListener('click',() => { when_i_say_update() })
+    }
+
     let p_button = document.getElementById("publish")
     if ( p_button ) {
       p_button.addEventListener('click',() => { when_i_publish() })
     }
+    let un_p_button = document.getElementById("unpublish")
+    if ( un_p_button ) {
+      un_p_button.addEventListener('click',() => { when_i_unpublish() })
+    }
+    let delete_p_button = document.getElementById("delete")
+    if ( delete_p_button ) {
+      delete_p_button.addEventListener('click',() => { when_i_delete() })
+    }
+
+
+    
 
     window.addEventListener("load", (event) => {
       app_code.startup()

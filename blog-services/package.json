@@ -14,7 +14,7 @@
   "author": "R. Leddy",
   "license": "ISC",
   "dependencies": {
-    "categorical-handlers": "^0.2.1",
+    "categorical-handlers": "^0.2.2",
     "xxhash-addon": "^1.3.0"
   },
   "devDependencies": {

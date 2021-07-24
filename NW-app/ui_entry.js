@@ -79,12 +79,11 @@ class DataFromUi {
                     if ( t.length ) tracking = t
                 }
                 //
-    
                 let uid = uid_fld.value
                 if ( uid.length ) {
                     upload_record = {
                         "_id" : uid,
-                        "_tracking" : tracking,
+                        "_tracking" : tracking
                     }
                     this._user_id = uid
                     return upload_record
@@ -151,8 +150,8 @@ class DataFromUi {
                 return(key)
             })
             //
-            let tracking = ""
-            let tracker = document.getElementById("user-tracking")
+            let tracking = ""       // if it has been created
+            let tracker = document.getElementById("asset-id")
             if ( tracker ) {
                 let t = tracker.value
                 if ( t.length ) tracking = t
@@ -161,6 +160,8 @@ class DataFromUi {
             upload_record = {
                 "_tracking" : tracking,
                 "_id" :  this._user_id,
+                "_transition_path" : "asset_path",
+                "asset_path" : `${tracking}+${asset_type}+${this._user_id}`,
                 "title" : encodeURIComponent(title_fld.value),
                 "subject" : encodeURIComponent(subject_fld.value),
                 "keys" : keys,
@@ -185,6 +186,26 @@ class DataFromUi {
 
         return(upload_record)
     }
+
+    put_fields(obj) {
+        let opt_fld = document.getElementById('rec-file-mtype')
+        let title_fld = document.getElementById('rec-title')
+        let subject_fld = document.getElementById('rec-subject')
+        let keys_fld = document.getElementById('rec-keys')
+        let abstract_fld = document.getElementById('rec-abstract')
+        let full_text_fld = document.getElementById('rec-full-text')
+        let file_name_fld = document.getElementById('rec-file-name')
+        let poster_name_fld = document.getElementById('rec-poster-name')
+        if ( !(opt_fld && title_fld && keys_fld && abstract_fld && full_text_fld && file_name_fld  && poster_name_fld) ) return false
+        
+        title_fld.value = decodeURIComponent(obj.title)
+        subject_fld.value = decodeURIComponent(obj.subject)
+        keys_fld.value = decodeURIComponent(obj.keys)
+        opt_fld.value = [obj.asset_type,obj.media_type].join('/')
+        abstract_fld.value = decodeURIComponent(obj.abstract)
+        full_text_fld.value = decodeURIComponent(obj.txt_full)
+    }
+
 
     async gather_asset_fields() {
         //

@@ -250,7 +250,7 @@ class AppLogic {
         //
     }
     
-    async new_entry(data) {
+    async new_entry(data,update) {
         //
         if ( g_user_data === false ) {
             this.alert_page("user not ready")
@@ -299,14 +299,63 @@ class AppLogic {
                 console.error("did not write image")
             }  
         } else {
-            let resp = this.msg_relay.create_on_path(data,'persistence')
-            if ( resp.status === "OK" ) {
-                add_to_manifest(resp.data)
-                console.log("stored")
+            if ( update ) {
+                let resp = await this.msg_relay.update_on_path(data,'persistence')
+                if ( resp.status === "OK" ) {
+                    return resp._tracking
+                }
+            } else {
+                let resp = await this.msg_relay.create_on_path(data,'persistence')
+                if ( resp.status === "OK" ) {
+                    //add_to_manifest(resp.data)
+                    console.log("stored")
+                    return resp._tracking
+                }    
             }
         }
     }
 
+    //
+    async update_entry(data) {
+        return await this.new_entry(data,true)
+    }
+
+
+    async get_entry(data) {
+        if ( this.msg_relay === false ) return
+        if ( g_user_data === false ) {
+            alert_page("user not ready")
+            return;
+        }
+        // ... do actions on behalf of the Renderer
+        if ( data && data._id ) {
+            let resp = await this.msg_relay.get_on_path(data,'persistence')
+            if ( resp.status === "OK" ) {
+                let output = JSON.parse(resp.data)
+                if ( output.mime_type.indexOf("/json") > 0 ) {
+                    output = JSON.parse(output.string)
+                }
+                return output
+            }
+        }
+    }
+
+    async delete_entry(data) {
+        if ( this.msg_relay === false ) return
+        if ( g_user_data === false ) {
+            alert_page("user not ready")
+            return;
+        }
+        // ... do actions on behalf of the Renderer
+        if ( data && data._id ) {
+            let resp = await this.msg_relay.del_on_path(data,'persistence')
+            if ( resp.status === "OK" ) {
+                console.log("deleted")
+            }
+        }
+    }
+
+    //
     async publish_entry(data) {
         //
         if ( this.msg_relay === false ) return
@@ -316,10 +365,11 @@ class AppLogic {
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-            let resp = this.msg_relay.publication_on_path(data,'persistence')
+            let resp = await this.msg_relay.publication_on_path(data,'persistence')
             if ( resp.status === "OK" ) {
-                add_to_manifest(resp.data)
+                //add_to_manifest(resp.data)
                 console.log("published")
+                return resp._tracking
             }
             //
         }
@@ -336,10 +386,11 @@ class AppLogic {
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-            let resp = this.msg_relay.unpublish_on_path(data,'persistence')
+            let resp = await this.msg_relay.unpublish_on_path(data,'persistence')
             if ( resp.status === "OK" ) {
-                add_to_manifest(resp.data)
+                //add_to_manifest(resp.data)
                 console.log("unpublish")
+                return resp._tracking
             }
             //
         }

@@ -93,6 +93,10 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         //
         if ( asset_info.length ) {
             let file = asset_info.pop()
+            if ( file.length === 0 ) {
+                file = u_obj._tracking
+                u_obj[key_field] = file + u_obj[key_field]
+            }
             user_path += '/' + file + ".json"
         } else {
             user_path += ".json"
@@ -210,7 +214,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             let entries_record = await this.get_entries(entries_file)
             if ( entries_record ) return [entries_record, producer_of_type, entries_file]    
         } catch (e) {}
-        return false
+        return [false,false,false]
     }
 
     async write_entry_file(entries_file,entries_record,producer_of_type,user_id) {
@@ -226,7 +230,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-    create_entry_type(entry_obj,user_path,entries_record,entry_type) {
+    create_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] === undefined ) {
             entries_record.entries[entry_type] = []
@@ -234,13 +238,13 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         entries_record.entries[entry_type].push(entry_obj)
     }
 
-    update_entry_type(entry_obj,user_path,entries_record,entry_type) {
+    update_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] !== undefined ) {
             let entry_list = entries_record.entries[entry_type]
             for ( let i = 0; i < entry_list.length; i++ ) {
                 let entry = entry_list[i]
-                if ( entry._id == entry_obj._id ) {
+                if ( entry._tracking == entry_obj._tracking ) {
                     entry_list[i] = entry_obj               // EDITED change the right object == _id match (overwrite)
                     break;
                 }
@@ -248,13 +252,13 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         }
     }
 
-    update_entry_type_field(entry_obj,user_path,entries_record,entry_type,field) {
+    update_producer_entry_type_field(entry_obj,user_path,entries_record,entry_type,field) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] !== undefined ) {
             let entry_list = entries_record.entries[entry_type]
             for ( let i = 0; i < entry_list.length; i++ ) {
                 let entry = entry_list[i]
-                if ( entry._id == entry_obj._id ) {
+                if ( entry._tracking == entry_obj._tracking ) {
                     let value = entry_obj[field]
                     entry[field] = value     // entry has been edited EDITED change value
                     break;
@@ -263,14 +267,14 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         }
     }
 
-    delete_entry_type(entry_obj,entries_record,entry_type) {
+    delete_producer_entry_type(entry_obj,entries_record,entry_type) {
         //
         if ( entries_record.entries[entry_type] !== undefined ) {
             let entry_list = entries_record.entries[entry_type]
             let del_index = -1
             for ( let i = 0; i < entry_list.length; i++ ) {
                 let entry = entry_list[i]
-                if ( entry._id == entry_obj._id ) {
+                if ( entry._tracking == entry_obj._tracking ) {
                     del_index = i
                     break;
                 }
@@ -303,7 +307,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
                 let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 user_path += `/${entry_type}/${asset_file_base}.json`
                 //
-                this.create_entry_type(u_obj,user_path,entries_record,entry_type)
+                this.create_producer_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
                 await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
@@ -313,7 +317,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
                 let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 user_path += `/${entry_type}/${asset_file_base}.json`
                 //
-                this.update_entry_type(u_obj,user_path,entries_record,entry_type)
+                this.update_producer_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
                 await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
@@ -323,7 +327,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
                 let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 user_path += `/${entry_type}/${asset_file_base}.json`
                 //
-                this.update_entry_type_field(u_obj,user_path,entries_record,entry_type,field)
+                this.update_producer_entry_type_field(u_obj,user_path,entries_record,entry_type,field)
                 //
                 await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
@@ -332,7 +336,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
                 //
                 let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
                 //
-                this.delete_entry_type(u_obj,entries_record,entry_type)
+                this.delete_producer_entry_type(u_obj,entries_record,entry_type)
                 //
                 await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
