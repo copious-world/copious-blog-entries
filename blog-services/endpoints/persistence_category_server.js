@@ -1,8 +1,10 @@
-
 const {PersistenceCategory} = require("categorical-handlers")
 //
 const fs = require('fs')
 const crypto = require('crypto')
+const Repository = require('repository_bridge')
+
+
 
 // connect to a relay service...
 // set by configuration (only one connection, will have two paths.)
@@ -54,6 +56,9 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         if ( conf.system_wide_topics ) {
             this.topic_producer = this.topic_producer_system
         }
+        //
+        this.repository = new Repository(conf,['ipfs'])
+        (async () => { await this.repository.init_repos() })()
     }
     //
 
@@ -188,6 +193,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         }
     }
 
+
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     async get_entries(entries_file) {
@@ -236,6 +242,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             entries_record.entries[entry_type] = []
         }
         entries_record.entries[entry_type].push(entry_obj)
+        this.repository.store(entry_obj)
     }
 
     update_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
@@ -245,12 +252,15 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             for ( let i = 0; i < entry_list.length; i++ ) {
                 let entry = entry_list[i]
                 if ( entry._tracking == entry_obj._tracking ) {
+                    this.repository.replace(entry_list[i],entry_obj)
                     entry_list[i] = entry_obj               // EDITED change the right object == _id match (overwrite)
                     break;
                 }
             }
         }
     }
+
+
 
     update_producer_entry_type_field(entry_obj,user_path,entries_record,entry_type,field) {
         entry_obj.file_name = user_path
@@ -282,6 +292,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             if ( del_index >= 0 ) {
                 entry_list.splice(del_index,1)      // entries have been edited EDITED delete
             }
+            this.repository.remove(entry_obj)
         }
         //
     }

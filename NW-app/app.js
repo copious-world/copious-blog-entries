@@ -1,17 +1,72 @@
 // get the system platform using node.js
 var os = require('os');
-const IPFS = require('ipfs')
 const fs = require('fs')
 const fsPromises = require('fs/promises')
 const crypto = require('crypto')
 
-
+// openssl ecparam -name secp384r1 -genkey -noout -out server.ec.key
+// openssl pkcs8 -topk8 -in server.ec.key -out server.pem
+// myecpassword1234
+// openssl ec -in server.pem -pubout -out server-public.pem
 
 // MultiPathRelayClient will make a connection for each configured path 
 // in this case 2: 1) one for user; 2) the other for the meta data store, persistence.
 const {MultiPathRelayClient} = require("categorical-handlers")
 const {nanoid} = require('nanoid')
 
+//
+const Repository = require('repository_bridge')
+const UCWID = require('UCWID')
+const CWID = require('CWID');
+
+
+
+
+
+/*
+const options = {
+  // Necessary only if the server requires client certificate authentication.
+  key: fs.readFileSync('client-key.pem'),
+  cert: fs.readFileSync('client-cert.pem'),
+
+  // Necessary only if the server uses a self-signed certificate.
+  ca: [ fs.readFileSync('server-cert.pem') ],
+
+  // Necessary only if the server's cert isn't for "localhost".
+  checkServerIdentity: () => { return null; },
+};
+
+
+  let ucwid_service = new UCWID({
+    "normalizer" : "normalized name"  :::  (text) => {}
+    _wrapper_key : "my wrapper key"
+  })
+  let [key_wait,key_promise] = ucwid_service.wait_for_key()
+  if ( key_wait ) {
+      await key_promise
+  }
+
+  let data = "this is a test"
+  let my_ucwid = await ucwid_service.ucwid(data)
+
+  console.dir(my_ucwid)
+
+
+{
+  ucwid: '0101!uAVUSIA!QED535eZMDB-XsQbawaYAtBJkxm2rxg7zfzNJkvB878',
+  info: {
+    ucwid_packet: {
+      clear_cwid: 'uAVUSIA!Lpl1hUiXKo6IIq1H-hAX_3Lwbz_2oBaFH0XDmHMrxQw',
+      crypto_cwid: 'uAVUSIA!Q0DHFf0wSt--hcPlSK4DtXx7n4lG7rZeEkJ4pnGFocY'
+    },
+    wrapped_key: 'Nn21CnPvAutMW1SOud7W0QcH6qX3WAACYcQjl15lOxeGOzd4CfUVAU_tw6J6dhpgriv_6IF5mowO7SlIdqxjZ0xifY7DS7Hlssygq5gz6uJnwzQuWau4-8mjnBzVnQi5YUL4-qGmvi-iAxAXVAzRSjjvOplrdTfFY-CWLBBawZRcy76fKtFc8o0f-XcEmPu8h7IzVz1fYhsB_r5RGb_76KBJCkzDhWsgMovcx82rJmjX5A3t5RcNKUF46vi_jmqcMUNd92_XztgyWtf9Ogkx6T7THUcOjT1AVGC8FnI7E8MPl-__AtEJoG-3WnW3HkH3AfLfqlzKCf_yiNtMb0nf8fcXYuJxsWxMWrjCrt36O0TqDobvZtMw_1HQcB7GK35OZursgJSwhwzPFSijU07vWKkiNnbD-tkz7LA7Gm0jcgMWJmhcKakJiXhIXlnf7vD7dE4iA9gteO0ZM6oFGu5fSjEbUpV7ovBFQ2faTE-h0wFDl-wTbwocYsbBXDrM-iGQklbdnkGb9V6VxyywMLe-bhJQ42BnWrGPyomwoiJXdJRXy2RUZci2-gDxSQn35qp8Khe5VXmTeDpXCeiozXxiAi61o2ZyC1Phxgc6-3XTJpfFaSWGliUn4ITSOn-4JCBRhBf9hMghE39odOJBDWbyfKhT1EEoKSz94SGZijPtYrw',
+    nonce: 'w_t2iTJJsN0d9yo75_ycgw',
+    cipher_text: 'Li_0i8B6dB0n3Vm0Uhv_UIqkP8wVC8JOQ5ngCnoqx8I',
+    type_original: 'string'
+  }
+}
+
+*/
 
 
 let g_algorithm = 'aes-256-cbc';
@@ -19,7 +74,7 @@ let g_key = '7x!A%D*G-JaNdRgUkXp2s5v8y/B?E(H+';
 let g_iv = crypto.randomBytes(16);
 
 let g_conf = false
-let g_ipfs_node = false
+
 
 g_conf = fs.readFileSync('desk_app.config').toString()
 
@@ -41,21 +96,13 @@ var g_user_data = false
 */
 
 var g_media_types = {
-  "audio" : { "ecrypted" : true, "store_local" : true, "store_ipfs" : true },
-  "video" : { "ecrypted" : false, "store_local" : true, "store_ipfs" : true },
-  "image" : { "ecrypted" : true, "store_local" : true, "store_ipfs" : true },
-  "text" : { "ecrypted" : true, "store_local" : true, "store_ipfs" : true }
-}
-
-var g_asset_types = {
-  "streams" : { "dir" : "." },
-  "blog" : { "dir" : "." },
-  "music_buzz" : { "dir" : "." },
+  "audio" : { "ecrypted" : true, "store_local" : true, "store_repo" : true },
+  "video" : { "ecrypted" : false, "store_local" : true, "store_repo" : true },
+  "image" : { "ecrypted" : true, "store_local" : true, "store_repo" : true },
+  "text" : { "ecrypted" : true, "store_local" : true, "store_repo" : true }
 }
 
 
-function user_dashboard_update(message) {
-}
 
 function encryptMedia(data) {
     const cipher = crypto.createCipheriv(g_algorithm, g_key, g_iv);
@@ -75,7 +122,7 @@ class MediaHandler {
     this.entries_dir = conf.entries_dir
     //
     this.media_types = conf && conf.media_type ? conf.media_type : g_media_types 
-    this.ipfs = false
+    this.repository = false
     for ( let mt in this.media_types ) {
       this.media_types[mt].dir =  this.media_dir.replace('$media_type',mt)
     }
@@ -83,7 +130,7 @@ class MediaHandler {
   }
 
 
-  async _media_storage(media_name,media_type,blob) {
+  async _media_storage(repo_kind,media_name,media_type,blob) {
       //
       try {
         let media_dir = this.media_types[media_type].dir
@@ -98,17 +145,17 @@ class MediaHandler {
           fs.writeFileSync(out_file,enc_blob)
         }
         // store to the local drive
-        let store_ipfs = this.media_types[media_type].store_ipfs
-        if ( store_ipfs && this.ipfs ) {
-          const file = await this.ipfs.add({
+        let store_repo = this.media_types[media_type].store_repo
+        if ( store_repo && this.repository ) {
+          const repo_id = await this.repository.add(repo_kind,{
               "path": media_name,
               "content": enc_blob
           })
-          //
-          let cid = file.cid.toString()
-          return {
-            "protocol" : 'ipfs',
-            "id" : cid
+          if ( repo_id !== false ) {
+            return {
+              "protocol" : 'ipfs',
+              "id" : repo_id
+            }  
           }
         }
         return true
@@ -133,7 +180,7 @@ class MediaHandler {
       let blob_bytes = bdata_parts[1]
       const blob = Buffer.from(blob_bytes, 'base64');
 
-      let result = await this._media_storage(media_name,media_type,blob)
+      let result = await this._media_storage('ipfs',media_name,media_type,blob)
       if ( typeof result === 'boolean' ) {
         return result
       } else {
@@ -159,7 +206,7 @@ class MediaHandler {
       const blob = Buffer.from(blob_bytes, 'base64');
       //
       let image_name = poster.file.name
-      let result = await this._media_storage(image_name,"image",blob)
+      let result = await this._media_storage('ipfs',image_name,"image",blob)
       if ( typeof result === 'boolean' ) {
         return result
       } else {
@@ -218,22 +265,19 @@ function check_crypto_config(conf) {
 class AppLogic {
     //
     constructor(conf) {
+        this.ipfs_conf = conf.ipfs
         check_crypto_config(conf)
         this.media_handler = new MediaHandler(conf)
         this.msg_relay = new MultiPathRelayClient(conf.relayer)
     }
 
-
+    // ----
     async startup() {
         //
         try {
-            //
-            this.ipfs = await IPFS.create()
-            const id = await this.ipfs.id()
-            console.log(id)
-            //
-            this.media_handler.ipfs = this.ipfs
-            //
+          this.repository = new Repository(conf,['ipfs'])
+          this.media_handler.repository = this.repository
+          (async () => { await this.repository.init_repos() })()
         } catch (err) {
             console.error(err)
         }
@@ -430,5 +474,37 @@ class AppLogic {
 
 
 let b = new AppLogic(g_conf)
+
+async function try_some_stuff(msgr) {
+
+  let p = new Promise((resolve,rejects) => {
+    msgr.msg_relay.on('path-ready',(info) => {
+      let path = info.path
+      let my_info = {
+        'address' : info.address,
+        'configured-address' : info['configured-address']
+      }
+      if ( path == 'user') resolve(path)
+    })  
+  })
+
+  let path = await p
+
+  let cwider = new CWID()
+
+  let user_identity = await cwider.cwid("a complete description of someone who is happy about life")
+  
+  let message = {
+    "_id" : user_identity,
+    "_user_op" : "create"
+  }
+
+  let result = await msgr.msg_relay.set_on_path(message,path)
+  console.dir(result)
+
+}
+
+
+try_some_stuff(b)
 
 module.exports = b
