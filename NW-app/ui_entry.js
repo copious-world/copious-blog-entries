@@ -119,7 +119,6 @@ class DataFromUi {
                 blog/text
                 music_buzz/text
             */
-
             let poster = await this.get_file(poster_name_fld)        // file names for stream type media
             let media_data = await this.get_file(file_name_fld)
 

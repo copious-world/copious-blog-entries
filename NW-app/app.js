@@ -12,13 +12,11 @@ const crypto = require('crypto')
 // MultiPathRelayClient will make a connection for each configured path 
 // in this case 2: 1) one for user; 2) the other for the meta data store, persistence.
 const {MultiPathRelayClient} = require("categorical-handlers")
-const {nanoid} = require('nanoid')
 
 //
 const Repository = require('repository_bridge')
 const UCWID = require('UCWID')
 const CWID = require('CWID');
-
 
 
 
@@ -103,14 +101,6 @@ var g_media_types = {
 }
 
 
-
-function encryptMedia(data) {
-    const cipher = crypto.createCipheriv(g_algorithm, g_key, g_iv);
-    const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
-    return encrypted
-}
-  
-  
 // decryption in back directory....
   
 
@@ -129,16 +119,17 @@ class MediaHandler {
     //
   }
 
+  // _media_storage
+  // FOR IMAGE AND STREAMS
+  //      media_name is for local disk storage only...
+  //    What goes to the ipfs like repository is the encode blob of data. The same as the local file...
+  //
 
-  async _media_storage(repo_kind,media_name,media_type,blob) {
+  async _media_storage(repo_kind,media_name,media_type,enc_blob) {
       //
       try {
         let media_dir = this.media_types[media_type].dir
         let out_file = media_dir + media_name
-        //      some types are encrypted
-        let do_encrypt = this.media_types[media_type].encrypted
-        let enc_blob = do_encrypt ? encryptMedia(blob) : blob
-        // 
         // store to the local drive
         let store_local = this.media_types[media_type].store_local
         if ( store_local ) {
@@ -147,10 +138,7 @@ class MediaHandler {
         // store to the local drive
         let store_repo = this.media_types[media_type].store_repo
         if ( store_repo && this.repository ) {
-          const repo_id = await this.repository.add(repo_kind,{
-              "path": media_name,
-              "content": enc_blob
-          })
+          const repo_id = await this.repository.add(repo_kind,enc_blob)
           if ( repo_id !== false ) {
             return {
               "protocol" : 'ipfs',
@@ -165,21 +153,22 @@ class MediaHandler {
       //
   }
 
+  storable(source) {
+    let blob_data = source.blob_url
+    delete source.blob_url  // this is only used to go from the interface to storage 
+    //
+    let bdata_parts = blob_data.split(',')
+    let blob_bytes = bdata_parts[1]
+    let blob = Buffer.from(blob_bytes, 'base64');
+    return blob
+  }
+
+
   // store_media
   //      ---- store the actual data... and edit the fields of the meta data object
-  async store_media(media,media_type) {
+  async store_media(blob,media,media_name,media_type) {
     // 
     if ( media_type in this.media_types ) {
-      //
-      let source = media.source
-      let media_name = source.file.name
-      let blob_data = source.blob_url
-      delete source.blob_url  // this is only used to go from the interface to storage 
-      //
-      let bdata_parts = blob_data.split(',')
-      let blob_bytes = bdata_parts[1]
-      const blob = Buffer.from(blob_bytes, 'base64');
-
       let result = await this._media_storage('ipfs',media_name,media_type,blob)
       if ( typeof result === 'boolean' ) {
         return result
@@ -198,6 +187,7 @@ class MediaHandler {
     if ( this.media_types.image !== undefined ) {
       //
       let poster = media.poster
+      let image_name = poster.file.name
       let blob_data = poster.blob_url
       delete poster.blob_url
       //
@@ -205,7 +195,6 @@ class MediaHandler {
       let blob_bytes = bdata_parts[1]
       const blob = Buffer.from(blob_bytes, 'base64');
       //
-      let image_name = poster.file.name
       let result = await this._media_storage('ipfs',image_name,"image",blob)
       if ( typeof result === 'boolean' ) {
         return result
@@ -269,6 +258,7 @@ class AppLogic {
         check_crypto_config(conf)
         this.media_handler = new MediaHandler(conf)
         this.msg_relay = new MultiPathRelayClient(conf.relayer)
+        this.ucwid_factory = new UCWID({  "_wrapper_key" : conf._wrapper_key  })
     }
 
     // ----
@@ -304,30 +294,68 @@ class AppLogic {
         //
         let asset_type = data.asset_type
         let media_type = data.media_type
-        
+        //
+        let _tracking = false
         // STORE MAIN MEDIA 
-        if ( data.media && data.media.source) {
+        if ( data.media && data.media.source ) {
             if ( data.media_type !== 'image' && this.media_handler ) {
-                if ( !(await this.media_handler.store_media(media,media_type)) ) {
-                    console.error("did not write media")
+                let blob = this.storable(data.media.source)
+                let ucwid_packet = await this.ucwid_factory.ucwid(blob)
+                _tracking = ucwid_packet.ucwid
+                let enc_blob = this.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_text : blob
+                if ( this.media_types[media_type].ecrypted ) {
+                  delete ucwid_packet.info.cipher_text
                 }
+                data.media.ucwid_info = ucwid_packet.info
+                let media = data.media.source
+                let media_name = media.source.name
+                let media_type = media.media_type
+                if ( !(await this.media_handler.store_media(enc_blob,media,media_name,media_type)) ) {
+                    console.error("did not write media")
+                } else {
+                  data.media.protocol = media.protocol
+                  data.media[media.protocol] = media[media.protocol]
+                }
+
             } else {
                 delete data.media.source  // only storing the image .. field is 'poster'
             }
         }
+
         // STORE POSTER 
         if ( data.media && data.media.poster && this.media_handler ) {
-            if ( !(await this.media_handler.store_image(media,media_type)) ) {
+            let blob = this.storable(data.media.poster)
+            let ucwid_packet = await this.ucwid_factory.ucwid(blob)
+            if ( _tracking === false ) {
+              _tracking = ucwid_packet.ucwid
+            }
+            let enc_blob = this.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_text : blob
+            if ( this.media_types[media_type].ecrypted ) {
+              delete ucwid_packet.info.cipher_text
+            }
+            data.media.poster.ucwid_info = ucwid_packet.info
+            let media = data.media.poster
+            let media_name = data.media.poster.name
+            if ( !(await this.media_handler.store_media(enc_blob,media,media_name,media_type)) ) {
                 console.error("did not write media")
+            } else if ( data.media.source === undefined ) {
+                data.media.protocol = media.protocol
+                data.media[media.protocol] = media[media.protocol]
             }
         }
-        
+
+        if ( _tracking === false && media_type === 'text ') {
+          let blob = data.txt_full
+          let ucwid_packet = await this.ucwid_factory.ucwid(blob)
+          _tracking = ucwid_packet.ucwid
+          data.text_ucwid_info = ucwid_packet.info
+        }
+      
         // IF ADMIN GO AHEAD AN STORE IN PUBLICATION DIRECTORY
         // OTHERWISE SEND IT TO THE ENDPOINT AND STORE IT IN THE USER DIRECTORY
         //
         let id = data._id
         if (  id === undefined || id == 'admin' ) {
-            let _tracking =  nanoid()
             data._tracking = _tracking
             id = 'admin'
         }
@@ -364,7 +392,7 @@ class AppLogic {
         return await this.new_entry(data,true)
     }
 
-
+    //
     async get_entry(data) {
         if ( this.msg_relay === false ) return
         if ( g_user_data === false ) {

@@ -3,6 +3,8 @@ const {PersistenceCategory} = require("categorical-handlers")
 const fs = require('fs')
 const crypto = require('crypto')
 const Repository = require('repository_bridge')
+const crypto_wraps = require('crypto-wraps')
+
 
 
 
@@ -74,8 +76,12 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     // ----
     app_generate_tracking(p_obj) {
-        let pobj_str = JSON.stringify(p_obj)
-        return(do_hash(pobj_str))
+        if ( p_obj._tracking === undefined ) {
+            let pobj_str = JSON.stringify(p_obj)
+            return(do_hash(pobj_str))    
+        } else {
+            return p_obj._tracking
+        }
     }
 
     // ----

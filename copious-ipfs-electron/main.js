@@ -54,7 +54,7 @@ class MediaHandler {
   constructor(conf) {
     //
     this.media_types = conf && conf.media_type ? conf.media_type : g_media_types 
-    this.ifps = g_ipfs_node
+    this.ipfs = g_ipfs_node
     for ( let mt in this.media_types ) {
       this.media_types[mt].dir =  this.media_dir.replace('$media_type',mt)
     }
@@ -79,10 +79,7 @@ class MediaHandler {
         // store to the local drive
         let store_ipfs = this.media_types[media_type].store_ipfs
         if ( store_ipfs ) {
-          const file = await this.ifps.add({
-              "path": media_name,
-              "content": enc_blob
-          })
+          const file = await this.ipfs.add(enc_blob)
           //
           let cid = file.cid.toString()
           return {
@@ -279,7 +276,7 @@ ipcMain.handle('new-entry', async (event,data) => {
   // STORE MAIN MEDIA 
   if ( data.media && data.media.source) {
     if ( data.media_type !== 'image' ) {
-      if ( !(await g_media_handler.store_media(media,media_type)) ) {
+      if ( !(await g_media_handler.store_media(data.media,media_type)) ) {
         console.error("did not write media")
       }
     } else {
@@ -288,7 +285,7 @@ ipcMain.handle('new-entry', async (event,data) => {
   }
   // STORE POSTER 
   if ( data.media && data.media.poster ) {
-    if ( !(await g_media_handler.store_image(media,media_type)) ) {
+    if ( !(await g_media_handler.store_image(data.media,media_type)) ) {
       console.error("did not write media")
     }
   }
