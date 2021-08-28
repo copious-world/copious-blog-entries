@@ -304,13 +304,22 @@ console.log(path)
     alert_page(ui_msg) {
         //
     }
-    
+
+
+    update_backup_process(the_backup) {
+      // TBD
+    }
+
+    // // // // // // // // // //
+
     async new_entry(data,update) {
         //
         if ( (g_user_data === false) || !(this.ready) ) {
             this.alert_page("user not ready")
             return;
         }
+        //
+        let the_backup = update ? {} : false
         // ... do actions on behalf of the Renderer
         //
         let asset_type = data.asset_type
@@ -320,27 +329,30 @@ console.log(path)
         // STORE MAIN MEDIA 
         if ( data.media && data.media.source ) {
             if ( data.media_type !== 'image' && this.media_handler ) {
-              let media = data.media.source
+              let media = data.media.source                     // media is poster
               let media_name = media.name
+              //  media type is top level for source
               //
               let blob = this.media_handler.storable(media)
-console.log(blob)
               let no_string = true
               let ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
+              // TRACKING
               _tracking = ucwid_packet.ucwid
               let enc_blob =  this.media_handler.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_buffer : blob
               if ( this.media_handler.media_types[media_type].ecrypted ) {
                 delete ucwid_packet.info.cipher_text
                 delete ucwid_packet.info.cipher_buffer
               }
-              data.media.ucwid_info = ucwid_packet.info
+              if ( update ) {
+                the_backup.source = Object.assign({},media)
+              }
+              media.ucwid_info = ucwid_packet.info
               if ( !(await this.media_handler.store_media(enc_blob,media,media_name,media_type)) ) {
                   console.error("did not write media")
-              } else {
+              } else {      // copy to top level
                 data.media.protocol = media.protocol
                 data.media[media.protocol] = media[media.protocol]
               }
-
             } else {
                 delete data.media.source  // only storing the image .. field is 'poster'
             }
@@ -348,37 +360,49 @@ console.log(blob)
 
         // STORE POSTER 
         if ( data.media && data.media.poster && this.media_handler ) {
+            let media = data.media.poster             // media is poster
+            let media_name = data.media.poster.name
+            let media_type = 'image'
+            //
             let blob = this.media_handler.storable(data.media.poster)
             let no_string = true
             let ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
             if ( _tracking === false ) {
               _tracking = ucwid_packet.ucwid
             }
-            let media_type = 'image'
             let enc_blob =  this.media_handler.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_buffer : blob
             if ( this.media_handler.media_types[media_type].ecrypted ) {
               delete ucwid_packet.info.cipher_text
               delete ucwid_packet.info.cipher_buffer
             }
-            data.media.poster.ucwid_info = ucwid_packet.info
-            let media = data.media.poster
-            let media_name = data.media.poster.name
+            if ( update ) {
+              the_backup.poster = Object.assign({},media)
+            }
+            media.ucwid_info = ucwid_packet.info
             if ( !(await this.media_handler.store_media(enc_blob,media,media_name,media_type)) ) {
                 console.error("did not write media")
-            } else if ( data.media.source === undefined ) {
-                data.media.protocol = media.protocol
-                data.media[media.protocol] = media[media.protocol]
-            }
+            } else if ( data.media.source === undefined ) {  // copy to top level
+              data.media.protocol = media.protocol
+              data.media[media.protocol] = media[media.protocol]
+          }
         }
 
-        if ( _tracking === false && media_type === 'text ') {
+        if (( _tracking === false) && (media_type === 'text') ) {   // assuming blog text will be short
+          if ( upate ) {
+            the_backup.text = data._prev_text
+            the_backup.text_ucwid_info = data.text_ucwid_info
+          }
           let blob = data.txt_full
           let ucwid_packet = await this.ucwid_factory.ucwid(blob)
-          _tracking = ucwid_packet.ucwid
+          _tracking = ucwid_packet.ucwid      // handle tracking > next block
           data.text_ucwid_info = ucwid_packet.info
         }
+
+        if ( update && (the_backup !== false) ) {
+          this.update_backup_process(the_backup)
+        }
  
-        if ( _tracking !== false ) {
+        if ( _tracking !== false ) {      // TRACKING IS SET ONCE FOR THE LIFE OF THE OBJECT
           if ( !update ) {
             data._tracking = _tracking  // provide tracking for the server or else the server has to fetch the asset, calculate tracking, and set it 
           } else if ( data._tracking === undefined ) {
@@ -392,7 +416,6 @@ console.log(blob)
             data._history.push(_tracking)
             data._current_rev = _tracking
           }
-          // the server should have do the tracking construction in production mode.
         }
 
         let id = data._id;
@@ -426,12 +449,16 @@ console.log(blob)
         }
     }
 
-    //
+
+    // // // // // // // // // //
+
     async update_entry(data) {
         return await this.new_entry(data,true)
     }
 
-    //
+
+    // // // // // // // // // //
+
     async get_entry(data) {
         if ( (this.msg_relay === false) || !(this.ready) ) return
         if ( g_user_data === false ) {
@@ -451,6 +478,9 @@ console.log(blob)
         }
     }
 
+
+    // // // // // // // // // //
+
     async delete_entry(data) {
         if ( (this.msg_relay === false) || !(this.ready) ) return
         if ( g_user_data === false ) {
@@ -466,7 +496,8 @@ console.log(blob)
         }
     }
 
-    //
+    // // // // // // // // // //
+
     async publish_entry(data) {
         //
         if ( (this.msg_relay === false) || !(this.ready) ) return
@@ -487,7 +518,8 @@ console.log(blob)
         //
     }
     
-    
+    // // // // // // // // // //
+
     async unpublish_entry(data) {
         //
         if ( (this.msg_relay === false) || !(this.ready) ) return
@@ -509,6 +541,7 @@ console.log(blob)
     }
     
     // // // // // // // // // //
+
     async user_ready(data) {
         if ( (this.msg_relay === false) || !(this.ready) ) return
         if ( data && data._id ) {

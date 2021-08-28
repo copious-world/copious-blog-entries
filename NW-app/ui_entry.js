@@ -3,6 +3,7 @@
 
 */
 
+//
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 let g_punctuation = ".,;:\'\"~\~\`@#$%^&*()+=|\\][}{?/><"
 
@@ -30,6 +31,9 @@ class DataFromUi {
 
     constructor() {
         this._user_id = false
+        this._current_asset_history = false
+        this._current_asset_prev_text = ""
+        this._current_asset_text_ucwid_info = false
     }
 
     get_file(file_el) {
@@ -201,8 +205,12 @@ class DataFromUi {
                 "dates" : {
                     "created" : Date.now(),
                     "updated" : modDate
-                }
+                },
+                "_history" : this._current_asset_history ? this._current_asset_history : [],
+                "_prev_text" : this._current_asset_prev_text,
+                "text_ucwid_info" : this._current_asset_text_ucwid_info
             }
+            this._current_asset_history = false   // reset it when it is retrieved
             //    
         } catch (e) {
             return false
@@ -281,6 +289,10 @@ class DataFromUi {
         opt_fld.value = [obj.asset_type,obj.media_type].join('/')
         abstract_fld.value = decodeURIComponent(obj.abstract)
         full_text_fld.value = decodeURIComponent(obj.txt_full)
+
+        this._current_asset_history = obj._history
+        this._current_asset_prev_text = obj.txt_full
+        this._current_asset_text_ucwid_info = obj.text_ucwid_info ? obj.text_ucwid_info : false
     }
 
 
