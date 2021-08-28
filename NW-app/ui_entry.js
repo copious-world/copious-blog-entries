@@ -1,8 +1,9 @@
+/*
 
 
+*/
 
-
-
+// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 let g_punctuation = ".,;:\'\"~\~\`@#$%^&*()+=|\\][}{?/><"
 
 function ispunct(c,add_dash) {
@@ -22,7 +23,6 @@ function trim_punct(key,add_dash) {
     }
     return(key)
 }
-
 
 
 
@@ -95,7 +95,12 @@ class DataFromUi {
         return false
     }
 
+    //  ----  ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     async gather_fields() {
+        //
+        if ( this._user_id === false ) {
+            return false
+        }
         //
         let upload_record = {}
         try {
@@ -108,14 +113,26 @@ class DataFromUi {
             let file_name_fld = document.getElementById('rec-file-name')
             let poster_name_fld = document.getElementById('rec-poster-name')
 
-            if ( !(opt_fld && title_fld && keys_fld && abstract_fld && full_text_fld && file_name_fld  && poster_name_fld) ) return {}
+            if ( !(opt_fld && title_fld && keys_fld && abstract_fld && full_text_fld && file_name_fld && poster_name_fld) ) return false
+
+            let full_text = full_text_fld.value
+            //
+            let title = title_fld.value
+            if ( title.length === 0 ) return false
+            //
+            let subject = subject_fld.value
+            if ( subject.length === 0 ) return false
+            //
+            let abstract =  abstract_fld.value
 
             let asset_pair = opt_fld.value
+            if ( asset_pair.length === 0 ) return false
+            //
             let [asset_type,media_type] = asset_pair.split('/')
             /*
-                streams/audio
-                streams/video
-                streams/image
+                stream/audio
+                stream/video
+                stream/image
                 blog/text
                 music_buzz/text
             */
@@ -123,8 +140,15 @@ class DataFromUi {
             let media_data = await this.get_file(file_name_fld)
 
             if ( (media_type !== 'text') && (media_data === false) && (poster === false) ) {
-                return upload_record
+                return false
             }
+
+            if ( ( media_type === 'text' ) && ( full_text.length === 0 ) ) {
+                return false
+            } else {
+                full_text = file_name_fld.files[0].name
+            }
+
             //
             let modDate = media_data ? media_data.file.lastModified : ( poster ? poster.file.lastModified : Date.now())
             //
@@ -155,24 +179,25 @@ class DataFromUi {
                 let t = tracker.value
                 if ( t.length ) tracking = t
             }
+
             //
             upload_record = {
                 "_tracking" : tracking,
                 "_id" :  this._user_id,
                 "_transition_path" : "asset_path",
                 "asset_path" : `${tracking}+${asset_type}+${this._user_id}`,
-                "title" : encodeURIComponent(title_fld.value),
-                "subject" : encodeURIComponent(subject_fld.value),
+                "title" : encodeURIComponent(title),
+                "subject" : encodeURIComponent(subject),
                 "keys" : keys,
                 "asset_type" : asset_type,        // blog, stream, link-package, contact, ownership, etc...
                 "media_type" : media_type,        // text, audio, video, image
-                "abstract" : encodeURIComponent(abstract_fld.value),
+                "abstract" : encodeURIComponent(abstract),
                 "media" : {
                     "poster" : poster,
                     "source" : media_data
                 },
                 "encode" : true,
-                "txt_full" : encodeURIComponent(full_text_fld.value),
+                "txt_full" : encodeURIComponent(full_text),
                 "dates" : {
                     "created" : Date.now(),
                     "updated" : modDate
@@ -186,6 +211,59 @@ class DataFromUi {
         return(upload_record)
     }
 
+
+
+    //  ----  ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+    async gather_identifying_fields() {
+        //
+        if ( this._user_id === false ) {
+            return false
+        }
+        //
+        let upload_record = {}
+        try {
+            let tracker = document.getElementById("asset-id")
+            let opt_fld = document.getElementById('rec-file-mtype')
+            if ( !(opt_fld && tracker) ) return false
+
+            let asset_pair = opt_fld.value
+            if ( asset_pair.length === 0 ) return false
+            //
+            let [asset_type,media_type] = asset_pair.split('/')
+            /*
+                stream/audio
+                stream/video
+                stream/image
+                blog/text
+                music_buzz/text
+            */
+            //
+            //
+            let tracking = ""       // if it has been created
+            if ( tracker ) {
+                let t = tracker.value
+                if ( t.length ) tracking = t
+                else return false
+            }
+
+            //
+            upload_record = {
+                "_tracking" : tracking,
+                "_id" :  this._user_id,
+                "_transition_path" : "asset_path",
+                "asset_path" : `${tracking}+${asset_type}+${this._user_id}`,
+                "asset_type" : asset_type,        // blog, stream, link-package, contact, ownership, etc...
+                "media_type" : media_type
+            }
+            //
+        } catch (e) {
+            return false
+        }
+
+        return(upload_record)
+    }
+
+    // put_fields ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     put_fields(obj) {
         let opt_fld = document.getElementById('rec-file-mtype')
         let title_fld = document.getElementById('rec-title')

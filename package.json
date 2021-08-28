@@ -7,7 +7,10 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cluster" : "bash test/run_cluster.sh",
+    "halt" : "pkill -x node; sudo nginx -s stop",
+    "configs" : "bash ./tools/configs.sh"
   },
   "repository": {
     "type": "git",
@@ -28,10 +31,10 @@
   "homepage": "https://github.com/copious-world/copious-blog-entries#readme",
   "dependencies": {
     "categorical-handlers": "^0.2.8",
-    "crypto-wraps": "^1.0.8",
+    "crypto-wraps": "^1.0.9",
     "cwid": "^1.0.2",
     "ipfs": "^0.55.4",
     "repository-bridge": "^0.6.0",
-    "ucwid": "^0.2.2"
+    "ucwid": "^0.2.4"
   }
 }

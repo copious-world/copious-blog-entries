@@ -2,9 +2,7 @@ const {PersistenceCategory} = require("categorical-handlers")
 //
 const fs = require('fs')
 const crypto = require('crypto')
-const Repository = require('repository_bridge')
-const crypto_wraps = require('crypto-wraps')
-
+const Repository = require('repository-bridge')
 
 
 
@@ -58,11 +56,14 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         if ( conf.system_wide_topics ) {
             this.topic_producer = this.topic_producer_system
         }
-        //
-        this.repository = new Repository(conf,['ipfs'])
-        (async () => { await this.repository.init_repos() })()
+        this.repository_initalizer(conf)
     }
     //
+
+    async repository_initalizer(conf) {
+        this.repository = new Repository(conf,['ipfs'])
+        await this.repository.init_repos() 
+    }
 
     // ----
     topic_producer_user(producer_of_type,user_id) {
@@ -375,5 +376,6 @@ if ( conf_par !== undefined ) {
 
 let conf = JSON.parse(fs.readFileSync(conf_file).toString())
 
+console.log(`Persistence Server: PORT: ${conf.persistence_endpoint.port} ADDRESS: ${conf.persistence_endpoint.address}`)
 
 new TransitionsPersistenceEndpoint(conf.persistence_endpoint)

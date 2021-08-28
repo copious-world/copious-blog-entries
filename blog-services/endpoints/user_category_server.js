@@ -61,4 +61,7 @@ class TransitionsUserEndpoint extends UserCategory {
 
 }
 
+
+console.log(`User Server: PORT: ${conf.user_endpoint.port} ADDRESS: ${conf.user_endpoint.address}`)
+
 new TransitionsUserEndpoint(conf.user_endpoint)

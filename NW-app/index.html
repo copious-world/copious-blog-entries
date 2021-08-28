@@ -77,9 +77,9 @@
             <div class = "field" >
               <label>media_type</label>
               <select id="rec-file-mtype" onchange="set_view_fields(this)">
-                <option value="streams/audio" >audio</option>
-                <option value="streams/video" >movie</option>
-                <option value="streams/image" >image</option>
+                <option value="stream/audio" >audio</option>
+                <option value="stream/video" >movie</option>
+                <option value="stream/image" >image</option>
                 <option value="blog/text" >blog</option>
                 <option value="music_buzz/text">music_buzz</option>
               </select>
@@ -101,7 +101,7 @@
               <label>Full Text:</label>
               <textarea id="rec-full-text" ></textarea>  
             </div>
-            <div id="when-loading-streams" class = "field">
+            <div id="when-loading-stream" class = "field">
               <label>Media File:</label> <input id="rec-file-name" type="file" />
             </div>
             <div class = "field">
@@ -119,6 +119,8 @@
 
     let app_code = require('./app.js')
     let ui_entry = require('./ui_entry.js')
+    //
+
     //
     //
     function set_view_fields(sel_el) {
@@ -168,27 +170,27 @@
         opt.value = vtype
       }
       switch ( vtype ) {
-        case 'streams/audio' : {
-          show_field('when-loading-streams')
+        case 'stream/audio' : {
+          show_field('when-loading-stream')
           hide_field('when-loading-blog-text')
           stash_full_text('rec-full-text')
           break;
         }
-        case 'streams/video' : {
-          show_field('when-loading-streams')
+        case 'stream/video' : {
+          show_field('when-loading-stream')
           hide_field('when-loading-blog-text')
           stash_full_text('rec-full-text')
           break;
         }
-        case 'streams/image' : {
-          hide_field('when-loading-streams')
+        case 'stream/image' : {
+          hide_field('when-loading-stream')
           hide_field('when-loading-blog-text')
           stash_full_text('rec-full-text')
           break;
         }
         case 'blog/text' :
         case 'music_buzz/text' : {
-          hide_field('when-loading-streams')
+          hide_field('when-loading-stream')
           show_field('when-loading-blog-text')
           unstash_full_text('rec-full-text')
           break;
@@ -217,7 +219,7 @@
     }
 
     async function when_i_get() {
-      let good_data = await ui_entry.gather_fields()
+      let good_data = await ui_entry.gather_identifying_fields()
         if ( good_data ) {
           let obj = await app_code.get_entry(good_data)
           let t_num = obj._tracking
@@ -246,21 +248,21 @@
 
     
     async function when_i_delete()  {
-      let good_data = await ui_entry.gather_fields()
+      let good_data = await ui_entry.gather_identifying_fields()
         if ( good_data ) {
           await app_code.delete_entry(good_data)
         }
     }
 
     async function when_i_publish() {
-        let good_data = await ui_entry.gather_fields()
+        let good_data = await ui_entry.gather_identifying_fields()
         if ( good_data ) {
           await app_code.publish_entry(good_data)
         }
     }
 
     async function when_i_unpublish() {
-        let good_data = await ui_entry.gather_fields()
+        let good_data = await ui_entry.gather_identifying_fields()
         if ( good_data ) {
           await app_code.unpublish_entry(good_data)
         }
@@ -315,12 +317,10 @@
     }
 
 
-    
 
-    window.addEventListener("load", (event) => {
-      app_code.startup()
+    window.addEventListener("load", async (event) => {
+      await app_code.startup()
     })
-
 
 
   </script>

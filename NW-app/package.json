@@ -3,6 +3,9 @@
     "main": "index.html",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start" : "bash NW_cmd.sh"
+        "start": "bash NW_cmd.sh"
+    },
+    "dependencies": {
+        "repository-bridge": "^0.6.0"
     }
 }

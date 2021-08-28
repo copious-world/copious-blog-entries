@@ -14,7 +14,7 @@ const crypto = require('crypto')
 const {MultiPathRelayClient} = require("categorical-handlers")
 
 //
-const Repository = require('repository_bridge')
+const Repository = require('repository-bridge')
 const UCWID = require('UCWID')
 const CWID = require('CWID');
 
@@ -86,9 +86,9 @@ var g_user_data = false
 
 
 /*  [asset_type,media_type]
-    streams/audio
-    streams/video
-    streams/image
+    stream/audio
+    stream/video
+    stream/image
     blog/text
     music_buzz/text
 */
@@ -120,7 +120,7 @@ class MediaHandler {
   }
 
   // _media_storage
-  // FOR IMAGE AND STREAMS
+  // FOR IMAGE AND STREAM
   //      media_name is for local disk storage only...
   //    What goes to the ipfs like repository is the encode blob of data. The same as the local file...
   //
@@ -254,26 +254,47 @@ function check_crypto_config(conf) {
 class AppLogic {
     //
     constructor(conf) {
+        this.conf = conf
         this.ipfs_conf = conf.ipfs
         check_crypto_config(conf)
         this.media_handler = new MediaHandler(conf)
         this.msg_relay = new MultiPathRelayClient(conf.relayer)
+        //
+        this.ready = false
+        this.await_ready()
+
         this.ucwid_factory = new UCWID({  "_wrapper_key" : conf._wrapper_key  })
+    }
+
+    async await_ready() {
+      let p = new Promise((resolve,rejects) => {
+        this.msg_relay.on('path-ready',(info) => {
+            let path = info.path
+            //let my_info = {
+            //  'address' : info.address,
+            //  'configured-address' : info['configured-address']
+            //}
+console.log(path)
+            resolve(true)
+        })  
+      })
+      this.ready = await p
     }
 
     // ----
     async startup() {
         //
         try {
-          this.repository = new Repository(conf,['ipfs'])
+          this.repository = new Repository(this.conf,['ipfs'])
           this.media_handler.repository = this.repository
-          (async () => { await this.repository.init_repos() })()
+          await this.repository.init_repos()
         } catch (err) {
             console.error(err)
         }
         //
     }
 
+    
     async doWrite_test() {
         let user_path = "./test.json"
         let msg_obj = { "test" : "A", "b" : "C" }
@@ -286,7 +307,7 @@ class AppLogic {
     
     async new_entry(data,update) {
         //
-        if ( g_user_data === false ) {
+        if ( (g_user_data === false) || !(this.ready) ) {
             this.alert_page("user not ready")
             return;
         }
@@ -299,23 +320,26 @@ class AppLogic {
         // STORE MAIN MEDIA 
         if ( data.media && data.media.source ) {
             if ( data.media_type !== 'image' && this.media_handler ) {
-                let blob = this.storable(data.media.source)
-                let ucwid_packet = await this.ucwid_factory.ucwid(blob)
-                _tracking = ucwid_packet.ucwid
-                let enc_blob = this.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_text : blob
-                if ( this.media_types[media_type].ecrypted ) {
-                  delete ucwid_packet.info.cipher_text
-                }
-                data.media.ucwid_info = ucwid_packet.info
-                let media = data.media.source
-                let media_name = media.source.name
-                let media_type = media.media_type
-                if ( !(await this.media_handler.store_media(enc_blob,media,media_name,media_type)) ) {
-                    console.error("did not write media")
-                } else {
-                  data.media.protocol = media.protocol
-                  data.media[media.protocol] = media[media.protocol]
-                }
+              let media = data.media.source
+              let media_name = media.name
+              //
+              let blob = this.media_handler.storable(media)
+console.log(blob)
+              let no_string = true
+              let ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
+              _tracking = ucwid_packet.ucwid
+              let enc_blob =  this.media_handler.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_buffer : blob
+              if ( this.media_handler.media_types[media_type].ecrypted ) {
+                delete ucwid_packet.info.cipher_text
+                delete ucwid_packet.info.cipher_buffer
+              }
+              data.media.ucwid_info = ucwid_packet.info
+              if ( !(await this.media_handler.store_media(enc_blob,media,media_name,media_type)) ) {
+                  console.error("did not write media")
+              } else {
+                data.media.protocol = media.protocol
+                data.media[media.protocol] = media[media.protocol]
+              }
 
             } else {
                 delete data.media.source  // only storing the image .. field is 'poster'
@@ -324,14 +348,17 @@ class AppLogic {
 
         // STORE POSTER 
         if ( data.media && data.media.poster && this.media_handler ) {
-            let blob = this.storable(data.media.poster)
-            let ucwid_packet = await this.ucwid_factory.ucwid(blob)
+            let blob = this.media_handler.storable(data.media.poster)
+            let no_string = true
+            let ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
             if ( _tracking === false ) {
               _tracking = ucwid_packet.ucwid
             }
-            let enc_blob = this.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_text : blob
-            if ( this.media_types[media_type].ecrypted ) {
+            let media_type = 'image'
+            let enc_blob =  this.media_handler.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_buffer : blob
+            if ( this.media_handler.media_types[media_type].ecrypted ) {
               delete ucwid_packet.info.cipher_text
+              delete ucwid_packet.info.cipher_buffer
             }
             data.media.poster.ucwid_info = ucwid_packet.info
             let media = data.media.poster
@@ -350,15 +377,27 @@ class AppLogic {
           _tracking = ucwid_packet.ucwid
           data.text_ucwid_info = ucwid_packet.info
         }
-      
+ 
+        if ( _tracking !== false ) {
+          if ( !update ) {
+            data._tracking = _tracking  // provide tracking for the server or else the server has to fetch the asset, calculate tracking, and set it 
+          } else if ( data._tracking === undefined ) {
+            data._tracking = _tracking
+            data._current_rev = _tracking
+            data._history = []
+          } else {        // don't change the tracking for DB consideration.. Do keep a history of tracking
+            if ( data._history === undefined ) {
+              data._history = []
+            }
+            data._history.push(_tracking)
+            data._current_rev = _tracking
+          }
+          // the server should have do the tracking construction in production mode.
+        }
+
+        let id = data._id;
         // IF ADMIN GO AHEAD AN STORE IN PUBLICATION DIRECTORY
         // OTHERWISE SEND IT TO THE ENDPOINT AND STORE IT IN THE USER DIRECTORY
-        //
-        let id = data._id
-        if (  id === undefined || id == 'admin' ) {
-            data._tracking = _tracking
-            id = 'admin'
-        }
         //
         if ( id === 'admin' ) {
             try {
@@ -394,7 +433,7 @@ class AppLogic {
 
     //
     async get_entry(data) {
-        if ( this.msg_relay === false ) return
+        if ( (this.msg_relay === false) || !(this.ready) ) return
         if ( g_user_data === false ) {
             alert_page("user not ready")
             return;
@@ -413,7 +452,7 @@ class AppLogic {
     }
 
     async delete_entry(data) {
-        if ( this.msg_relay === false ) return
+        if ( (this.msg_relay === false) || !(this.ready) ) return
         if ( g_user_data === false ) {
             alert_page("user not ready")
             return;
@@ -430,7 +469,7 @@ class AppLogic {
     //
     async publish_entry(data) {
         //
-        if ( this.msg_relay === false ) return
+        if ( (this.msg_relay === false) || !(this.ready) ) return
         if ( g_user_data === false ) {
             alert_page("user not ready")
             return;
@@ -451,7 +490,7 @@ class AppLogic {
     
     async unpublish_entry(data) {
         //
-        if ( this.msg_relay === false ) return
+        if ( (this.msg_relay === false) || !(this.ready) ) return
         if ( g_user_data === false ) {
             alert_page("user not ready")
             return;
@@ -471,7 +510,7 @@ class AppLogic {
     
     // // // // // // // // // //
     async user_ready(data) {
-        if ( this.msg_relay === false ) return
+        if ( (this.msg_relay === false) || !(this.ready) ) return
         if ( data && data._id ) {
             let u_data = await this.msg_relay.get_on_path(data,'user')
             // { "status" : stat, "data" : data,  "explain" : "get", "when" : Date.now() }
@@ -501,38 +540,10 @@ class AppLogic {
 
 
 
+
 let b = new AppLogic(g_conf)
 
-async function try_some_stuff(msgr) {
-
-  let p = new Promise((resolve,rejects) => {
-    msgr.msg_relay.on('path-ready',(info) => {
-      let path = info.path
-      let my_info = {
-        'address' : info.address,
-        'configured-address' : info['configured-address']
-      }
-      if ( path == 'user') resolve(path)
-    })  
-  })
-
-  let path = await p
-
-  let cwider = new CWID()
-
-  let user_identity = await cwider.cwid("a complete description of someone who is happy about life")
-  
-  let message = {
-    "_id" : user_identity,
-    "_user_op" : "create"
-  }
-
-  let result = await msgr.msg_relay.set_on_path(message,path)
-  console.dir(result)
-
-}
 
 
-try_some_stuff(b)
 
 module.exports = b
