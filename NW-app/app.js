@@ -338,7 +338,8 @@ console.log(path)
               let ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
               // TRACKING
               _tracking = ucwid_packet.ucwid
-              let enc_blob =  this.media_handler.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_buffer : blob
+              media._is_encrypted = this.media_handler.media_types[media_type].ecrypted
+              let enc_blob = media._is_encrypted ? ucwid_packet.info.cipher_buffer : blob
               if ( this.media_handler.media_types[media_type].ecrypted ) {
                 delete ucwid_packet.info.cipher_text
                 delete ucwid_packet.info.cipher_buffer
@@ -370,7 +371,8 @@ console.log(path)
             if ( _tracking === false ) {
               _tracking = ucwid_packet.ucwid
             }
-            let enc_blob =  this.media_handler.media_types[media_type].ecrypted ? ucwid_packet.info.cipher_buffer : blob
+            media._is_encrypted = this.media_handler.media_types[media_type].ecrypted
+            let enc_blob = media._is_encrypted ? ucwid_packet.info.cipher_buffer : blob
             if ( this.media_handler.media_types[media_type].ecrypted ) {
               delete ucwid_packet.info.cipher_text
               delete ucwid_packet.info.cipher_buffer

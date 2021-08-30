@@ -23,6 +23,16 @@ function do_hash (text) {
     return(ehash)
 }
 
+function terminus(obj,field_path) {
+    let fpath = field_path.split('.')
+    let tobj = obj
+    for ( let f of fpath ) {
+        tobj = tobj[f]
+        if ( tobj === undefined ) return false
+    }
+    return tobj
+}
+
 // -- -- -- --
 
 let g_type_to_producer = {}    // e.g a dashboard will produce blog entries.
@@ -62,8 +72,69 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     async repository_initalizer(conf) {
         this.repository = new Repository(conf,['ipfs'])
-        await this.repository.init_repos() 
+        await this.repository.init_repos()
+
+        // test
+        let data = await this.repository.diagnotistic('ipfs','boostrap-peers')
+        console.log(data)
+        
+        await this.repository.diagnotistic('ipfs',"ls-pins")
+        let stored = await this.repository.fetch('ipfs',"QmY3yQ13xmWJ43FNcfijAQunZXxFRzfvcSnUwXScCKW6aN")
+        fs.writeFileSync("test_data.mp3",stored)
     }
+
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
+    repo_add(obj) {
+        let storage_fields = obj.repository_fields
+        if ( (storage_fields !== undefined) && storage_fields ) {
+            for ( let field_path of storage_fields ) {
+                let tobj = terminus(obj,field_path)
+                if ( tobj ) {
+                    if ( tobj.protocol && tobj[tobj.protocol] ) {
+                        this.repository.store(tobj)
+                    }
+                }
+            }
+        }
+    }
+
+    repo_replace(old_obj,new_obj) {
+        let storage_fields = obj.repository_fields
+        if ( (storage_fields !== undefined) && storage_fields ) {
+            for ( let field_path of storage_fields ) {
+                let tobj_old = terminus(old_obj,field_path)
+                if ( !(tobj_old) ) {
+                    return
+                }
+                let tobj_new = terminus(new_obj,field_path)
+                if ( !(tobj_new) ) {
+                    return
+                }
+                if ( tobj_old.protocol && tobj_old[tobj_old.protocol] && tobj_new.protocol && tobj_new[tobj_new.protocol] ) {
+                    this.repository.replace(tobj_old,tobj_new)
+                }
+            }
+        }
+    }
+
+    repo_remove(obj) {
+        let storage_fields = obj.repository_fields
+        if ( (storage_fields !== undefined) && storage_fields ) {
+            for ( let field_path of storage_fields ) {
+                let tobj = terminus(obj,field_path)
+                if ( tobj ) {
+                    if ( tobj.protocol && tobj[tobj.protocol] ) {
+                        this.repository.remove(tobj)
+                    }
+                }
+            }
+        }
+    }
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
 
     // ----
     topic_producer_user(producer_of_type,user_id) {
@@ -249,7 +320,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             entries_record.entries[entry_type] = []
         }
         entries_record.entries[entry_type].push(entry_obj)
-        this.repository.store(entry_obj)
+        this.repo_add(entry_obj)
     }
 
     update_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
@@ -259,7 +330,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             for ( let i = 0; i < entry_list.length; i++ ) {
                 let entry = entry_list[i]
                 if ( entry._tracking == entry_obj._tracking ) {
-                    this.repository.replace(entry_list[i],entry_obj)
+                    this.repo_replace(entry_list[i],entry_obj)
                     entry_list[i] = entry_obj               // EDITED change the right object == _id match (overwrite)
                     break;
                 }
@@ -299,7 +370,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             if ( del_index >= 0 ) {
                 entry_list.splice(del_index,1)      // entries have been edited EDITED delete
             }
-            this.repository.remove(entry_obj)
+            this.repo_remove(entry_obj)
         }
         //
     }

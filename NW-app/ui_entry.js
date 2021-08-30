@@ -208,7 +208,8 @@ class DataFromUi {
                 },
                 "_history" : this._current_asset_history ? this._current_asset_history : [],
                 "_prev_text" : this._current_asset_prev_text,
-                "text_ucwid_info" : this._current_asset_text_ucwid_info
+                "text_ucwid_info" : this._current_asset_text_ucwid_info,
+                "repository_fields" : [ "media.source", "media.poster" ]
             }
             this._current_asset_history = false   // reset it when it is retrieved
             //    
