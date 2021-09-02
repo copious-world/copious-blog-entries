@@ -33,6 +33,23 @@ function terminus(obj,field_path) {
     return tobj
 }
 
+function terminus_unlink(obj,field_path) {
+    let fpath = field_path.split('.')
+    let tobj = obj
+    let parent = false
+    let f = false
+    while ( fpath.length ) {
+        f = fpath.shift()
+        parent = tobj
+        tobj = parent[f]
+        if ( tobj === undefined ) return false
+    }
+    if ( f && parent ) {
+        parent[f] = undefined
+    }
+    return tobj
+}
+
 // -- -- -- --
 
 let g_type_to_producer = {}    // e.g a dashboard will produce blog entries.
@@ -56,6 +73,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         g_type_to_producer = conf.entry_types_to_producers
         //
         this.app_subscriptions_ok = true
+        this.app_meta_universe = true
         // ---------------->>  topic, client_name, relayer  (when relayer is false, topics will not be written to self)
         this.add_to_topic("command-publish",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
         this.add_to_topic("command-recind",'self',false)
@@ -67,6 +85,15 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             this.topic_producer = this.topic_producer_system
         }
         this.repository_initalizer(conf)
+        if ( (conf.multi_meta_hanlders !== undefined) && conf.multi_meta_hanlders ) {
+            this.init_multi_meta(conf.multi_meta_hanlders)
+        }
+    }
+
+
+
+    async init_multi_meta(conf) {
+        this.all_meta_topics = Object.keys(conf)
     }
     //
 
@@ -187,6 +214,30 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         return(user_path)
     }
 
+
+    appliction_meta_publication(msg_obj,app_meta_universe) {
+        //
+        if ( !app_meta_universe ) return;
+        //
+        let exclusion_fields = msg_obj.exclusion_fields         // exclusion_fields shall be an array
+        if ( (exclusion_fields !== undefined) && exclusion_fields ) {   // the client decides which fields to remove from metat data before pushing to discovery systems...
+            let projection = Object.assign({},msg_obj)  
+            for ( let field_path of exclusion_fields ) {
+                terminus_unlink(projection,field_path)
+            }
+            //
+            if ( this.multi_meta_releaser && (typeof this.multi_meta_releaser.send_on_path === 'function' ) ) {
+                if ( this.all_meta_topics && Array.isArray(this.all_meta_topics) ) {
+                    for ( let topic of this.all_meta_topics ) {
+                        this.app_publish(topic,projection)
+                    }
+                }
+            }
+            //
+        }
+
+        console.log("the application class should implement appliction_meta_publication")
+    }
 
     // app_subscription_handler
     //  -- Handle state changes...
