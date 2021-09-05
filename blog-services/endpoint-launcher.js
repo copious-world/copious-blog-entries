@@ -7,8 +7,8 @@ const fs = require('fs')
 const conf_file = process.argv[2]
 const conf = JSON.parse(fs.readFileSync(conf_file).toString())
 
-function spawn_node_file(endpoint) {
-    let proc = spawn("node",[endpoint,conf_file])
+function spawn_node_file(endpoint_args) {
+    let proc = spawn("node",endpoint_args)
     proc.on('close',(code) => {
         console.log(`child process closed with code ${code}`)
     })
@@ -22,8 +22,7 @@ function spawn_node_file(endpoint) {
 
 let endpoint_procs = conf.launch_endoints
 
-for ( let endpoint of endpoint_procs ) {
-
-    spawn_node_file(endpoint)
-
+for ( let endpoint in endpoint_procs ) {
+    let endpoint_args = endpoint_procs[endpoint]
+    spawn_node_file(endpoint_args)
 }

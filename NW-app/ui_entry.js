@@ -90,6 +90,7 @@ class DataFromUi {
                         "_tracking" : tracking
                     }
                     this._user_id = uid
+                    this._author_tracking = tracking
                     return upload_record
                 }
             }
@@ -116,6 +117,7 @@ class DataFromUi {
             let full_text_fld = document.getElementById('rec-full-text')
             let file_name_fld = document.getElementById('rec-file-name')
             let poster_name_fld = document.getElementById('rec-poster-name')
+            let paid_fld = document.getElementById('paid-checkbox')
 
             if ( !(opt_fld && title_fld && keys_fld && abstract_fld && full_text_fld && file_name_fld && poster_name_fld) ) return false
 
@@ -184,10 +186,23 @@ class DataFromUi {
                 if ( t.length ) tracking = t
             }
 
+
+            let paid = paid_fld ? paid_fld.checked : false
+
+            let exclusion_fields = [
+                "_history","_prev_text",
+                "_transition_path", "encode",
+                "media.poster.ucwid_info", "media.source.ucwid_info",
+                "media.poster.protocol", "media.source.protocol",
+                "media.poster.ipfs", "media.source.ipfs"
+            ]
+            let repository_fields = [ "media.source", "media.poster" ]  // field that contain id's useful to pin object at the server
             //
             upload_record = {
-                "_tracking" : tracking,
-                "_id" :  this._user_id,
+                "_tracking" : tracking,             // tracking of the asset
+                "_id" :  this._user_id,             // should be a UCWID
+                "_author_tracking" :  this._author_tracking,
+                "_paid" : paid,
                 "_transition_path" : "asset_path",
                 "asset_path" : `${tracking}+${asset_type}+${this._user_id}`,
                 "title" : encodeURIComponent(title),
@@ -209,7 +224,8 @@ class DataFromUi {
                 "_history" : this._current_asset_history ? this._current_asset_history : [],
                 "_prev_text" : this._current_asset_prev_text,
                 "text_ucwid_info" : this._current_asset_text_ucwid_info,
-                "repository_fields" : [ "media.source", "media.poster" ]
+                "repository_fields" : repository_fields,
+                "exclusion_fields" : exclusion_fields
             }
             this._current_asset_history = false   // reset it when it is retrieved
             //    

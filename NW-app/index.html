@@ -59,7 +59,8 @@
       Tracking: <input type="text" id="user-tracking" >
     </div>
     <div class = "mat-back mat-back-2 form ">
-      Asset ID: <input type="text" id="asset-id" >
+      Asset ID: <input type="text" id="asset-id" >&nbsp;&nbsp;<span style="color:blue;font-size: larger;">&nbsp;&RightArrowBar;&nbsp;</span>
+      <label for="paid-checkbox" style="color: rgb(6, 32, 6);font-weight: 600;">paid content:</label><input type="checkbox" id="paid-checkbox" />
     </div>
   
     <div> 
@@ -321,6 +322,34 @@
     window.addEventListener("load", async (event) => {
       await app_code.startup()
     })
+
+
+
+    //  fetchEndPoint
+// //
+// fetch with GET method
+const g_siteURL = "localhost"
+async function fetchEndPoint(endpoint,site_url,port) {
+	port = !(port) ? '' : ( port.length ? `:${port}`   : '')
+	let myRequest = new Request(`${location.protocol}//${site_url}${port}/${endpoint}`);
+	try {
+		const body = await fetch(myRequest, {
+									method: 'GET', // *GET, POST, PUT, DELETE, etc.
+									mode: 'cors', // no-cors, *cors, same-origin
+									cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+									credentials: 'omit', // include, *same-origin, omit
+									redirect: 'follow', // manual, *follow, error
+									referrerPolicy: 'no-referrer', // no-referrer, *client
+								});
+		//
+		let infoObj = await body.json();
+		return(infoObj)
+		//
+	} catch (e) {
+		console.log(e.message)
+		return(false)
+	}
+}
 
 
   </script>

@@ -80,34 +80,62 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         this.add_to_topic("command-delete",'self',false)
         this.add_to_topic("command-send",'self',false)
         //
+        if ( conf.counting_service ) {
+            this.counting_service = conf.counting_service
+        } else {
+            this.counting_service = false
+        }
+        //
         this.topic_producer = this.topic_producer_user
         if ( conf.system_wide_topics ) {
             this.topic_producer = this.topic_producer_system
         }
         this.repository_initalizer(conf)
         if ( (conf.multi_meta_hanlders !== undefined) && conf.multi_meta_hanlders ) {
-            this.init_multi_meta(conf.multi_meta_hanlders)
+            this.all_meta_topics = conf.multi_meta_hanlders
         }
     }
 
-
-
-    async init_multi_meta(conf) {
-        this.all_meta_topics = Object.keys(conf)
-    }
     //
-
     async repository_initalizer(conf) {
         this.repository = new Repository(conf,['ipfs'])
         await this.repository.init_repos()
-
         // test
+        /*
         let data = await this.repository.diagnotistic('ipfs','boostrap-peers')
         console.log(data)
-        
+        //
         await this.repository.diagnotistic('ipfs',"ls-pins")
         let stored = await this.repository.fetch('ipfs',"QmY3yQ13xmWJ43FNcfijAQunZXxFRzfvcSnUwXScCKW6aN")
         fs.writeFileSync("test_data.mp3",stored)
+        */
+    }
+
+
+    async app_message_handler(msg_obj) {
+        let op = msg_obj._tx_op
+        let result = "OK"
+        let user_id = msg_obj._user_dir_key ? msg_obj[msg_obj._user_dir_key] : msg_obj._id
+        if ( (user_id === undefined) && (msg_obj._id !== undefined) ) {
+            user_id = msg_obj._id
+        }
+        msg_obj._id = user_id
+        //
+        let counting_service_link = "false"
+        switch ( op ) {         // from web client 
+            case 'KP' : {
+                if ( this.counting_service ) {
+                    counting_service_link = this.counting_service
+                } else {
+                    result = "ERR"
+                }
+                break
+            }
+            default: {
+                return super.app_message_handler(msg_obj)
+            }
+        }
+        return({ "status" : result, "explain" : `${op} performed`, "when" : Date.now(), "counting_link" : counting_service_link })
     }
 
 
@@ -215,9 +243,10 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
     }
 
 
-    appliction_meta_publication(msg_obj,app_meta_universe) {
+    // ----
+    appliction_meta_publication(msg_obj,app_meta_universe) {        // publications going to mini link servers
         //
-        if ( !app_meta_universe ) return;
+        //if ( !app_meta_universe ) return;
         //
         let exclusion_fields = msg_obj.exclusion_fields         // exclusion_fields shall be an array
         if ( (exclusion_fields !== undefined) && exclusion_fields ) {   // the client decides which fields to remove from metat data before pushing to discovery systems...
@@ -225,19 +254,20 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             for ( let field_path of exclusion_fields ) {
                 terminus_unlink(projection,field_path)
             }
+            delete msg_obj.exclusion_fields
             //
-            if ( this.multi_meta_releaser && (typeof this.multi_meta_releaser.send_on_path === 'function' ) ) {
-                if ( this.all_meta_topics && Array.isArray(this.all_meta_topics) ) {
-                    for ( let topic of this.all_meta_topics ) {
-                        this.app_publish(topic,projection)
-                    }
-                }
-            }
+            let topic = "add_" + this.all_meta_topics["meta"]
+            this.app_publish(topic,projection)
             //
         }
-
-        console.log("the application class should implement appliction_meta_publication")
     }
+
+    appliction_meta_remove(msg_obj,app_meta_universe) {
+        //if ( !app_meta_universe ) return;
+        let topic = "remove_" + this.all_meta_topics["meta"]
+        this.app_publish(topic,msg_obj)
+    }
+
 
     // app_subscription_handler
     //  -- Handle state changes...
@@ -374,6 +404,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         this.repo_add(entry_obj)
     }
 
+
     update_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] !== undefined ) {
@@ -390,7 +421,6 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
     }
 
 
-
     update_producer_entry_type_field(entry_obj,user_path,entries_record,entry_type,field) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] !== undefined ) {
@@ -405,6 +435,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             }
         }
     }
+
 
     delete_producer_entry_type(entry_obj,entries_record,entry_type) {
         //
@@ -496,8 +527,18 @@ if ( conf_par !== undefined ) {
     conf_file = conf_par
 }
 
+let commerce = process.argv[3]
+
+let endpoint = false
+if ( commerce === undefined ) { commerce = "free" }
+//
 let conf = JSON.parse(fs.readFileSync(conf_file).toString())
+if ( commerce === "free" ) {
+    endpoint = conf.persistence_endpoint
+} else {
+    endpoint = conf.paid_persistence_endpoint
+}
 
-console.log(`Persistence Server: PORT: ${conf.persistence_endpoint.port} ADDRESS: ${conf.persistence_endpoint.address}`)
+console.log(`Persistence Server: PORT: ${endpoint.port} ADDRESS: ${endpoint.address}`)
 
-new TransitionsPersistenceEndpoint(conf.persistence_endpoint)
+new TransitionsPersistenceEndpoint(endpoint)

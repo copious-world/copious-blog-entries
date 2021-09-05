@@ -1,5 +1,4 @@
 // get the system platform using node.js
-var os = require('os');
 const fs = require('fs')
 const fsPromises = require('fs/promises')
 const crypto = require('crypto')
@@ -16,9 +15,6 @@ const {MultiPathRelayClient} = require("categorical-handlers")
 //
 const Repository = require('repository-bridge')
 const UCWID = require('UCWID')
-const CWID = require('CWID');
-
-
 
 
 /*
@@ -35,19 +31,19 @@ const options = {
 };
 
 
-  let ucwid_service = new UCWID({
-    "normalizer" : "normalized name"  :::  (text) => {}
-    _wrapper_key : "my wrapper key"
-  })
-  let [key_wait,key_promise] = ucwid_service.wait_for_key()
-  if ( key_wait ) {
-      await key_promise
-  }
+let ucwid_service = new UCWID({
+  "normalizer" : "normalized name"  :::  (text) => {}
+  _wrapper_key : "my wrapper key"
+})
+let [key_wait,key_promise] = ucwid_service.wait_for_key()
+if ( key_wait ) {
+    await key_promise
+}
 
-  let data = "this is a test"
-  let my_ucwid = await ucwid_service.ucwid(data)
+let data = "this is a test"
+let my_ucwid = await ucwid_service.ucwid(data)
 
-  console.dir(my_ucwid)
+console.dir(my_ucwid)
 
 
 {
@@ -261,10 +257,45 @@ class AppLogic {
         this.msg_relay = new MultiPathRelayClient(conf.relayer)
         //
         this.ready = false
-        this.await_ready()
-
-        this.ucwid_factory = new UCWID({  "_wrapper_key" : conf._wrapper_key  })
+        this.path_ucwids = false
+        if ( conf._wrapper_key === undefined ) {
+          this.await_ready()
+        } else {
+          this.ucwid_factory = new UCWID({  "_wrapper_key" : conf._wrapper_key  })
+          this.path_ucwids = {}
+          for ( let path in conf._wrapper_keys ) {  // plural
+            this.path_ucwids[path] = new UCWID({  "_wrapper_key" : conf._wrapper_keys[path]  })
+            this.await_ready()  
+          }
+        }
     }
+
+
+    async wait_for_key(user_id) {
+      if ( ready ) {
+        let message = {
+          "_id" : user_id
+        }
+        this.conf._wrapper_keys = {}
+        for ( let path of [ "persistence", "paid-persistence" ]) {
+          let result = await this.msg_relay.send_op_on_path(message, path,"KP")
+          if ( result.status === "OK" ) {
+            let counter_link = result.counting_link
+            let endpoint = `/creative-gets-pulic-key/${user_id}`
+            let key_query_result = await window.fetchEndPoint(endpoint,counter_link)  // /creative-gets-pulic-key/:creative
+            if ( key_query_result.status === "OK" ) {
+              this.conf._wrapper_keys[path] = key_query_result._wrapper_key
+              this.path_ucwids[path] = new UCWID({  "_wrapper_key" : key_query_result._wrapper_key })
+              this.path_ucwids[path]._x_link_counter = counter_link
+            }
+          }  
+        }
+        //
+      }
+    }
+
+
+    
 
     async await_ready() {
       let p = new Promise((resolve,rejects) => {
@@ -319,6 +350,8 @@ console.log(path)
             return;
         }
         //
+        let persistence_path = data._paid ? "paid-persistence" : "persistence"
+        //
         let the_backup = update ? {} : false
         // ... do actions on behalf of the Renderer
         //
@@ -335,7 +368,13 @@ console.log(path)
               //
               let blob = this.media_handler.storable(media)
               let no_string = true
-              let ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
+              let ucwid_packet = false
+              if ( this.path_ucwids == false ) {
+                ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
+              } else {
+                ucwid_packet = await this.path_ucwids[persistence_path].ucwid(blob,no_string)
+                media._x_link_counter = this.path_ucwids[persistence_path]._x_link_counter 
+              }
               // TRACKING
               _tracking = ucwid_packet.ucwid
               media._is_encrypted = this.media_handler.media_types[media_type].ecrypted
@@ -367,7 +406,13 @@ console.log(path)
             //
             let blob = this.media_handler.storable(data.media.poster)
             let no_string = true
-            let ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
+            let ucwid_packet = false
+            if ( this.path_ucwids == false ) {
+              ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
+            } else {
+              ucwid_packet = await this.path_ucwids[persistence_path].ucwid(blob,no_string)
+              media._x_link_counter = this.path_ucwids[persistence_path]._x_link_counter 
+            }
             if ( _tracking === false ) {
               _tracking = ucwid_packet.ucwid
             }
@@ -395,7 +440,14 @@ console.log(path)
             the_backup.text_ucwid_info = data.text_ucwid_info
           }
           let blob = data.txt_full
-          let ucwid_packet = await this.ucwid_factory.ucwid(blob)
+          let ucwid_packet = false
+            if ( this.path_ucwids == false ) {
+              ucwid_packet = await this.ucwid_factory.ucwid(blob)
+            } else {
+              ucwid_packet = await this.path_ucwids[persistence_path].ucwid(blob)
+              media._x_link_counter = this.path_ucwids[persistence_path]._x_link_counter 
+            }
+
           _tracking = ucwid_packet.ucwid      // handle tracking > next block
           data.text_ucwid_info = ucwid_packet.info
         }
@@ -436,12 +488,12 @@ console.log(path)
             }  
         } else {
             if ( update ) {
-                let resp = await this.msg_relay.update_on_path(data,'persistence')
+                let resp = await this.msg_relay.update_on_path(data,persistence_path)
                 if ( resp.status === "OK" ) {
                     return resp._tracking
                 }
             } else {
-                let resp = await this.msg_relay.create_on_path(data,'persistence')
+                let resp = await this.msg_relay.create_on_path(data,persistence_path)
                 if ( resp.status === "OK" ) {
                     //add_to_manifest(resp.data)
                     console.log("stored")
@@ -469,14 +521,15 @@ console.log(path)
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-            let resp = await this.msg_relay.get_on_path(data,'persistence')
-            if ( resp.status === "OK" ) {
-                let output = JSON.parse(resp.data)
-                if ( output.mime_type.indexOf("/json") > 0 ) {
-                    output = JSON.parse(output.string)
-                }
-                return output
-            }
+          let persistence_path = data.paid ? "paid-persistence" : "persistence"
+          let resp = await this.msg_relay.get_on_path(data,persistence_path)
+          if ( resp.status === "OK" ) {
+              let output = JSON.parse(resp.data)
+              if ( output.mime_type.indexOf("/json") > 0 ) {
+                  output = JSON.parse(output.string)
+              }
+              return output
+          }
         }
     }
 
@@ -491,10 +544,11 @@ console.log(path)
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-            let resp = await this.msg_relay.del_on_path(data,'persistence')
-            if ( resp.status === "OK" ) {
-                console.log("deleted")
-            }
+          let persistence_path = data.paid ? "paid-persistence" : "persistence"
+          let resp = await this.msg_relay.del_on_path(data,persistence_path)
+          if ( resp.status === "OK" ) {
+              console.log("deleted")
+          }
         }
     }
 
@@ -509,17 +563,18 @@ console.log(path)
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-            let resp = await this.msg_relay.publication_on_path(data,'persistence')
-            if ( resp.status === "OK" ) {
-                //add_to_manifest(resp.data)
-                console.log("published")
-                return resp._tracking
-            }
-            //
+          let persistence_path = data.paid ? "paid-persistence" : "persistence"
+          let resp = await this.msg_relay.publication_on_path(data,persistence_path)
+          if ( resp.status === "OK" ) {
+              //add_to_manifest(resp.data)
+              console.log("published")
+              return resp._tracking
+          }
+          //
         }
         //
     }
-    
+
     // // // // // // // // // //
 
     async unpublish_entry(data) {
@@ -531,13 +586,14 @@ console.log(path)
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-            let resp = await this.msg_relay.unpublish_on_path(data,'persistence')
-            if ( resp.status === "OK" ) {
-                //add_to_manifest(resp.data)
-                console.log("unpublish")
-                return resp._tracking
-            }
-            //
+          let persistence_path = data.paid ? "paid-persistence" : "persistence"
+          let resp = await this.msg_relay.unpublish_on_path(data,persistence_path)
+          if ( resp.status === "OK" ) {
+              //add_to_manifest(resp.data)
+              console.log("unpublish")
+              return resp._tracking
+          }
+          //
         }
         //
     }
@@ -551,8 +607,10 @@ console.log(path)
             // { "status" : stat, "data" : data,  "explain" : "get", "when" : Date.now() }
             if ( u_data && u_data.status !== "ERR" ) {
                 let u_obj = JSON.parse(u_data.data)
-                g_user_data = Object.assign({},u_obj) 
+                g_user_data = Object.assign({},u_obj)
                 this.msg_relay.subscribe(`user-dashboard-${g_user_data._id}`,'persistence',u_obj)
+                this.msg_relay.subscribe(`user-dashboard-${g_user_data._id}`,'paid-persistence',u_obj)
+                await this.wait_for_key(g_user_data._id)
                 return u_obj._tracking
             } else {
                 let resp = await this.msg_relay.create_on_path(data,'user')
@@ -564,6 +622,8 @@ console.log(path)
                         let u_obj = JSON.parse(u_data.data)
                         g_user_data = Object.assign({},u_obj) 
                         this.msg_relay.subscribe(`user-dashboard-${g_user_data._id}`,'persistence',u_obj)
+                        this.msg_relay.subscribe(`user-dashboard-${g_user_data._id}`,'paid-persistence',u_obj)
+                        await this.wait_for_key(g_user_data._id)
                         return u_obj._tracking
                     }
                 }
@@ -572,7 +632,6 @@ console.log(path)
         return false
     }
 }
-
 
 
 
