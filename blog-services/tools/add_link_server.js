@@ -7,7 +7,6 @@ const http = require('http')
 
 
 async function tell_link_server(endpoint,link_server_addr) {
-    link_server_addr = encodeURIComponent(link_server_addr)
 
     let local_host = `${endpoint.address}:${endpoint.port}`
     local_host = encodeURIComponent(local_host)
