@@ -361,7 +361,7 @@ console.log(path)
         let _tracking = false
         // STORE MAIN MEDIA 
         if ( data.media && data.media.source ) {
-            if ( data.media_type !== 'image' && this.media_handler ) {
+            if ( (data.media_type !== 'image') && this.media_handler ) {
               let media = data.media.source                     // media is poster
               let media_name = media.name
               //  media type is top level for source
@@ -392,6 +392,7 @@ console.log(path)
               } else {      // copy to top level
                 data.media.protocol = media.protocol
                 data.media[media.protocol] = media[media.protocol]
+                data.media._x_link_counter = media._x_link_counter
               }
             } else {
                 delete data.media.source  // only storing the image .. field is 'poster'
@@ -431,6 +432,7 @@ console.log(path)
             } else if ( data.media.source === undefined ) {  // copy to top level
               data.media.protocol = media.protocol
               data.media[media.protocol] = media[media.protocol]
+              data.media._x_link_counter = media._x_link_counter
           }
         }
 
@@ -445,7 +447,7 @@ console.log(path)
               ucwid_packet = await this.ucwid_factory.ucwid(blob)
             } else {
               ucwid_packet = await this.path_ucwids[persistence_path].ucwid(blob)
-              media._x_link_counter = this.path_ucwids[persistence_path]._x_link_counter 
+              data.media._x_link_counter = this.path_ucwids[persistence_path]._x_link_counter 
             }
 
           _tracking = ucwid_packet.ucwid      // handle tracking > next block

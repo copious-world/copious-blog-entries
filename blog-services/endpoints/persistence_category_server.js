@@ -258,10 +258,11 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             //
             let topic = "add_" + this.all_meta_topics["meta"]
             this.app_publish(topic,projection)
-            //
         }
     }
 
+    
+    // ----
     appliction_meta_remove(msg_obj,app_meta_universe) {
         //if ( !app_meta_universe ) return;
         let topic = "remove_" + this.all_meta_topics["meta"]
