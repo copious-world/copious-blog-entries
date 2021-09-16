@@ -72,6 +72,8 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         //
         g_type_to_producer = conf.entry_types_to_producers
         //
+        this.path = `${conf.address}:${conf.port}`
+        //
         this.app_subscriptions_ok = true
         this.app_meta_universe = true
         // ---------------->>  topic, client_name, relayer  (when relayer is false, topics will not be written to self)
@@ -244,6 +246,12 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
 
     // ----
+    publish_mini_link_server(topic,msg_obj) {
+        msg_obj.client_name = this.client_name
+        this.app_publish_on_path(topic,this.path,msg_obj)
+    }
+
+    // ----
     appliction_meta_publication(msg_obj,app_meta_universe) {        // publications going to mini link servers
         //
         //if ( !app_meta_universe ) return;
@@ -257,7 +265,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             delete msg_obj.exclusion_fields
             //
             let topic = "add_" + this.all_meta_topics["meta"]
-            this.app_publish(topic,projection)
+            this.publish_mini_link_server(topic,projection)
         }
     }
 
@@ -266,7 +274,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
     appliction_meta_remove(msg_obj,app_meta_universe) {
         //if ( !app_meta_universe ) return;
         let topic = "remove_" + this.all_meta_topics["meta"]
-        this.app_publish(topic,msg_obj)
+        this.publish_mini_link_server(topic,projection)
     }
 
 
@@ -387,7 +395,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         let entries_record_str = await this.put_entries(entries_file,entries_record)
         let topic = this.topic_producer(producer_of_type,user_id)
         let pub_obj = {
-            "_id" : user_id,
+            "_id" : user_id
         }
         pub_obj[producer_of_type] = encodeURIComponent(entries_record_str)        
         this.app_publish(topic,pub_obj)     // send the dashboard or profile back to DB closers to the UI client

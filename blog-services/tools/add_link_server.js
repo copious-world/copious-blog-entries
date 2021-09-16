@@ -4,10 +4,10 @@ const fs = require('fs')
 const http = require('http')
 
 
-
-
+//
+//
 async function tell_link_server(endpoint,link_server_addr) {
-
+    //
     let local_host = `${endpoint.address}:${endpoint.port}`
     local_host = encodeURIComponent(local_host)
 
@@ -51,23 +51,31 @@ async function tell_link_server(endpoint,link_server_addr) {
 }
 
 
+let link_server_addr = ""
 let conf_file = 'relay-service.conf'
-let conf_par = process.argv[2]
-if ( conf_par !== undefined ) {
-    conf_file = conf_par
-}
 
-let link_server_addr = process.argv[3]
+link_server_addr = process.argv[3]
+if ( link_server_addr === undefined ) {
+    link_server_addr = process.argv[2]
+} else {
+    conf_file = process.argv[2]
+}
 
 if ( link_server_addr === undefined ) {
     console.log("no link server address provided on the command line")
 }
 
 
+//
+let conf_str = fs.readFileSync(conf_file).toString()
+let conf = JSON.parse(conf_str)
+
+
+// Just one mini link server connects to two difference persistence managers....
+//
 let endpoint = conf.persistence_endpoint
 tell_link_server(endpoint,link_server_addr)
 
 endpoint = conf.paid_persistence_endpoint
 tell_link_server(endpoint,link_server_addr)
-
 //
