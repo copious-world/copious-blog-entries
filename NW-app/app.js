@@ -62,10 +62,12 @@ console.dir(my_ucwid)
 
 */
 
-
+/*
 let g_algorithm = 'aes-256-cbc';
 let g_key = '7x!A%D*G-JaNdRgUkXp2s5v8y/B?E(H+';
 let g_iv = crypto.randomBytes(16);
+*/
+
 
 let g_conf = false
 
@@ -74,8 +76,10 @@ g_conf = fs.readFileSync('desk_app.config').toString()
 
 try {
   g_conf = JSON.parse(g_conf)
+console.dir(g_conf)
 } catch (e) {
   console.log("COULD NOT READ CONFIG FILE " + 'desk_app.config')
+  console.log(e)
 }
 
 var g_user_data = false
@@ -210,7 +214,7 @@ class MediaHandler {
 
 }
 
-
+/*
 
 function check_crypto_config(conf) {
   if ( conf.crypto ) {
@@ -236,7 +240,7 @@ function check_crypto_config(conf) {
   }
 }
 
-
+*/
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -252,7 +256,7 @@ class AppLogic {
     constructor(conf) {
         this.conf = conf
         this.ipfs_conf = conf.ipfs
-        check_crypto_config(conf)
+        //check_crypto_config(conf)
         this.media_handler = new MediaHandler(conf)
         this.msg_relay = new MultiPathRelayClient(conf.relayer)
         //
@@ -272,7 +276,7 @@ class AppLogic {
 
 
     async wait_for_key(user_id) {
-      if ( ready ) {
+      if ( this.ready ) {
         let message = {
           "_id" : user_id
         }
@@ -437,7 +441,7 @@ console.log(path)
         }
 
         if (( _tracking === false) && (media_type === 'text') ) {   // assuming blog text will be short
-          if ( upate ) {
+          if ( update ) {
             the_backup.text = data._prev_text
             the_backup.text_ucwid_info = data.text_ucwid_info
           }
@@ -495,6 +499,8 @@ console.log(path)
                     return resp._tracking
                 }
             } else {
+                let asset_path = `${_tracking}+${asset_type}+${id}`   // the tracking just got made, so the asset_path is new (used by storage)
+                data.asset_path = asset_path
                 let resp = await this.msg_relay.create_on_path(data,persistence_path)
                 if ( resp.status === "OK" ) {
                     //add_to_manifest(resp.data)

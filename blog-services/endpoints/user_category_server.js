@@ -40,9 +40,12 @@ class TransitionsUserEndpoint extends UserCategory {
 
     constructor(conf) {
         super(conf)
+        this.user_tracking_table = {}        // keep track of all the user registration files.
+        this.new_tracking = {}
     }
 
     app_generate_tracking(u_obj) {
+        this.new_tracking[u_obj._id] = true   // calling create...
         let uobj_str = JSON.stringify(u_obj)
         return(do_hash(uobj_str))
     }
@@ -59,9 +62,63 @@ class TransitionsUserEndpoint extends UserCategory {
         return storables
     }
 
+
+    //
+    make_path(u_obj) {
+        let user_id = u_obj._id
+        // password is a hash of the password, might encrypt it... (also might carry other info to the back..)
+        if ( this.user_tracking_table[user_id] !== undefined ) {
+            if ( this.new_tracking[user_id] ) {
+                this.new_tracking[user_id] = false
+                return false
+            }
+            // doing a get without tracking available to client
+            u_obj._tracking = this.user_tracking_table[user_id]
+        }
+        let tracking = u_obj._tracking
+        if ( tracking === undefined ) {     // trying to get something we never saw
+            return false
+        }
+        let au = this.all_users.trim()
+        user_id = user_id.trim()
+        tracking = tracking.trim()
+        let user_path = `${au}/${user_id}${this.user_file_sep}${tracking}.json`
+        return(user_path)
+    }
+
+    _startup_track_users_from_directory() {
+        let au = this.all_users.trim()
+        let dir_list = fs.readdirSync(au)
+        if ( dir_list ) {
+            let ordered_stats = []
+            for ( let file of dir_list ) {
+                if ( file[0] !== '.' ) {
+                    let fpath = (au + '/' + file)
+                    let stats = fs.statSync(fpath)
+                    ordered_stats.push(stats)
+                    stats.path = fpath
+                    stats.f_name = file
+                }
+            }
+            ordered_stats.sort((a,b) => {
+                if ( a.birthtime == b.birthtime) return 0
+                return a.birthtime < b.birthtime ? -1 : 1
+            })
+            for ( let stat of ordered_stats ) {
+                let key_parts = stat.f_name.split('+')
+                let fname_key = key_parts[0]
+                let tracking = key_parts[1].replace(".json","")
+                if ( this.user_tracking_table[fname_key] === undefined )
+                this.user_tracking_table[fname_key] = tracking
+            }
+        }
+    }
+    
 }
 
 
 console.log(`User Server: PORT: ${conf.user_endpoint.port} ADDRESS: ${conf.user_endpoint.address}`)
 
-new TransitionsUserEndpoint(conf.user_endpoint)
+let tue = new TransitionsUserEndpoint(conf.user_endpoint)
+
+tue. _startup_track_users_from_directory()

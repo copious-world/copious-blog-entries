@@ -5,7 +5,6 @@ const crypto = require('crypto')
 const Repository = require('repository-bridge')
 
 
-
 // connect to a relay service...
 // set by configuration (only one connection, will have two paths.)
 
@@ -62,8 +61,31 @@ function map_entry_type_to_producer(entry_type) {
     return producer_of_type
 }
 
-// -- -- -- --
 
+function needs_media_type(asset_type) {
+    switch ( asset_type ) {
+        case "stream" : {
+            return true
+        }
+        default : {
+            return false
+        }
+    }
+}
+
+function non_stream_media(msg_obj) {
+    let asset_type = msg_obj.asset_type         //  asset -type
+    let media_type = msg_obj.media_type 
+
+    if ( asset_type !== "stream" ) {
+        return true
+    }
+    return false
+}
+
+
+// -- -- -- --
+//
 class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     //
@@ -73,6 +95,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         g_type_to_producer = conf.entry_types_to_producers
         //
         this.path = `${conf.address}:${conf.port}`
+        this.client_name = this.path
         //
         this.app_subscriptions_ok = true
         this.app_meta_universe = true
@@ -213,7 +236,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         }
     }
 
-    // ----
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     make_path(u_obj) {
         let key_field = u_obj.key_field ? u_obj.key_field : u_obj._transition_path
         let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
@@ -244,27 +267,39 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         return(user_path)
     }
 
-
-    // ----
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     publish_mini_link_server(topic,msg_obj) {
         msg_obj.client_name = this.client_name
-        this.app_publish_on_path(topic,this.path,msg_obj)
+        let pub = {
+            "data" : JSON.stringify(msg_obj),
+            "_tracking" : msg_obj._tracking,
+            "client_name" : this.client_name
+        }
+        this.app_publish_on_path(topic,this.path,pub)
     }
 
-    // ----
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     appliction_meta_publication(msg_obj,app_meta_universe) {        // publications going to mini link servers
         //
         //if ( !app_meta_universe ) return;
         //
         let exclusion_fields = msg_obj.exclusion_fields         // exclusion_fields shall be an array
-        if ( (exclusion_fields !== undefined) && exclusion_fields ) {   // the client decides which fields to remove from metat data before pushing to discovery systems...
+        if ( ((exclusion_fields !== undefined) && exclusion_fields ) || non_stream_media(msg_obj) ) {   // the client decides which fields to remove from metat data before pushing to discovery systems...
+            let asset_type = msg_obj.asset_type         //  asset -type
+            let media_type = msg_obj.media_type
             let projection = Object.assign({},msg_obj)  
-            for ( let field_path of exclusion_fields ) {
-                terminus_unlink(projection,field_path)
+            if ( exclusion_fields ) {
+                for ( let field_path of exclusion_fields ) {
+                    terminus_unlink(projection,field_path)
+                }
+                delete projection.exclusion_fields
             }
-            delete msg_obj.exclusion_fields
             //
-            let topic = "add_" + this.all_meta_topics["meta"]
+            let topic = `add_${this.all_meta_topics["meta"]}_${asset_type}`
+            if ( needs_media_type(asset_type) ) {
+                topic += '_' + media_type
+            }
             this.publish_mini_link_server(topic,projection)
         }
     }
@@ -272,9 +307,14 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
     
     // ----
     appliction_meta_remove(msg_obj,app_meta_universe) {
+        let asset_type = msg_obj.asset_type
+        let media_type = msg_obj.media_type
         //if ( !app_meta_universe ) return;
-        let topic = "remove_" + this.all_meta_topics["meta"]
-        this.publish_mini_link_server(topic,projection)
+        let topic = `remove_${this.all_meta_topics["meta"]}_${asset_type}`
+        if ( needs_media_type(asset_type) ) {
+            topic += '_' + media_type
+        }
+        this.publish_mini_link_server(topic,msg_obj)
     }
 
 
@@ -523,7 +563,6 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             }
         }
     }
-
 }
 
 

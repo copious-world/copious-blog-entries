@@ -151,7 +151,7 @@ class DataFromUi {
 
             if ( ( media_type === 'text' ) && ( full_text.length === 0 ) ) {
                 return false
-            } else {
+            } else if ( media_type !== 'text' ) {
                 full_text = file_name_fld.files[0].name
             }
 
@@ -271,6 +271,15 @@ class DataFromUi {
                 else return false
             }
 
+
+            let exclusion_fields = [
+                "_history","_prev_text",
+                "_transition_path", "encode",
+                "media.poster.ucwid_info", "media.source.ucwid_info",
+                "media.poster.protocol", "media.source.protocol",
+                "media.poster.ipfs", "media.source.ipfs"
+            ]
+
             //
             upload_record = {
                 "_tracking" : tracking,
@@ -278,7 +287,8 @@ class DataFromUi {
                 "_transition_path" : "asset_path",
                 "asset_path" : `${tracking}+${asset_type}+${this._user_id}`,
                 "asset_type" : asset_type,        // blog, stream, link-package, contact, ownership, etc...
-                "media_type" : media_type
+                "media_type" : media_type,
+                "exclusion_fields" : exclusion_fields
             }
             //
         } catch (e) {

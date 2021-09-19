@@ -11,7 +11,7 @@ async function tell_link_server(endpoint,link_server_addr) {
     let local_host = `${endpoint.address}:${endpoint.port}`
     local_host = encodeURIComponent(local_host)
 
-    let url = `http://${link_server_addr}/peristence/add-publisher/${local_host}`
+    let url = `http://${link_server_addr}/persistence/add-publisher/${local_host}`
     http.get(url, (res) => {
 
         const { statusCode } = res;
@@ -63,13 +63,12 @@ if ( link_server_addr === undefined ) {
 
 if ( link_server_addr === undefined ) {
     console.log("no link server address provided on the command line")
+    process.exit(0)
 }
-
 
 //
 let conf_str = fs.readFileSync(conf_file).toString()
 let conf = JSON.parse(conf_str)
-
 
 // Just one mini link server connects to two difference persistence managers....
 //
