@@ -266,11 +266,16 @@ class AppLogic {
           this.await_ready()
         } else {
           this.ucwid_factory = new UCWID({  "_wrapper_key" : conf._wrapper_key  })
-          this.path_ucwids = {}
-          for ( let path in conf._wrapper_keys ) {  // plural
-            this.path_ucwids[path] = new UCWID({  "_wrapper_key" : conf._wrapper_keys[path]  })
-            this.await_ready()  
+          this.path_ucwids = {
+            "persistence" : {}, "paid-persistence" : {}
           }
+          for ( let path in conf._wrapper_keys ) {  // plural
+            let asset_wrapper = conf._wrapper_keys[path]
+            for ( let a_type in asset_wrapper ) {
+              this.path_ucwids[path][a_type] = new UCWID({ "_wrapper_key" : asset_wrapper[a_type] })
+            }
+          }
+          this.await_ready()  
         }
     }
 
@@ -282,15 +287,20 @@ class AppLogic {
         }
         this.conf._wrapper_keys = {}
         for ( let path of [ "persistence", "paid-persistence" ]) {
+          this.conf._wrapper_keys[path] = {}
+          this.path_ucwids[path] = {}
           let result = await this.msg_relay.send_op_on_path(message, path,"KP")
           if ( result.status === "OK" ) {
-            let counter_link = result.counting_link
+            let counter_links = result.counting_links
             let endpoint = `/creative-gets-pulic-key/${user_id}`
-            let key_query_result = await window.fetchEndPoint(endpoint,counter_link)  // /creative-gets-pulic-key/:creative
-            if ( key_query_result.status === "OK" ) {
-              this.conf._wrapper_keys[path] = key_query_result._wrapper_key
-              this.path_ucwids[path] = new UCWID({  "_wrapper_key" : key_query_result._wrapper_key })
-              this.path_ucwids[path]._x_link_counter = counter_link
+            for ( let clink in counter_links ) {
+              let counter_link = counter_links[clink]
+              let key_query_result = await window.fetchEndPoint(endpoint,counter_link)  // /creative-gets-pulic-key/:creative
+              if ( key_query_result.status === "OK" ) {
+                this.conf._wrapper_keys[path][clink] = key_query_result._wrapper_key
+                this.path_ucwids[path][clink] = new UCWID({  "_wrapper_key" : key_query_result._wrapper_key })
+                this.path_ucwids[path][clink]._x_link_counter = counter_link
+              }  
             }
           }  
         }
@@ -373,11 +383,11 @@ console.log(path)
               let blob = this.media_handler.storable(media)
               let no_string = true
               let ucwid_packet = false
-              if ( this.path_ucwids == false ) {
+              if ( this.path_ucwids == false || (this.path_ucwids[persistence_path][asset_type] === undefined)) {
                 ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
               } else {
-                ucwid_packet = await this.path_ucwids[persistence_path].ucwid(blob,no_string)
-                media._x_link_counter = this.path_ucwids[persistence_path]._x_link_counter 
+                ucwid_packet = await this.path_ucwids[persistence_path][asset_type].ucwid(blob,no_string)
+                media._x_link_counter = this.path_ucwids[persistence_path][asset_type]._x_link_counter 
               }
               // TRACKING
               _tracking = ucwid_packet.ucwid
@@ -412,11 +422,11 @@ console.log(path)
             let blob = this.media_handler.storable(data.media.poster)
             let no_string = true
             let ucwid_packet = false
-            if ( this.path_ucwids == false ) {
+            if ( this.path_ucwids == false || (this.path_ucwids[persistence_path][asset_type] === undefined)) {
               ucwid_packet = await this.ucwid_factory.ucwid(blob,no_string)
             } else {
-              ucwid_packet = await this.path_ucwids[persistence_path].ucwid(blob,no_string)
-              media._x_link_counter = this.path_ucwids[persistence_path]._x_link_counter 
+              ucwid_packet = await this.path_ucwids[persistence_path][asset_type].ucwid(blob,no_string)
+              media._x_link_counter = this.path_ucwids[persistence_path][asset_type]._x_link_counter 
             }
             if ( _tracking === false ) {
               _tracking = ucwid_packet.ucwid
@@ -447,12 +457,12 @@ console.log(path)
           }
           let blob = data.txt_full
           let ucwid_packet = false
-            if ( this.path_ucwids == false ) {
-              ucwid_packet = await this.ucwid_factory.ucwid(blob)
-            } else {
-              ucwid_packet = await this.path_ucwids[persistence_path].ucwid(blob)
-              data.media._x_link_counter = this.path_ucwids[persistence_path]._x_link_counter 
-            }
+          if ( this.path_ucwids == false || (this.path_ucwids[persistence_path][asset_type] === undefined)) {
+            ucwid_packet = await this.ucwid_factory.ucwid(blob)
+          } else {
+              ucwid_packet = await this.path_ucwids[persistence_path][asset_type].ucwid(blob)
+              media._x_link_counter = this.path_ucwids[persistence_path][asset_type]._x_link_counter 
+          }
 
           _tracking = ucwid_packet.ucwid      // handle tracking > next block
           data.text_ucwid_info = ucwid_packet.info

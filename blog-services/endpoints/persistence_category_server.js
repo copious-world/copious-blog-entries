@@ -146,11 +146,11 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         }
         msg_obj._id = user_id
         //
-        let counting_service_link = "false"
+        let counting_service_links = "false"
         switch ( op ) {         // from web client 
             case 'KP' : {
                 if ( this.counting_service ) {
-                    counting_service_link = this.counting_service
+                    counting_service_links = this.counting_service
                 } else {
                     result = "ERR"
                 }
@@ -160,7 +160,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
                 return super.app_message_handler(msg_obj)
             }
         }
-        return({ "status" : result, "explain" : `${op} performed`, "when" : Date.now(), "counting_link" : counting_service_link })
+        return({ "status" : result, "explain" : `${op} performed`, "when" : Date.now(), "counting_links" : counting_service_links })
     }
 
 

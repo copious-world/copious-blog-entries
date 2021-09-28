@@ -271,7 +271,7 @@ class DataFromUi {
                 else return false
             }
 
-
+            //
             let exclusion_fields = [
                 "_history","_prev_text",
                 "_transition_path", "encode",
@@ -321,7 +321,6 @@ class DataFromUi {
         this._current_asset_prev_text = obj.txt_full
         this._current_asset_text_ucwid_info = obj.text_ucwid_info ? obj.text_ucwid_info : false
     }
-
 
     async gather_asset_fields() {
         //
