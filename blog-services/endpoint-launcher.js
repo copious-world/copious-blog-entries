@@ -20,7 +20,7 @@ function spawn_node_file(endpoint_args) {
     })
 }
 
-let endpoint_procs = conf.launch_endoints
+let endpoint_procs = conf.launch_endpoints
 
 for ( let endpoint in endpoint_procs ) {
     let endpoint_args = endpoint_procs[endpoint]
