@@ -102,7 +102,6 @@ var g_media_types = {
 
 
 // decryption in back directory....
-  
 
 class MediaHandler {
   //
@@ -309,8 +308,6 @@ class AppLogic {
     }
 
 
-    
-
     async await_ready() {
       let p = new Promise((resolve,rejects) => {
         this.msg_relay.on('path-ready',(info) => {
@@ -326,6 +323,7 @@ console.log(path)
       this.ready = await p
     }
 
+
     // ----
     async startup() {
         //
@@ -339,7 +337,7 @@ console.log(path)
         //
     }
 
-    
+
     async doWrite_test() {
         let user_path = "./test.json"
         let msg_obj = { "test" : "A", "b" : "C" }

@@ -280,7 +280,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-    appliction_meta_publication(msg_obj,app_meta_universe) {        // publications going to mini link servers
+    application_meta_publication(msg_obj,app_meta_universe) {        // publications going to mini link servers
         //
         //if ( !app_meta_universe ) return;
         //
@@ -304,9 +304,9 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         }
     }
 
-    
+
     // ----
-    appliction_meta_remove(msg_obj,app_meta_universe) {
+    application_meta_remove(msg_obj,app_meta_universe) {
         let asset_type = msg_obj.asset_type
         let media_type = msg_obj.media_type
         //if ( !app_meta_universe ) return;

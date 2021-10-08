@@ -272,7 +272,7 @@ class DataFromUi {
             }
 
             //
-            let exclusion_fields = [
+            let exclusion_fields = [  // fields excluded from searching services.
                 "_history","_prev_text",
                 "_transition_path", "encode",
                 "media.poster.ucwid_info", "media.source.ucwid_info",
