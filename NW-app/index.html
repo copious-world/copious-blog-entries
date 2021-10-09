@@ -329,9 +329,10 @@
 // //
 // fetch with GET method
 const g_siteURL = "localhost"
+const g_protocol = "http:"
 async function fetchEndPoint(endpoint,site_url,port) {
 	port = !(port) ? '' : ( port.length ? `:${port}`   : '')
-	let myRequest = new Request(`${location.protocol}//${site_url}${port}/${endpoint}`);
+	let myRequest = new Request(`${g_protocol}//${site_url}${port}/${endpoint}`);
 	try {
 		const body = await fetch(myRequest, {
 									method: 'GET', // *GET, POST, PUT, DELETE, etc.

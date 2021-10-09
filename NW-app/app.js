@@ -291,7 +291,7 @@ class AppLogic {
           let result = await this.msg_relay.send_op_on_path(message, path,"KP")
           if ( result.status === "OK" ) {
             let counter_links = result.counting_links
-            let endpoint = `/creative-gets-pulic-key/${user_id}`
+            let endpoint = `creative-gets-pulic-key/${user_id}`
             for ( let clink in counter_links ) {
               let counter_link = counter_links[clink]
               let key_query_result = await window.fetchEndPoint(endpoint,counter_link)  // /creative-gets-pulic-key/:creative
@@ -459,7 +459,7 @@ console.log(path)
             ucwid_packet = await this.ucwid_factory.ucwid(blob)
           } else {
               ucwid_packet = await this.path_ucwids[persistence_path][asset_type].ucwid(blob)
-              media._x_link_counter = this.path_ucwids[persistence_path][asset_type]._x_link_counter 
+              data._x_link_counter = this.path_ucwids[persistence_path][asset_type]._x_link_counter 
           }
 
           _tracking = ucwid_packet.ucwid      // handle tracking > next block

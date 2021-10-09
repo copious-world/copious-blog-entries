@@ -121,4 +121,4 @@ console.log(`User Server: PORT: ${conf.user_endpoint.port} ADDRESS: ${conf.user_
 
 let tue = new TransitionsUserEndpoint(conf.user_endpoint)
 
-tue. _startup_track_users_from_directory()
+tue._startup_track_users_from_directory()

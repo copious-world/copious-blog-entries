@@ -110,6 +110,11 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         } else {
             this.counting_service = false
         }
+        if ( conf.counter ) {
+            this.client_counting_service = conf.counter
+        } else {
+            this.client_counting_service = false
+        }
         //
         this.topic_producer = this.topic_producer_user
         if ( conf.system_wide_topics ) {
@@ -150,7 +155,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         switch ( op ) {         // from web client 
             case 'KP' : {
                 if ( this.counting_service ) {
-                    counting_service_links = this.counting_service
+                    counting_service_links = this.client_counting_service
                 } else {
                     result = "ERR"
                 }
