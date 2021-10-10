@@ -257,27 +257,31 @@ class AppLogic {
         this.ipfs_conf = conf.ipfs
         //check_crypto_config(conf)
         this.media_handler = new MediaHandler(conf)
-        this.msg_relay = new MultiPathRelayClient(conf.relayer)
         //
         this.ready = false
-        this.path_ucwids = false
-        if ( conf._wrapper_key === undefined ) {
-          this.await_ready()
-        } else {
-          this.ucwid_factory = new UCWID({  "_wrapper_key" : conf._wrapper_key  })
-          this.path_ucwids = {
-            "persistence" : {}, "paid-persistence" : {}
-          }
-          for ( let path in conf._wrapper_keys ) {  // plural
-            let asset_wrapper = conf._wrapper_keys[path]
-            for ( let a_type in asset_wrapper ) {
-              this.path_ucwids[path][a_type] = new UCWID({ "_wrapper_key" : asset_wrapper[a_type] })
-            }
-          }
-          this.await_ready()  
-        }
+        this.setup_relays()
     }
 
+    async setup_relays() {
+      let conf = this.conf
+      this.msg_relay = new MultiPathRelayClient(conf.relayer)
+      this.path_ucwids = false
+      if ( conf._wrapper_key === undefined ) {
+        this.await_ready()
+      } else {
+        this.ucwid_factory = new UCWID({  "_wrapper_key" : conf._wrapper_key  })
+        this.path_ucwids = {
+          "persistence" : {}, "paid-persistence" : {}
+        }
+        for ( let path in conf._wrapper_keys ) {  // plural
+          let asset_wrapper = conf._wrapper_keys[path]
+          for ( let a_type in asset_wrapper ) {
+            this.path_ucwids[path][a_type] = new UCWID({ "_wrapper_key" : asset_wrapper[a_type] })
+          }
+        }
+        await this.await_ready()  
+      }
+    }
 
     async wait_for_key(user_id) {
       if ( this.ready ) {
@@ -309,18 +313,11 @@ class AppLogic {
 
 
     async await_ready() {
-      let p = new Promise((resolve,rejects) => {
-        this.msg_relay.on('path-ready',(info) => {
-            let path = info.path
-            //let my_info = {
-            //  'address' : info.address,
-            //  'configured-address' : info['configured-address']
-            //}
-console.log(path)
-            resolve(true)
-        })  
-      })
-      this.ready = await p
+      try {
+        await this.msg_relay.await_ready("persistence")
+        this.ready = true
+      } catch (e) {
+      }
     }
 
 

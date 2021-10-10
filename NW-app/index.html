@@ -54,6 +54,7 @@
   </style>
   <body>
     <h2>Copious World <h3>Blog Editing App</h3> </h2>
+    <!-- <button id="test-startup">GET STARTED</button> -->
     <div class = "mat-back mat-back-2 form ">
       User ID: <input type="text" id="user-id" > <button id="user-id-btn">User Ready</button>
       Tracking: <input type="text" id="user-tracking" >
@@ -318,6 +319,12 @@
     }
 
 
+/*
+    let test_startup_btn = document.getElementById("test-startup")
+    if ( test_startup_btn ) {
+      test_startup_btn.addEventListener('click',() => { app_code.setup_relays() })
+    }
+*/
 
     window.addEventListener("load", async (event) => {
       await app_code.startup()
