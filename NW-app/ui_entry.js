@@ -271,6 +271,9 @@ class DataFromUi {
                 else return false
             }
 
+            let paid_fld = document.getElementById('paid-checkbox')
+            let paid = paid_fld ? paid_fld.checked : false
+
             //
             let exclusion_fields = [  // fields excluded from searching services.
                 "_history","_prev_text",
@@ -284,6 +287,7 @@ class DataFromUi {
             upload_record = {
                 "_tracking" : tracking,
                 "_id" :  this._user_id,
+                "_paid" : paid,
                 "_transition_path" : "asset_path",
                 "asset_path" : `${tracking}+${asset_type}+${this._user_id}`,
                 "asset_type" : asset_type,        // blog, stream, link-package, contact, ownership, etc...
@@ -308,6 +312,7 @@ class DataFromUi {
         let full_text_fld = document.getElementById('rec-full-text')
         let file_name_fld = document.getElementById('rec-file-name')
         let poster_name_fld = document.getElementById('rec-poster-name')
+        let paid_fld = document.getElementById('paid-checkbox')
         if ( !(opt_fld && title_fld && keys_fld && abstract_fld && full_text_fld && file_name_fld  && poster_name_fld) ) return false
         
         title_fld.value = decodeURIComponent(obj.title)
@@ -316,6 +321,10 @@ class DataFromUi {
         opt_fld.value = [obj.asset_type,obj.media_type].join('/')
         abstract_fld.value = decodeURIComponent(obj.abstract)
         full_text_fld.value = decodeURIComponent(obj.txt_full)
+
+        if ( paid_fld )  {
+            paid_fld.setAttribute("checked",obj._paid)
+        }
 
         this._current_asset_history = obj._history
         this._current_asset_prev_text = obj.txt_full

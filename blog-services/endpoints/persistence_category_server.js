@@ -63,6 +63,8 @@ function map_entry_type_to_producer(entry_type) {
 
 
 function needs_media_type(asset_type) {
+    return false
+    /*
     switch ( asset_type ) {
         case "stream" : {
             return true
@@ -71,6 +73,7 @@ function needs_media_type(asset_type) {
             return false
         }
     }
+    */
 }
 
 function non_stream_media(msg_obj) {

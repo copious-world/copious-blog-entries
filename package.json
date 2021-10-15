@@ -35,6 +35,6 @@
     "cwid": "^1.0.2",
     "ipfs": "^0.55.4",
     "repository-bridge": "^0.6.0",
-    "ucwid": "^0.2.4"
+    "ucwid": "^0.2.5"
   }
 }

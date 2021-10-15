@@ -300,8 +300,8 @@ class AppLogic {
               let counter_link = counter_links[clink]
               let key_query_result = await window.fetchEndPoint(endpoint,counter_link)  // /creative-gets-pulic-key/:creative
               if ( key_query_result.status === "OK" ) {
-                this.conf._wrapper_keys[path][clink] = key_query_result._wrapper_key
-                this.path_ucwids[path][clink] = new UCWID({  "_wrapper_key" : key_query_result._wrapper_key })
+                this.conf._wrapper_keys[path][clink] = key_query_result.public_wrapper_key
+                this.path_ucwids[path][clink] = new UCWID({ "_wrapper_key" : key_query_result.public_wrapper_key })
                 this.path_ucwids[path][clink]._x_link_counter = counter_link
               }  
             }
@@ -534,7 +534,7 @@ class AppLogic {
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-          let persistence_path = data.paid ? "paid-persistence" : "persistence"
+          let persistence_path = data._paid ? "paid-persistence" : "persistence"
           let resp = await this.msg_relay.get_on_path(data,persistence_path)
           if ( resp.status === "OK" ) {
               let output = JSON.parse(resp.data)
@@ -557,7 +557,7 @@ class AppLogic {
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-          let persistence_path = data.paid ? "paid-persistence" : "persistence"
+          let persistence_path = data._paid ? "paid-persistence" : "persistence"
           let resp = await this.msg_relay.del_on_path(data,persistence_path)
           if ( resp.status === "OK" ) {
               console.log("deleted")
@@ -576,7 +576,7 @@ class AppLogic {
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-          let persistence_path = data.paid ? "paid-persistence" : "persistence"
+          let persistence_path = data._paid ? "paid-persistence" : "persistence"
           let resp = await this.msg_relay.publication_on_path(data,persistence_path)
           if ( resp.status === "OK" ) {
               //add_to_manifest(resp.data)
@@ -599,7 +599,7 @@ class AppLogic {
         }
         // ... do actions on behalf of the Renderer
         if ( data && data._id ) {
-          let persistence_path = data.paid ? "paid-persistence" : "persistence"
+          let persistence_path = data._paid ? "paid-persistence" : "persistence"
           let resp = await this.msg_relay.unpublish_on_path(data,persistence_path)
           if ( resp.status === "OK" ) {
               //add_to_manifest(resp.data)
