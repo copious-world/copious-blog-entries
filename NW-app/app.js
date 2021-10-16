@@ -295,10 +295,10 @@ class AppLogic {
           let result = await this.msg_relay.send_op_on_path(message, path,"KP")
           if ( result.status === "OK" ) {
             let counter_links = result.counting_links
-            let endpoint = `creative-gets-pulic-key/${user_id}`
+            let endpoint = `creative-gets-public-key/${user_id}`
             for ( let clink in counter_links ) {
               let counter_link = counter_links[clink]
-              let key_query_result = await window.fetchEndPoint(endpoint,counter_link)  // /creative-gets-pulic-key/:creative
+              let key_query_result = await window.fetchEndPoint(endpoint,counter_link)  // /creative-gets-public-key/:creative
               if ( key_query_result.status === "OK" ) {
                 this.conf._wrapper_keys[path][clink] = key_query_result.public_wrapper_key
                 this.path_ucwids[path][clink] = new UCWID({ "_wrapper_key" : key_query_result.public_wrapper_key })
