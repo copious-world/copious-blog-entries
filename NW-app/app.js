@@ -16,7 +16,6 @@ const {MultiPathRelayClient} = require("categorical-handlers")
 const Repository = require('repository-bridge')
 const UCWID = require('UCWID')
 
-
 /*
 const options = {
   // Necessary only if the server requires client certificate authentication.
@@ -71,7 +70,6 @@ let g_iv = crypto.randomBytes(16);
 
 let g_conf = false
 
-
 g_conf = fs.readFileSync('desk_app.config').toString()
 
 try {
@@ -94,10 +92,10 @@ var g_user_data = false
 */
 
 var g_media_types = {
-  "audio" : { "ecrypted" : true, "store_local" : true, "store_repo" : true },
-  "video" : { "ecrypted" : false, "store_local" : true, "store_repo" : true },
-  "image" : { "ecrypted" : true, "store_local" : true, "store_repo" : true },
-  "text" : { "ecrypted" : true, "store_local" : true, "store_repo" : true }
+  "audio" : { "encrypted" : true, "store_local" : true, "store_repo" : true },
+  "video" : { "encrypted" : false, "store_local" : true, "store_repo" : true },
+  "image" : { "encrypted" : true, "store_local" : true, "store_repo" : true },
+  "text" : { "encrypted" : true, "store_local" : true, "store_repo" : false }
 }
 
 
@@ -140,7 +138,7 @@ class MediaHandler {
           const repo_id = await this.repository.add(repo_kind,enc_blob)
           if ( repo_id !== false ) {
             return {
-              "protocol" : 'ipfs',
+              "protocol" : repo_kind,
               "id" : repo_id
             }  
           }
@@ -173,13 +171,17 @@ class MediaHandler {
         return result
       } else {
         media.protocol = result.protocol
-        media.ipfs = result.id
+        media[media.protocol] = result.id
       }
       return true
     }
     return false
   }
 
+}
+
+
+/*
 
   async store_image(media,media_type) {   // the image may be a poster for another media type e.g. audio or video
     //
@@ -212,8 +214,6 @@ class MediaHandler {
   }
 
 }
-
-/*
 
 function check_crypto_config(conf) {
   if ( conf.crypto ) {
@@ -386,9 +386,9 @@ class AppLogic {
               }
               // TRACKING
               _tracking = ucwid_packet.ucwid
-              media._is_encrypted = this.media_handler.media_types[media_type].ecrypted
+              media._is_encrypted = this.media_handler.media_types[media_type].encrypted
               let enc_blob = media._is_encrypted ? ucwid_packet.info.cipher_buffer : blob
-              if ( this.media_handler.media_types[media_type].ecrypted ) {
+              if ( this.media_handler.media_types[media_type].store_repo ) {
                 delete ucwid_packet.info.cipher_text
                 delete ucwid_packet.info.cipher_buffer
               }
@@ -426,9 +426,9 @@ class AppLogic {
             if ( _tracking === false ) {
               _tracking = ucwid_packet.ucwid
             }
-            media._is_encrypted = this.media_handler.media_types[media_type].ecrypted
+            media._is_encrypted = this.media_handler.media_types[media_type].encrypted
             let enc_blob = media._is_encrypted ? ucwid_packet.info.cipher_buffer : blob
-            if ( this.media_handler.media_types[media_type].ecrypted ) {
+            if ( this.media_handler.media_types[media_type].store_repo ) {
               delete ucwid_packet.info.cipher_text
               delete ucwid_packet.info.cipher_buffer
             }
