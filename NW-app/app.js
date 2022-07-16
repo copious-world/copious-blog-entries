@@ -1,7 +1,6 @@
 // get the system platform using node.js
 const fs = require('fs')
 const fsPromises = require('fs/promises')
-const crypto = require('crypto')
 
 // openssl ecparam -name secp384r1 -genkey -noout -out server.ec.key
 // openssl pkcs8 -topk8 -in server.ec.key -out server.pem
@@ -11,8 +10,6 @@ const crypto = require('crypto')
 // MultiPathRelayClient will make a connection for each configured path 
 // in this case 2: 1) one for user; 2) the other for the meta data store, persistence.
 const {MultiPathRelayClient} = require("categorical-handlers")
-
-//
 const Repository = require('repository-bridge')
 const UCWID = require('UCWID')
 
@@ -254,8 +251,6 @@ class AppLogic {
     //
     constructor(conf) {
         this.conf = conf
-        this.ipfs_conf = conf.ipfs
-        //check_crypto_config(conf)
         this.media_handler = new MediaHandler(conf)
         //
         this.ready = false
@@ -282,6 +277,7 @@ class AppLogic {
         await this.await_ready()  
       }
     }
+
 
     async wait_for_key(user_id) {
       if ( this.ready ) {
