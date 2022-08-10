@@ -1,6 +1,6 @@
 {
   "name": "copious-endpoints",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Endpoint servers providing disk interface and pub/sub interfaces to supporting services, e.g search, counting, streaming, etc.",
   "scripts": {
     "test": "ava --verbose",
@@ -24,7 +24,8 @@
   "dependencies": {
     "categorical-handlers": "^0.3.6",
     "repository-bridge": "^0.6.0",
-    "ucwid": "^0.2.8"
+    "ucwid": "^0.2.8",
+    "ipfs" : "^0.63.5"
   },
   "devDependencies": {
     "ava": "^3.15.0"
