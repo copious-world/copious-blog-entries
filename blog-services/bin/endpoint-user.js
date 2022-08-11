@@ -39,6 +39,9 @@ if ( conf_index > 0 ) {
     endpoint_args[conf_index] = conf_file ? conf_file : model_file
 }
 
+endpoint_args[0] = __dirname + '/../' + endpoint_args[0]
+
+
 console.dir(endpoint_args)
 
 spawn_node_file(endpoint_args)

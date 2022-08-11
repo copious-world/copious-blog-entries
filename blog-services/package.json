@@ -1,20 +1,28 @@
 {
   "name": "copious-endpoints",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "Endpoint servers providing disk interface and pub/sub interfaces to supporting services, e.g search, counting, streaming, etc.",
+  "main": "service.js",
+  "directories": {
+    "endpoints": "endpoints"
+  },
+  "bin" : {
+    "copious-user" : "./bin/endpoint-user.js",
+    "copious-persistence" : "./bin/endpoint-persistence.js"
+  },
   "scripts": {
     "test": "ava --verbose",
     "endpoints": "node endpoint-launcher.js relay-service.conf"
-  },
-  "bin" : {
-    "copious-user" : "./bin/endpoint-user",
-    "copious-persistence" : "./bin/endpoint-persistence"
   },
   "keywords": [
     "endpoint-server",
     "user-records",
     "asset-records"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/copious-world/copious-blog-entries.git"
+  },
   "funding": {
     "type": "GitHub Sponsors",
     "url": "https://github.com/sponsors/copious-world"

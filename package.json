@@ -1,6 +1,6 @@
 {
   "name": "copious-blog-entries",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The endpoint project with a clients (focusing on NW.js client) for storing meta data about user-business relationships and user assets.",
   "main": "index.js",
   "directories": {
