@@ -2,7 +2,6 @@ const {PersistenceCategory} = require("categorical-handlers")
 //
 const fs = require('fs')
 const crypto = require('crypto')
-const Repository = require('repository-bridge')
 
 
 // connect to a relay service...
@@ -22,32 +21,6 @@ function do_hash (text) {
     return(ehash)
 }
 
-function terminus(obj,field_path) {
-    let fpath = field_path.split('.')
-    let tobj = obj
-    for ( let f of fpath ) {
-        tobj = tobj[f]
-        if ( tobj === undefined ) return false
-    }
-    return tobj
-}
-
-function terminus_unlink(obj,field_path) {
-    let fpath = field_path.split('.')
-    let tobj = obj
-    let parent = false
-    let f = false
-    while ( fpath.length ) {
-        f = fpath.shift()
-        parent = tobj
-        tobj = parent[f]
-        if ( tobj === undefined ) return false
-    }
-    if ( f && parent ) {
-        parent[f] = undefined
-    }
-    return tobj
-}
 
 // -- -- -- --
 
@@ -62,34 +35,9 @@ function map_entry_type_to_producer(entry_type) {
 }
 
 
-function needs_media_type(asset_type) {
-    return false
-    /*
-    switch ( asset_type ) {
-        case "stream" : {
-            return true
-        }
-        default : {
-            return false
-        }
-    }
-    */
-}
-
-function non_stream_media(msg_obj) {
-    let asset_type = msg_obj.asset_type         //  asset -type
-    let media_type = msg_obj.media_type 
-
-    if ( asset_type !== "stream" ) {
-        return true
-    }
-    return false
-}
-
-
 // -- -- -- --
 //
-class TransitionsPersistenceEndpoint extends PersistenceCategory {
+class TransitionsContactEndpoint extends PersistenceCategory {
 
     //
     constructor(conf) {
@@ -103,46 +51,14 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         this.app_subscriptions_ok = true
         this.app_meta_universe = true
         // ---------------->>  topic, client_name, relayer  (when relayer is false, topics will not be written to self)
-        this.add_to_topic("command-publish",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
-        this.add_to_topic("command-recind",'self',false)
-        this.add_to_topic("command-delete",'self',false)
-        this.add_to_topic("command-send",'self',false)
-        //
-        if ( conf.counting_service ) {
-            this.counting_service = conf.counting_service
-        } else {
-            this.counting_service = false
-        }
-        if ( conf.counter ) {
-            this.client_counting_service = conf.counter
-        } else {
-            this.client_counting_service = false
-        }
+        this.add_to_topic("contact",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
         //
         this.topic_producer = this.topic_producer_user
         if ( conf.system_wide_topics ) {
             this.topic_producer = this.topic_producer_system
         }
-        this.repository_initalizer(conf)
-        if ( (conf.multi_meta_hanlders !== undefined) && conf.multi_meta_hanlders ) {
-            this.all_meta_topics = conf.multi_meta_hanlders
-        }
     }
 
-    //
-    async repository_initalizer(conf) {
-        this.repository = new Repository(conf,['ipfs'])
-        await this.repository.init_repos()
-        // test
-        /*
-        let data = await this.repository.diagnotistic('ipfs','boostrap-peers')
-        console.log(data)
-        //
-        await this.repository.diagnotistic('ipfs',"ls-pins")
-        let stored = await this.repository.fetch('ipfs',"QmY3yQ13xmWJ43FNcfijAQunZXxFRzfvcSnUwXScCKW6aN")
-        fs.writeFileSync("test_data.mp3",stored)
-        */
-    }
 
 
     async app_message_handler(msg_obj) {
@@ -154,73 +70,11 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         }
         msg_obj._id = user_id
         //
-        let counting_service_links = "false"
-        switch ( op ) {         // from web client 
-            case 'KP' : {
-                if ( this.counting_service ) {
-                    counting_service_links = this.client_counting_service
-                } else {
-                    result = "ERR"
-                }
-                break
-            }
-            default: {
-                return super.app_message_handler(msg_obj)
-            }
-        }
-        return({ "status" : result, "explain" : `${op} performed`, "when" : Date.now(), "counting_links" : counting_service_links })
+        return({ "status" : result, "explain" : `${op} performed`, "when" : Date.now() })
     }
 
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-
-    repo_add(obj) {
-        let storage_fields = obj.repository_fields
-        if ( (storage_fields !== undefined) && storage_fields ) {
-            for ( let field_path of storage_fields ) {
-                let tobj = terminus(obj,field_path)
-                if ( tobj ) {
-                    if ( tobj.protocol && tobj[tobj.protocol] ) {
-                        this.repository.store(tobj)
-                    }
-                }
-            }
-        }
-    }
-
-    repo_replace(old_obj,new_obj) {
-        let storage_fields = obj.repository_fields
-        if ( (storage_fields !== undefined) && storage_fields ) {
-            for ( let field_path of storage_fields ) {
-                let tobj_old = terminus(old_obj,field_path)
-                if ( !(tobj_old) ) {
-                    return
-                }
-                let tobj_new = terminus(new_obj,field_path)
-                if ( !(tobj_new) ) {
-                    return
-                }
-                if ( tobj_old.protocol && tobj_old[tobj_old.protocol] && tobj_new.protocol && tobj_new[tobj_new.protocol] ) {
-                    this.repository.replace(tobj_old,tobj_new)
-                }
-            }
-        }
-    }
-
-    repo_remove(obj) {
-        let storage_fields = obj.repository_fields
-        if ( (storage_fields !== undefined) && storage_fields ) {
-            for ( let field_path of storage_fields ) {
-                let tobj = terminus(obj,field_path)
-                if ( tobj ) {
-                    if ( tobj.protocol && tobj[tobj.protocol] ) {
-                        this.repository.remove(tobj)
-                    }
-                }
-            }
-        }
-    }
-
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
 
@@ -289,39 +143,17 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     application_meta_publication(msg_obj,app_meta_universe) {        // publications going to mini link servers
-        //
-        //if ( !app_meta_universe ) return;
-        //
-        let exclusion_fields = msg_obj.exclusion_fields         // exclusion_fields shall be an array
-        if ( ((exclusion_fields !== undefined) && exclusion_fields ) || non_stream_media(msg_obj) ) {   // the client decides which fields to remove from metat data before pushing to discovery systems...
-            let asset_type = msg_obj.asset_type         //  asset -type
-            let media_type = msg_obj.media_type
-            let projection = Object.assign({},msg_obj)  
-            if ( exclusion_fields ) {
-                for ( let field_path of exclusion_fields ) {
-                    terminus_unlink(projection,field_path)
-                }
-                delete projection.exclusion_fields
-            }
-            //
-            let topic = `add_${this.all_meta_topics["meta"]}_${asset_type}`
-            if ( needs_media_type(asset_type) ) {
-                topic += '_' + media_type
-            }
-            this.publish_mini_link_server(topic,projection)
-        }
+        let conversation = msg_obj.conversation         //  asset -type
+        let topic = `add_contact_${conversation}`  // in persistence, the conversation is a media type or meta type
+        this.publish_mini_link_server(topic,msg_obj)
     }
 
 
     // ----
     application_meta_remove(msg_obj,app_meta_universe) {
-        let asset_type = msg_obj.asset_type
-        let media_type = msg_obj.media_type
+        let conversation = msg_obj.conversation
         //if ( !app_meta_universe ) return;
-        let topic = `remove_${this.all_meta_topics["meta"]}_${asset_type}`
-        if ( needs_media_type(asset_type) ) {
-            topic += '_' + media_type
-        }
+        let topic = `remove_contact_${conversation}`  // in persistence, the conversation is a media type or meta type
         this.publish_mini_link_server(topic,msg_obj)
     }
 
@@ -331,17 +163,17 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
     // this is the handler for the topics added directoy above in the constructor
     app_subscription_handler(topic,msg_obj) {
         //
-        if ( topic === 'command-publish' ) {
+        if ( topic === 'contact' ) {
             msg_obj._tx_op = 'P'
-        } else if ( topic === 'command-recind' ) {
+        } else if ( topic === 'contact-update' ) {
             msg_obj._tx_op = 'U'
-        } else if ( topic === 'command-delete' ) {
+        } else if ( topic === 'contact-delete' ) {
             msg_obj._tx_op = 'D'
         }
         //
         this.app_message_handler(msg_obj)           // run the handler (often gotten to by relay to endpoint messaging ... this is pub/sub pathway)
         //
-        if ( ( topic === 'command-publish' ) || ( topic === 'command-recind' ) ) {
+        if ( topic === 'contact' ) {
             let op = 'F' // change one field
             let field = 'published'
             let value = msg_obj.published
@@ -458,7 +290,6 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             entries_record.entries[entry_type] = []
         }
         entries_record.entries[entry_type].push(entry_obj)
-        this.repo_add(entry_obj)
     }
 
 
@@ -469,7 +300,6 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             for ( let i = 0; i < entry_list.length; i++ ) {
                 let entry = entry_list[i]
                 if ( entry._tracking == entry_obj._tracking ) {
-                    this.repo_replace(entry_list[i],entry_obj)
                     entry_list[i] = entry_obj               // EDITED change the right object == _id match (overwrite)
                     break;
                 }
@@ -509,7 +339,6 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
             if ( del_index >= 0 ) {
                 entry_list.splice(del_index,1)      // entries have been edited EDITED delete
             }
-            this.repo_remove(entry_obj)
         }
         //
     }
@@ -574,27 +403,22 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 }
 
 
+// ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- -------
+// ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- -------
 
 
-
-let conf_file = 'relay-service.conf'
+let conf_file = 'contact-service.conf'
 let conf_par = process.argv[2]
 if ( conf_par !== undefined ) {
     conf_file = conf_par
 }
 
-let commerce = process.argv[3]
-
-let endpoint = false
-if ( commerce === undefined ) { commerce = "free" }
-//
 let conf = JSON.parse(fs.readFileSync(conf_file).toString())
-if ( commerce === "free" ) {
-    endpoint = conf.persistence_endpoint
-} else {
-    endpoint = conf.paid_persistence_endpoint
-}
+let endpoint = conf
 
-console.log(`Persistence Server: PORT: ${endpoint.port} ADDRESS: ${endpoint.address}`)
+console.log(`Contact Server: PORT: ${endpoint.port} ADDRESS: ${endpoint.address}`)
 
-new TransitionsPersistenceEndpoint(endpoint)
+new TransitionsContactEndpoint(endpoint)
+
+// ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- -------
+// (end file)

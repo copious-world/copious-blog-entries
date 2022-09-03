@@ -1,6 +1,6 @@
 {
-  "name": "copious-endpoints",
-  "version": "1.1.4",
+  "name": "persistence-endpoints",
+  "version": "1.0.7",
   "description": "Endpoint servers providing disk interface and pub/sub interfaces to supporting services, e.g search, counting, streaming, contacts, etc.",
   "main": "service.js",
   "directories": {
@@ -8,6 +8,7 @@
   },
   "bin" : {
     "copious-user" : "./bin/endpoint-user.js",
+    "copious-persistence" : "./bin/endpoint-persistence.js",
     "copious-contacts" : "./bin/endpoint-contacts.js",
     "add-mini-links" : "./bin/add-mini-links.js"
   },
@@ -18,7 +19,7 @@
   "keywords": [
     "endpoint-server",
     "user-records",
-    "contact-records"
+    "asset-records"
   ],
   "repository": {
     "type": "git",
@@ -31,8 +32,10 @@
   "author": "R. Leddy",
   "license": "ISC",
   "dependencies": {
-    "categorical-handlers": "^0.3.7",
-    "ucwid": "^0.2.8"
+    "categorical-handlers": "^0.3.6",
+    "repository-bridge": "^0.6.0",
+    "ucwid": "^0.2.8",
+    "ipfs" : "^0.63.5"
   },
   "devDependencies": {
     "ava": "^3.15.0"

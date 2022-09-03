@@ -1,5 +1,4 @@
-
-
+// 
 const fs = require('fs')
 const http = require('http')
 
@@ -50,7 +49,7 @@ async function tell_link_server(endpoint,link_server_addr) {
 
 
 let link_server_addr = ""
-let conf_file = 'relay-service.conf'
+let conf_file = 'contact-service.conf'
 
 link_server_addr = process.argv[3]
 if ( link_server_addr === undefined ) {
@@ -68,11 +67,4 @@ if ( link_server_addr === undefined ) {
 let conf_str = fs.readFileSync(conf_file).toString()
 let conf = JSON.parse(conf_str)
 
-// Just one mini link server connects to two difference persistence managers....
-//
-let endpoint = conf.persistence_endpoint
-tell_link_server(endpoint,link_server_addr)
-
-endpoint = conf.paid_persistence_endpoint
-tell_link_server(endpoint,link_server_addr)
-//
+tell_link_server(conf,link_server_addr)
