@@ -26,7 +26,7 @@ function spawn_node_file(endpoint_args) {
 
 let endpoint_args = ["","",""]
 
-if ( ml_type === "contact" ) {
+if ( (ml_type === "contact") || (ml_type === "contacts") ) {
     endpoint_args[0] = __dirname + '/../tools/add_contact_server.js'
 } else if ( ml_type === "pesistence" ) {
     endpoint_args[0] = __dirname + '/../tools/add_link_server.js'
