@@ -7,7 +7,9 @@ This module provides servers that enter bloggable content into directories and o
 Two kinds of command line interfaces are provided:
 
 * **copious-users**
-* **copious-persistence**
+* **copious-contacts**
+
+A third kind service has been moved. The service copious-persistence will have its own repository and package since it requires larger libraries such as IPFS.
 
 User applications store records which aid in associating a kind of user identity with assets. This is for the operation of the system as an asset tracker and has little to do with authorization which is handled elsewhere by making use of distributed identities.
 
@@ -32,7 +34,7 @@ copious-users relay-service.conf
 
 
 ```
-copious-persitence relay-service.conf
+copious-contacts contact-service.conf
 ```
 
 The first command will launch the user record managment service. This service is fairly local to the server. It will look for keys in **keys** directory.
@@ -49,7 +51,7 @@ mkdir data
 
 ## Configuring
 
-The configuration file specifies all that will be needed to make connections, startup as a server, idenitify directories for storage, etc.  Here is an example of the configuration file:
+The following configuration file is for three services, a relay service that switches packets to endpoints from any number clients, a user manager services, and a persistence service. (The contact service configuration is follows after it.) The configuration file specifies all that will be needed to make connections, startup as a server, idenitify directories for storage, etc.  Here is an example of the configuration file:
 
 ```
 
@@ -251,6 +253,46 @@ The configuration file specifies all that will be needed to make connections, st
 
 ```
 
+### contact configuration
+
+Here is a configuration file for **copious-contacts**:
+
+```
+{
+    "port" : 5336,
+    "address" : "localhost",
+    "user_directory" : "./assets/users",
+    "contacts_directory" : "./contacts",
+    "directories" : [ "contacts"  ],
+    "multi_meta_hanlders" : {
+        "meta" : "meta_searching"
+    },
+    "tls" : {
+        "server_key" : "keys/ec_key.pem",
+        "server_cert" : "keys/ec_crt.crt",
+        "client_cert" : "keys/cl_ec_crt.crt"
+    },
+    "ucwid" : {
+            "pk_str": "public key",
+            "priv_key": "private key"
+    },
+    "publication_directories" : {
+        "contact" :  "./contact"
+    },
+    "entry_types_to_producers" : {
+        "contacts" :    "profile"
+    },
+    "all_users" : "./users",
+    "create_OK" : true,
+    "remove_OK" : true,
+    "launch_endpoints" : {
+        "contact_endpoint" : [ "endpoints/contact_category_server", "contact-service.conf" ]
+    }
+}
+
+
+```
+
 
 
 ##### NOTE:
@@ -258,7 +300,7 @@ The configuration file specifies all that will be needed to make connections, st
 *All crypto keys in this repository are for examples only. Do not expect them to work on any data stored and retrievable by these tools.*
 
 
-## blog-services .a.k.a copious-endpoints
+## blog-services a.k.a. copious-endpoints
 
 
 Theses services run a tpc/ip service built on top of node.js, making use of the **net** module and its TLS provisions. This service derives from [categorical-handlers](https://www.github.com/cooious-world/categorical-handlers), which is a specialization of the endpoint class from the [message-relay-services](https://www.github.com/cooious-world/message-relay-services) package.
@@ -274,10 +316,76 @@ See for example:
 
 
 ## client examples
+
 Some of the client operations that interact with these services can be found in the desktop application provided by [copious-blog-entries desktop tool](https://github.com/copious-world/copious-blog-entries/tree/main/NW-app)
 
 The NW app will actually load files into IPFS. But, the blog services will only accept persistence record entries with IPFS CIDs in fields. The blog services may make sure the content identified by a CIDs are available for presentation by blog interfaces.
 
+The contact services client is being used by the *basic* version of [**captcha-igid**](https://www.npmjs.com/package/captcha-igid) which is one of the [copious-transition-apps](https://github.com/copious-world/copious-transition-apps).
 
+## A note on generating keys
 
+Here is an article about generating keys for these applications: [Elliptic Curve TLSv1.3](https://dev.to/rleddy/elliptic-curve-tlsv1-3-for-node-js-16mm).
+
+You can see above, that for the contact example, the tls field is as follows:
+
+```
+    "tls" : {
+        "server_key" : "keys/ec_key.pem",
+        "server_cert" : "keys/ec_crt.crt",
+        "client_cert" : "keys/cl_ec_crt.crt"
+    }
+```
+
+When you run the commands shown in the article with an empty **keys** directory, you will only get two keys.
+
+Here are the commands again:
+
+```
+$ openssl ecparam -name secp384r1 -genkey -out keys/ec_key.pem
+$ openssl req -new -x509 -key keys/ec_key.pem -sha256 -nodes -out keys/ec_crt.crt -days 365
+
+```
+
+After running these commands, there are just two files in the **keys** directory:
+
+* ec_key.pem
+* ec_crt.crt
+
+In the test directory, there is a client.js that publishes messages to the contact server. Here is the configuration found in the javascript code:
+
+```
+{
+    "port" : 5336,
+    "address" : "localhost",
+    "files_only" : false,
+    "output_dir" : "fail_over_persistence",
+    "output_file" : "./user_data.json",
+    "max_pending_messages" : false,
+    "file_shunting" : false,
+    "max_reconnect" : 24,
+    "reconnect_wait" : 5,
+    "attempt_reconnect" : true,
+    "tls" : {
+        "client_key" : "ckeys/ec_key.pem",
+        "client_cert" : "ckeys/ec_crt.crt",
+        "server_cert" : "ckeys/srv_ec_crt.crt"
+    }
+}
+```
+
+Notice that for the client, another directory **ckeys**, has been made, The client has its own .pem and .cert files  But, it refers to `ckeys/srv_ec_crt.crt`.  And, the server had these fields: `"client_cert" : "keys/cl_ec_crt.crt"`.
+
+Where did these files come from? Well... they are just copies.
+
+Here are \*nix copy commands that put the certs into the right directories:
+
+```
+$cp keys/ec_crt.crt ckeys/srv_ec_crt.crt
+$cp ckeys/ec_crt.crt keys/cl_ec_crt.crt
+``` 
+
+Sometimes its easy to forget this simple state of affairs. 
+
+Just keep in mind that you will want to copy srv_ec_crt.crt to all the key directories of clients.
 

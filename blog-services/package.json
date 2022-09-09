@@ -1,6 +1,6 @@
 {
   "name": "copious-endpoints",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "description": "Endpoint servers providing disk interface and pub/sub interfaces to supporting services, e.g search, counting, streaming, contacts, etc.",
   "main": "service.js",
   "directories": {
@@ -31,10 +31,10 @@
   "author": "R. Leddy",
   "license": "ISC",
   "dependencies": {
-    "categorical-handlers": "^0.3.7",
-    "ucwid": "^0.2.8"
+    "categorical-handlers": "^0.3.8",
+    "ucwid": "^0.2.9"
   },
   "devDependencies": {
-    "ava": "^3.15.0"
+    "ava": "^4.3.3"
   }
 }

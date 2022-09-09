@@ -7,12 +7,6 @@ const crypto = require('crypto')
 // connect to a relay service...
 // set by configuration (only one connection, will have two paths.)
 
-function faux_random_enough() {
-    let rr = Math.random()
-    rr = Math.floor(rr*1897271171)
-    return "dashing" + rr
-}
-
 function do_hash (text) {
     const hash = crypto.createHash('sha256');
     hash.update(text);
@@ -21,20 +15,7 @@ function do_hash (text) {
     return(ehash)
 }
 
-
 // -- -- -- --
-
-let g_type_to_producer = {}    // e.g a dashboard will produce blog entries.
-
-function map_entry_type_to_producer(entry_type) {
-    let producer_of_type = g_type_to_producer[entry_type]
-    if ( producer_of_type === undefined ) {
-        producer_of_type = "profile"
-    }
-    return producer_of_type
-}
-
-
 // -- -- -- --
 //
 class TransitionsContactEndpoint extends PersistenceCategory {
@@ -42,8 +23,12 @@ class TransitionsContactEndpoint extends PersistenceCategory {
     //
     constructor(conf) {
         super(conf)
+
         //
-        g_type_to_producer = conf.entry_types_to_producers
+        this.all_contacts = {}
+        this.entries_file = `${conf.contacts_directory}/${Date.now()}.json`
+        this.entries_sep = ""
+        this.app_handles_subscriptions = true
         //
         this.path = `${conf.address}:${conf.port}`
         this.client_name = this.path
@@ -51,7 +36,7 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         this.app_subscriptions_ok = true
         this.app_meta_universe = true
         // ---------------->>  topic, client_name, relayer  (when relayer is false, topics will not be written to self)
-        this.add_to_topic("contact",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
+        this.add_to_topic("publish-contact",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
         //
         this.topic_producer = this.topic_producer_user
         if ( conf.system_wide_topics ) {
@@ -59,8 +44,7 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         }
     }
 
-
-
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     async app_message_handler(msg_obj) {
         let op = msg_obj._tx_op
         let result = "OK"
@@ -160,10 +144,10 @@ class TransitionsContactEndpoint extends PersistenceCategory {
 
     // app_subscription_handler
     //  -- Handle state changes...
-    // this is the handler for the topics added directoy above in the constructor
+    // this is the handler for the topics added directory above in the constructor
     app_subscription_handler(topic,msg_obj) {
         //
-        if ( topic === 'contact' ) {
+        if ( topic === 'publish-contact' ) {
             msg_obj._tx_op = 'P'
         } else if ( topic === 'contact-update' ) {
             msg_obj._tx_op = 'U'
@@ -173,42 +157,15 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         //
         this.app_message_handler(msg_obj)           // run the handler (often gotten to by relay to endpoint messaging ... this is pub/sub pathway)
         //
-        if ( topic === 'contact' ) {
-            let op = 'F' // change one field
-            let field = 'published'
-            let value = msg_obj.published
-            this.user_action_keyfile(op,msg_obj,field,value)
+        if ( topic === 'publish-contact' ) {
+            let op = 'C' // change one field
+            let field = "ucwid"
+            this.user_action_keyfile(op,msg_obj,field,false)
         }
     }
 
     // ----
     application_data_update(u_obj,data) {
-        try {
-            let d_obj = JSON.parse(data)
-            //
-            let key_field = u_obj.key_field ?  u_obj.key_field : u_obj._transition_path
-            let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
-            if ( asset_info )  {
-                asset_info = asset_info.split('+')
-                let user_id = asset_info.pop()
-                d_obj.owner = user_id
-                d_obj.info = asset_info
-                d_obj.id = user_id
-                let path_key = d_obj.path_key
-                if ( path_key ) {
-                    d_obj[`which_${path_key}`] = faux_random_enough()  // a name for the application tab...
-                } else {
-                    d_obj.which_tab_name = faux_random_enough()
-                }
-                data = {
-                    "mime_type" : "application/json",
-                    "string" : JSON.stringify(d_obj)
-                }
-                data = JSON.stringify(data)
-            }
-        } catch (e) {
-            return(data)
-        }
         return(data)
     }
 
@@ -244,158 +201,43 @@ class TransitionsContactEndpoint extends PersistenceCategory {
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-    async get_entries(entries_file) {
-        try {
-            let entries_record =  await this.data_reader(entries_file)
-            entries_record = JSON.parse(entries_record.toString())
-            return entries_record    
-        } catch (e) {}
-        return false
-    }
-
     async put_entries(entries_file,entries_record) {
-        let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
-        await this.write_out_string(entries_file,entries_record_str,false)
+        let entries_record_str = this.entries_sep + JSON.stringify(entries_record) +'\n'    // STORE AS STRING
+        this.entries_sep = ','
+        await this.write_append_string(entries_file,entries_record_str,false)
         return entries_record_str
     }
 
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-    async get_entries_record(user_path,entry_type) {
-        let producer_of_type = map_entry_type_to_producer(entry_type)
-        let entries_file = user_path + `/${producer_of_type}.json`
-        try {
-            let entries_record = await this.get_entries(entries_file)
-            if ( entries_record ) return [entries_record, producer_of_type, entries_file]    
-        } catch (e) {}
-        return [false,false,false]
-    }
-
-    async write_entry_file(entries_file,entries_record,producer_of_type,user_id) {
-        let entries_record_str = await this.put_entries(entries_file,entries_record)
-        let topic = this.topic_producer(producer_of_type,user_id)
-        let pub_obj = {
-            "_id" : user_id
-        }
-        pub_obj[producer_of_type] = encodeURIComponent(entries_record_str)        
-        this.app_publish(topic,pub_obj)     // send the dashboard or profile back to DB closers to the UI client
-    }
-
-
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-
-    create_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
-        entry_obj.file_name = user_path
-        if ( entries_record.entries[entry_type] === undefined ) {
-            entries_record.entries[entry_type] = []
-        }
-        entries_record.entries[entry_type].push(entry_obj)
-    }
-
-
-    update_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
-        entry_obj.file_name = user_path
-        if ( entries_record.entries[entry_type] !== undefined ) {
-            let entry_list = entries_record.entries[entry_type]
-            for ( let i = 0; i < entry_list.length; i++ ) {
-                let entry = entry_list[i]
-                if ( entry._tracking == entry_obj._tracking ) {
-                    entry_list[i] = entry_obj               // EDITED change the right object == _id match (overwrite)
-                    break;
-                }
-            }
-        }
-    }
-
-
-    update_producer_entry_type_field(entry_obj,user_path,entries_record,entry_type,field) {
-        entry_obj.file_name = user_path
-        if ( entries_record.entries[entry_type] !== undefined ) {
-            let entry_list = entries_record.entries[entry_type]
-            for ( let i = 0; i < entry_list.length; i++ ) {
-                let entry = entry_list[i]
-                if ( entry._tracking == entry_obj._tracking ) {
-                    let value = entry_obj[field]
-                    entry[field] = value     // entry has been edited EDITED change value
-                    break;
-                }
-            }
-        }
-    }
-
-
-    delete_producer_entry_type(entry_obj,entries_record,entry_type) {
-        //
-        if ( entries_record.entries[entry_type] !== undefined ) {
-            let entry_list = entries_record.entries[entry_type]
-            let del_index = -1
-            for ( let i = 0; i < entry_list.length; i++ ) {
-                let entry = entry_list[i]
-                if ( entry._tracking == entry_obj._tracking ) {
-                    del_index = i
-                    break;
-                }
-            }
-            if ( del_index >= 0 ) {
-                entry_list.splice(del_index,1)      // entries have been edited EDITED delete
-            }
-        }
-        //
-    }
-
-
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
         //
-        let key_field = u_obj.key_field ? u_obj.key_field : u_obj._transition_path
-        let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
+        let asset_info = u_obj[field]   // dashboard+striking@pp.com  profile+striking@pp.com
         //
-        asset_info = asset_info.split('+')
         let user_path = this.user_directory
-        let user_id = asset_info.pop()
-        let entry_type = asset_info.pop()
-        let asset_file_base = asset_info.pop()
-        user_path += '/' + user_id
+        user_path += '/' + asset_info
         //
         switch ( op ) {
             case 'C' : {
+                let nowtime =  Date.now()
+                u_obj.when = nowtime
+                if ( this.all_contacts[asset_info] === undefined ) this.all_contacts[asset_info] = {}
+                let keyed_assets = this.all_contacts[asset_info]
+                keyed_assets[nowtime] = u_obj
                 //
-                let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
-                user_path += `/${entry_type}/${asset_file_base}.json`
-                //
-                this.create_producer_entry_type(u_obj,user_path,entries_record,entry_type)
-                //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
+                await this.put_entries(this.entries_file,u_obj)
                 break;
             }
             case 'U' : {    // update (read asset_file_base, change, write new)
-                //
-                let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
-                user_path += `/${entry_type}/${asset_file_base}.json`
-                //
-                this.update_producer_entry_type(u_obj,user_path,entries_record,entry_type)
-                //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
             }
             case 'F' : {        // change one field
-                //
-                let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
-                user_path += `/${entry_type}/${asset_file_base}.json`
-                //
-                this.update_producer_entry_type_field(u_obj,user_path,entries_record,entry_type,field)
-                //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
             }
             case 'D' : {
                 //
-                let [entries_record, producer_of_type, entries_file] = await this.get_entries_record(user_path,entry_type)
-                //
-                this.delete_producer_entry_type(u_obj,entries_record,entry_type)
-                //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
                 break;
             }
         }
