@@ -23,7 +23,6 @@ class TransitionsContactEndpoint extends PersistenceCategory {
     //
     constructor(conf) {
         super(conf)
-
         //
         this.all_contacts = {}
         this.entries_file = `${conf.contacts_directory}/${Date.now()}.json`
@@ -37,6 +36,7 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         this.app_meta_universe = true
         // ---------------->>  topic, client_name, relayer  (when relayer is false, topics will not be written to self)
         this.add_to_topic("publish-contact",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
+        this.add_to_topic("delete-contact",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
         //
         this.topic_producer = this.topic_producer_user
         if ( conf.system_wide_topics ) {
@@ -149,9 +149,7 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         //
         if ( topic === 'publish-contact' ) {
             msg_obj._tx_op = 'P'
-        } else if ( topic === 'contact-update' ) {
-            msg_obj._tx_op = 'U'
-        } else if ( topic === 'contact-delete' ) {
+        } else if ( topic === 'delete-contact' ) {
             msg_obj._tx_op = 'D'
         }
         //
@@ -159,6 +157,10 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         //
         if ( topic === 'publish-contact' ) {
             let op = 'C' // change one field
+            let field = "ucwid"
+            this.user_action_keyfile(op,msg_obj,field,false)
+        } else if (topic === 'delete-contact' ) {
+            let op = 'D // change one field
             let field = "ucwid"
             this.user_action_keyfile(op,msg_obj,field,false)
         }
@@ -220,7 +222,7 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         user_path += '/' + asset_info
         //
         switch ( op ) {
-            case 'C' : {
+            case 'C' : {   // add a contact to the ledger
                 let nowtime =  Date.now()
                 u_obj.when = nowtime
                 if ( this.all_contacts[asset_info] === undefined ) this.all_contacts[asset_info] = {}
@@ -230,13 +232,15 @@ class TransitionsContactEndpoint extends PersistenceCategory {
                 await this.put_entries(this.entries_file,u_obj)
                 break;
             }
-            case 'U' : {    // update (read asset_file_base, change, write new)
-                break;
-            }
-            case 'F' : {        // change one field
-                break;
-            }
-            case 'D' : {
+            case 'D' : {        // add a delete action to the ledger
+                let nowtime =  Date.now()
+                u_obj.deleted = nowtime
+                if ( this.all_contacts[asset_info] === undefined ) break
+                else {
+                    let keyed_assets = this.all_contacts[asset_info]
+                    keyed_assets[nowtime] = u_obj
+                    await this.put_entries(this.entries_file,u_obj)    
+                }
                 //
                 break;
             }
