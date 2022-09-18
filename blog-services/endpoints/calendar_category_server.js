@@ -1,7 +1,6 @@
 const {PersistenceCategory} = require("categorical-handlers")
 //
 const fs = require('fs')
-const crypto = require('crypto')
 
 
 // connect to a relay service...
@@ -16,7 +15,7 @@ class TransitionsContactEndpoint extends PersistenceCategory {
     constructor(conf) {
         super(conf)
         //
-        this.all_contacts = {}
+        this.all_months = {}
         this.entries_file = `${conf.contacts_directory}/${Date.now()}.json`
         this.entries_sep = ""
         this.app_handles_subscriptions = true
@@ -25,12 +24,12 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         this.path = `${conf.address}:${conf.port}`
         this.client_name = this.path
         //
-        //  meta_publication not used for contacts
+        //  meta_publication not used for calendars
         //
         this.app_subscriptions_ok = true
         // ---------------->>  topic, client_name, relayer  (when relayer is false, topics will not be written to self)
-        this.add_to_topic("publish-contact",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
-        this.add_to_topic("delete-contact",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
+        this.add_to_topic("publish-calendar",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
+        this.add_to_topic("delete-calendar",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
         //
         this.topic_producer = this.topic_producer_user
         if ( conf.system_wide_topics ) {
@@ -70,17 +69,17 @@ class TransitionsContactEndpoint extends PersistenceCategory {
     // this is the handler for the topics added directory above in the constructor  -- called post publication by endpoint in send_to_all
     app_subscription_handler(topic,msg_obj) {
         //
-        if ( topic === 'publish-contact' ) {
+        if ( topic === 'publish-calendar' ) {
             msg_obj._tx_op = 'P'
-        } else if ( topic === 'delete-contact' ) {
+        } else if ( topic === 'delete-calendar' ) {
             msg_obj._tx_op = 'U'
         }
         //
-        if ( topic === 'publish-contact' ) {
+        if ( topic === 'publish-calendar' ) {
             let op = 'C' // change one field
             let field = "ucwid"
             this.user_action_keyfile(op,msg_obj,field,false)
-        } else if (topic === 'delete-contact' ) {
+        } else if (topic === 'delete-calendar' ) {
             let op = 'D' // change one field
             let field = "ucwid"
             this.user_action_keyfile(op,msg_obj,field,false)
@@ -89,10 +88,10 @@ class TransitionsContactEndpoint extends PersistenceCategory {
 
 
     app_publication_pre_fan_response(topic,msg_obj,ignore) {
-        if ( topic === 'publish-contact' ) {
+        if ( topic === 'publish-calendar' ) {
             this.user_manage_date('C',msg_obj)
             this.app_generate_tracking(msg_obj)
-        } else if ( topic === 'delete-contact' ) {
+        } else if ( topic === 'delete-calendar' ) {
             this.user_manage_date('U',msg_obj) 
         }
     }
@@ -154,23 +153,31 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         //
         switch ( op ) {
             case 'C' : {   // add a contact to the ledger
-                let nowtime =  Date.now()
-                u_obj.when = nowtime
-                if ( this.all_contacts[asset_info] === undefined ) this.all_contacts[asset_info] = {}
-                let keyed_assets = this.all_contacts[asset_info]
-                keyed_assets[nowtime] = u_obj
+                let nowtime =  u_obj.start_time
+                if ( this.all_months[nowtime] === undefined ) this.all_months[nowtime] = u_obj
                 //
-                await this.put_entries(this.entries_file,u_obj)
+                await this.put_entries(this.entries_file,this.all_months)
+                break;
+            }
+            case 'U' : {   // add a contact to the ledger
+                let nowtime = u_obj.start_time
+                if ( this.all_months[nowtime] === undefined ) break;
+                else {
+                    this.all_months[nowtime] = u_obj
+                    await this.put_entries(this.entries_file,this.all_months)    
+                }
                 break;
             }
             case 'D' : {        // add a delete action to the ledger
-                let nowtime =  Date.now()
-                u_obj.deleted = nowtime
-                if ( this.all_contacts[asset_info] === undefined ) break
+                let nowtime =  u_obj.start_time
+                if ( this.all_months[nowtime] === undefined ) break
                 else {
-                    let keyed_assets = this.all_contacts[asset_info]
-                    keyed_assets[nowtime] = u_obj
-                    await this.put_entries(this.entries_file,u_obj)    
+                    let keyed_assets = this.all_months[nowtime]
+                    if ( keyed_assets ) {
+                        delete this.all_months[nowtime]
+                    }
+                    // need to remove -- ?? directories per file?
+                    await this.put_entries(this.entries_file,this.all_months)    
                 }
                 //
                 break;
@@ -184,7 +191,7 @@ class TransitionsContactEndpoint extends PersistenceCategory {
 // ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- -------
 
 
-let conf_file = 'contact-service.conf'
+let conf_file = 'calendar-service.conf'
 let conf_par = process.argv[2]
 if ( conf_par !== undefined ) {
     conf_file = conf_par
