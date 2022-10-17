@@ -1,15 +1,15 @@
 {
   "name": "copious-endpoints",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Endpoint servers providing disk interface and pub/sub interfaces to supporting services, e.g search, counting, streaming, contacts, etc.",
   "main": "service.js",
   "directories": {
     "endpoints": "endpoints"
   },
-  "bin" : {
-    "copious-user" : "./bin/endpoint-user.js",
-    "copious-contacts" : "./bin/endpoint-contacts.js",
-    "add-mini-links" : "./bin/add-mini-links.js"
+  "bin": {
+    "copious-user": "./bin/endpoint-user.js",
+    "copious-contacts": "./bin/endpoint-contacts.js",
+    "add-mini-links": "./bin/add-mini-links.js"
   },
   "scripts": {
     "test": "ava --verbose",
@@ -31,7 +31,10 @@
   "author": "R. Leddy",
   "license": "ISC",
   "dependencies": {
-    "categorical-handlers": "^0.3.8",
+    "categorical-handlers": "^0.3.9",
+    "event-days": "^0.1.7",
+    "message-relay-websocket": "^0.2.0",
+    "month-utils": "^0.8.1",
     "ucwid": "^0.2.9"
   },
   "devDependencies": {

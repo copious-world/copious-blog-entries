@@ -28,6 +28,8 @@ let endpoint_args = ["","",""]
 
 if ( (ml_type === "contact") || (ml_type === "contacts") ) {
     endpoint_args[0] = __dirname + '/../tools/add_contact_server.js'
+} else if ( (ml_type === "calendar") || (ml_type === "calendars") ) {
+    endpoint_args[0] = __dirname + '/../tools/add_calendar_server.js'
 } else if ( ml_type === "pesistence" ) {
     endpoint_args[0] = __dirname + '/../tools/add_link_server.js'
 }

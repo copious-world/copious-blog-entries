@@ -1,6 +1,18 @@
+//
 const {PersistenceCategory} = require("categorical-handlers")
+const {WSMessageRelayer} = require('message-relay-websocket')
 //
 const fs = require('fs')
+const cal_consts = require('../defs/calendar-constants')
+
+const month_utils = require('month-utils')
+const event_days = require('event-days')
+
+const MonthContainer = event_days.MonthContainer()
+
+
+const MINI_LINK_SERVER_ADD_TOPIC = "add-month"
+const MINI_LINK_SERVER_REMOVE_TOPIC = "remove-month"
 
 
 // connect to a relay service...
@@ -8,15 +20,48 @@ const fs = require('fs')
 
 // -- -- -- --
 // -- -- -- --
-//
-class TransitionsContactEndpoint extends PersistenceCategory {
 
-    //
+class MonthManagement extends PersistenceCategory {
+
     constructor(conf) {
         super(conf)
         //
         this.all_months = {}
-        this.entries_file = `${conf.contacts_directory}/${Date.now()}.json`
+    }
+
+    //
+    get_month_of_request(req) {
+        let start_time = month_utils.first_day_of_month_ts(req.start_time)
+        if ( this.all_months[start_time] === undefined ) {
+            this.all_months[start_time] = new MonthContainer(start_time)
+        }
+        return this.all_months[start_time]
+    }
+
+    //
+    get_agenda_of_request(req) {
+        let a_month = this.get_month_of_request(req)
+        if ( a_month ) {
+            let a_day = a_month.day_of(req.start_time)
+            let agenda = a_month.get_day_agenda(a_day)
+            return agenda ? agenda : false
+        }
+        return false
+    }
+
+}
+
+
+
+
+//
+class TransitionsContactEndpoint extends MonthManagement {
+    //
+    constructor(conf) {
+        super(conf)
+        //
+        this.asset_file = `${conf.assets_directory}/${Date.now()}.json`  // store the latest map
+        this.entries_file = `${conf.updating_records_directory}/${Date.now()}.json` // write to the mini-link-server dir
         this.entries_sep = ""
         this.app_handles_subscriptions = true
         this.app_can_block_and_respond = true
@@ -35,7 +80,13 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         if ( conf.system_wide_topics ) {
             this.topic_producer = this.topic_producer_system
         }
+        //
+        this.web_ws_proxy = new WSMessageRelayer(conf.ws_proxy)
+        this.web_ws_proxy.on('client-ready',() => {
+            this.web_socket_subscriptions()
+        })
     }
+
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     async app_message_handler(msg_obj) {
@@ -55,12 +106,25 @@ class TransitionsContactEndpoint extends PersistenceCategory {
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     // ----
-    app_generate_tracking(p_obj) {
+    app_generate_tracking(p_obj) {          // a universal start of month (GMT)
         if ( p_obj._tracking === undefined ) {
             p_obj._tracking = p_obj.ucwid + '-' + Date.now()
         }
         return p_obj._tracking
     }
+
+
+    publish_mini_link_server(topic,msg_obj) {
+        msg_obj.client_name = this.client_name
+        let pub = {
+            "data" : JSON.stringify(msg_obj),
+            "_tracking" : msg_obj._tracking,
+            "client_name" : this.client_name
+        }
+        this.app_publish_on_path(topic,this.path,pub)
+    }
+
+
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
@@ -79,10 +143,12 @@ class TransitionsContactEndpoint extends PersistenceCategory {
             let op = 'C' // change one field
             let field = "ucwid"
             this.user_action_keyfile(op,msg_obj,field,false)
+            this.publish_mini_link_server(MINI_LINK_SERVER_ADD_TOPIC,msg_obj)
         } else if (topic === 'delete-calendar' ) {
             let op = 'D' // change one field
             let field = "ucwid"
             this.user_action_keyfile(op,msg_obj,field,false)
+            this.publish_mini_link_server(MINI_LINK_SERVER_REMOVE_TOPIC,msg_obj)
         }
     }
 
@@ -134,9 +200,15 @@ class TransitionsContactEndpoint extends PersistenceCategory {
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     async put_entries(entries_file,entries_record) {
-        let entries_record_str = this.entries_sep + JSON.stringify(entries_record) +'\n'    // STORE AS STRING
-        this.entries_sep = ','
-        await this.write_append_string(entries_file,entries_record_str,false)
+        let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
+        await this.write_out_string(entries_file,entries_record_str,false)
+        return entries_record_str
+    }
+
+    async put_entries_array(entries_file,entries_record) {
+        let e_array = Object.keys(entries_record).map(ky => { return entries_record[ky] })
+        let entries_record_str = JSON.stringify(e_array)         // STORE AS STRING
+        await this.write_out_string(entries_file,entries_record_str,false)
         return entries_record_str
     }
 
@@ -144,6 +216,7 @@ class TransitionsContactEndpoint extends PersistenceCategory {
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
+    // changes go into the timeline ---
     async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
         //
         let asset_info = u_obj[field]   // dashboard+striking@pp.com  profile+striking@pp.com
@@ -156,7 +229,8 @@ class TransitionsContactEndpoint extends PersistenceCategory {
                 let nowtime =  u_obj.start_time
                 if ( this.all_months[nowtime] === undefined ) this.all_months[nowtime] = u_obj
                 //
-                await this.put_entries(this.entries_file,this.all_months)
+                await this.put_entries(this.asset_file,this.all_months)
+                await put_entries_array(this.entries_file,entries_record)
                 break;
             }
             case 'U' : {   // add a contact to the ledger
@@ -164,7 +238,8 @@ class TransitionsContactEndpoint extends PersistenceCategory {
                 if ( this.all_months[nowtime] === undefined ) break;
                 else {
                     this.all_months[nowtime] = u_obj
-                    await this.put_entries(this.entries_file,this.all_months)    
+                    await this.put_entries(this.asset_file,this.all_months)    
+                    await put_entries_array(this.entries_file,entries_record)
                 }
                 break;
             }
@@ -177,13 +252,81 @@ class TransitionsContactEndpoint extends PersistenceCategory {
                         delete this.all_months[nowtime]
                     }
                     // need to remove -- ?? directories per file?
-                    await this.put_entries(this.entries_file,this.all_months)    
+                    await this.put_entries(this.asset_file,this.all_months)    
+                    await put_entries_array(this.entries_file,entries_record)
                 }
                 //
                 break;
             }
         }
     }
+
+
+    // // ---- ---- ---- ---- ---- ---- ----
+    web_socket_subscriptions() {
+        let self = this
+        this.web_ws_proxy.subscribe(cal_consts.ACCEPT_EVENT_TOPIC,cal_consts.USER_CHAT_PATH,(message) => {
+            // what has to be done to the message?
+            let the_agenda = self.get_agenda_of_request(message)
+            let a_slot = message.slot
+            the_agenda.remove_slot(message.start_time)
+            the_agenda.add_slot(a_slot)
+            let the_month = self.get_month_of_request(message)
+            self.user_action_keyfile('U',the_month) 
+        })
+        this.web_ws_proxy.subscribe(cal_consts.SCHEDULER_ACCEPTED_TOPIC,cal_consts.USER_CHAT_PATH,(message) => {
+            // what has to be done to the message?
+            let the_agenda = self.get_agenda_of_request(message)
+            let a_slot = message.slot
+            the_agenda.remove_slot(message.start_time)
+            the_agenda.add_slot(a_slot)
+            let the_month = self.get_month_of_request(message)
+            self.user_action_keyfile('U',the_month) 
+        })
+        this.web_ws_proxy.subscribe(cal_consts.REJECT_EVENT_TOPIC,cal_consts.USER_CHAT_PATH,(message) => {
+            // what has to be done to the message?
+            let the_agenda = self.get_agenda_of_request(message)
+            the_agenda.remove_slot(message.start_time)
+            let the_month = self.get_month_of_request(message)
+            self.user_action_keyfile('D',the_month) 
+        })
+
+        // cal_consts.SUGGEST_CHANGE_EVENT_TOPIC  ... this might be captured for notification... but just needs to go between browsers
+
+        // emit cal_consts.NOTIFY_TIMELINE_CHANGE  ... this can be published after injesting a new timeline... it would not be captured by the server
+        // emit cal_consts.TIMELINE_UPDATE_READY   ...  this is the same idea... after the admin submits the change, browsers may be notified to load the new time line
+
+        this.web_ws_proxy.subscribe(cal_consts.REQUEST_EVENT_TOPIC,cal_consts.USER_CHAT_PATH,(message) => {
+            // what has to be done to the message?
+            let the_agenda = self.get_agenda_of_request(message)
+            let a_slot = message.slot
+            the_agenda.remove_slot(message.start_time)
+            the_agenda.add_slot(a_slot)
+            let the_month = self.get_month_of_request(message)
+            self.user_action_keyfile('C',the_month)   // create the request... put it into the timelien and then publish the change...
+        })
+
+        this.web_ws_proxy.subscribe(cal_consts.REQUEST_EVENT_CHANGE_TOPIC,cal_consts.USER_CHAT_PATH,(message) => {
+            // The user or admin wants to change the event but not cancel (long shorter different time)
+            // what has to be done to the message?
+            let the_agenda = self.get_agenda_of_request(message)
+            let a_slot = message.slot
+            the_agenda.remove_slot(message.start_time)
+            the_agenda.add_slot(a_slot)
+            let the_month = self.get_month_of_request(message)
+            self.user_action_keyfile('U',the_month)   // create the request... put it into the timelien and then publish the change...
+        })
+
+        this.web_ws_proxy.subscribe(cal_consts.REQUEST_EVENT_DROP_TOPIC,cal_consts.USER_CHAT_PATH,(message) => {
+            // what has to be done to the message?
+            let the_agenda = self.get_agenda_of_request(message)
+            the_agenda.remove_slot(message.start_time)
+            let the_month = self.get_month_of_request(message)
+            self.user_action_keyfile('D',the_month)   // create the request... put it into the timelien and then publish the change...
+        })
+
+    }
+
 }
 
 
