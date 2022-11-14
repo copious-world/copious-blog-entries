@@ -109,7 +109,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         this.app_meta_universe = true
         // ---------------->>  topic, client_name, relayer  (when relayer is false, topics will not be written to self)
         this.add_to_topic("command-publish",'self',false)           // allow the client (front end) to use the pub/sub pathway to send state changes
-        this.add_to_topic("command-recind",'self',false)
+        this.add_to_topic("command-rescind",'self',false)
         this.add_to_topic("command-delete",'self',false)
         this.add_to_topic("command-send",'self',false)
         //
@@ -121,7 +121,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
 
         this.counting_service_list = []
         if ( this.counting_service ) {
-            this.counting_service_lis.push(this.counting_service)
+            this.counting_service_list.push(this.counting_service)
         }
         //
         this.topic_producer = this.topic_producer_user

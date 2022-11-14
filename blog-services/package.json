@@ -9,6 +9,7 @@
   "bin": {
     "copious-user": "./bin/endpoint-user.js",
     "copious-contacts": "./bin/endpoint-contacts.js",
+    "copious-calendars": "./bin/endpoint-calendars.js",
     "add-mini-links": "./bin/add-mini-links.js"
   },
   "scripts": {

@@ -1,30 +1,12 @@
 //
 const {WSServeMessageEndpoint} = require('message-relay-websocket')
-
-
-
 const fs = require('fs')
 
 
 // connect to a relay service...
 // set by configuration (only one connection, will have two paths.)
 
-
-
-const USER_CHAT_PATH = 'calendar-owner-contact'
-//
-const SUGGEST_CHANGE_EVENT_TOPIC = 'owner-ask-event-calendar-change'
-const ACCEPT_EVENT_TOPIC = 'owner-accept-event-calendar'
-const SCHEDULER_ACCEPTED_TOPIC = 'owner-accept-event-calendar'
-const REJECT_EVENT_TOPIC = 'owner-drop-event-calendar'
-const NOTIFY_TIMELINE_CHANGE = 'owner-change-timeline-calendar'
-
-const TIMELINE_UPDATE_READY = 'timeline-update-available'
-//
-const REQUEST_EVENT_TOPIC = 'user-request-event-calendar'
-const REQUEST_EVENT_CHANGE_TOPIC = 'user-request-change-event-calendar'
-const REQUEST_EVENT_DROP_TOPIC = 'user-request-drop-event-calendar'
-//
+const cal_consts = require('../defs/calendar-constants')
 
 // -- -- -- --
 // -- -- -- --
@@ -48,17 +30,20 @@ class WSCalendarEndpoint extends WSServeMessageEndpoint {
         //
         this.app_subscriptions_ok = true
         // ---------------->>  topic, client_name, relayer  (when relayer is false, topics will not be written to self)
-        this.add_to_topic(SUGGEST_CHANGE_EVENT_TOPIC,'self',false)
-        this.add_to_topic(ACCEPT_EVENT_TOPIC,'self',false)
-        this.add_to_topic(SCHEDULER_ACCEPTED_TOPIC,'self',false)
-        this.add_to_topic(REJECT_EVENT_TOPIC,'self',false)
+        this.add_to_topic(cal_consts.SUGGEST_CHANGE_EVENT_TOPIC,'self',false)
+        this.add_to_topic(cal_consts.ACCEPT_EVENT_TOPIC,'self',false)
+        this.add_to_topic(cal_consts.SCHEDULER_ACCEPTED_TOPIC,'self',false)
+        this.add_to_topic(cal_consts.REJECT_EVENT_TOPIC,'self',false)
         //
-        this.add_to_topic(NOTIFY_TIMELINE_CHANGE,'self',false)
+        this.add_to_topic(cal_consts.NOTIFY_TIMELINE_CHANGE,'self',false)
         //
-        this.add_to_topic(TIMELINE_UPDATE_READY,'self',false)
-        this.add_to_topic(REQUEST_EVENT_TOPIC,'self',false)
-        this.add_to_topic(REQUEST_EVENT_CHANGE_TOPIC,'self',false)
-        this.add_to_topic(REQUEST_EVENT_DROP_TOPIC,'self',false)
+        this.add_to_topic(cal_consts.TIMELINE_UPDATE_READY,'self',false)
+        this.add_to_topic(cal_consts.REQUEST_EVENT_TOPIC,'self',false)
+        this.add_to_topic(cal_consts.REQUEST_EVENT_CHANGE_TOPIC,'self',false)
+        this.add_to_topic(cal_consts.REQUEST_EVENT_DROP_TOPIC,'self',false)
+
+        this.add_to_topic(cal_consts.APPRISE_NEW_MONTH_DATA,'self',false)
+
         //
         this.topic_producer = this.topic_producer_user
         if ( conf.system_wide_topics ) {
@@ -99,12 +84,12 @@ class WSCalendarEndpoint extends WSServeMessageEndpoint {
 
 
     app_publication_pre_fan_response(topic,msg_obj,ignore) {
-        if ( topic === REQUEST_EVENT_TOPIC ) {
+        if ( topic === cal_consts.REQUEST_EVENT_TOPIC ) {
             this.user_manage_date('C',msg_obj)
             this.app_generate_tracking(msg_obj)
-        } else if ( topic === REQUEST_EVENT_CHANGE_TOPIC ) {
+        } else if ( topic === cal_consts.REQUEST_EVENT_CHANGE_TOPIC ) {
             this.user_manage_date('U',msg_obj) 
-        } else if ( topic === REQUEST_EVENT_DROP_TOPIC ) {
+        } else if ( topic === cal_consts.REQUEST_EVENT_DROP_TOPIC ) {
             this.user_manage_date('D',msg_obj) 
         }
     }
@@ -144,40 +129,14 @@ class WSCalendarEndpoint extends WSServeMessageEndpoint {
 
     async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
         //
-        let asset_info = u_obj[field]   // dashboard+striking@pp.com  profile+striking@pp.com
-        //
-        let user_path = this.user_directory
-        user_path += '/' + asset_info
-        //
         switch ( op ) {
             case 'C' : {   // add a contact to the ledger
-                let nowtime =  u_obj.start_time
-                if ( this.all_months[nowtime] === undefined ) this.all_months[nowtime] = u_obj
-                //
-                await this.put_entries(this.entries_file,this.all_months)
                 break;
             }
             case 'U' : {   // add a contact to the ledger
-                let nowtime = u_obj.start_time
-                if ( this.all_months[nowtime] === undefined ) break;
-                else {
-                    this.all_months[nowtime] = u_obj
-                    await this.put_entries(this.entries_file,this.all_months)    
-                }
                 break;
             }
             case 'D' : {        // add a delete action to the ledger
-                let nowtime =  u_obj.start_time
-                if ( this.all_months[nowtime] === undefined ) break
-                else {
-                    let keyed_assets = this.all_months[nowtime]
-                    if ( keyed_assets ) {
-                        delete this.all_months[nowtime]
-                    }
-                    // need to remove -- ?? directories per file?
-                    await this.put_entries(this.entries_file,this.all_months)    
-                }
-                //
                 break;
             }
         }
