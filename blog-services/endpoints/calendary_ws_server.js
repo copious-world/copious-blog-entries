@@ -8,10 +8,52 @@ const fs = require('fs')
 
 const cal_consts = require('../defs/calendar-constants')
 
+
+class TimeManagedData extends WSServeMessageEndpoint {
+
+    constructor(conf) {
+        super(conf)
+        this.waiting_messages = {}
+        this.stored_message_path = conf.stored_message_file
+    }
+
+    // do this on command... this may happen every few days or so...
+    remove_old_messages(before_time) {
+        for ( let topic in this.waiting_messages ) {
+            let mlist = this.waiting_messages[topic]
+            while ( mlist.length ) {
+                let mobj_pair = mlist[0]
+                let tstamp = mobj_pair[0]
+                if ( tstamp < before_time ) {
+                    mlist.shift()
+                } else {
+                    break
+                }
+            }
+        }
+    }
+
+    serialize() {
+        try {
+            let output = JSON.stringify(this.waiting_messages)
+            fs.writeFileSync(this.stored_message_path,output)
+        } catch (e) {}
+    }
+
+    deserialize() {
+        try {
+            let data = fs.readFileSync(file_path)
+            let json = data.toString()
+            this.stored_message_path = JSON.parse(json)
+        } catch (e) {
+        }
+    }
+}
+
 // -- -- -- --
 // -- -- -- --
 //
-class WSCalendarEndpoint extends WSServeMessageEndpoint {
+class WSCalendarEndpoint extends TimeManagedData {
 
     //
     constructor(conf) {
@@ -49,8 +91,20 @@ class WSCalendarEndpoint extends WSServeMessageEndpoint {
         if ( conf.system_wide_topics ) {
             this.topic_producer = this.topic_producer_system
         }
+
+        this.restore_fields()
+
     }
 
+
+    shutdown() {
+        super.serialize()
+    }
+
+
+    restore_fields() {
+        super.deserialize()
+    }
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     async app_message_handler(msg_obj) {
@@ -82,7 +136,17 @@ class WSCalendarEndpoint extends WSServeMessageEndpoint {
         //
     }
 
+    // ----
+    async app_post_start_subscription(topic,client_name,relayer) {
+        if ( this.waiting_messages[topic] !== undefined ) {
+            for ( let mobj_pair of this.waiting_messages[topic] ) {
+                let msg_obj = mobj_pair[1]   // timestamp of entry is in 0
+                this.send_to_one(relayer,msg_obj)
+            }
+        }
+    }
 
+    // ----
     app_publication_pre_fan_response(topic,msg_obj,ignore) {
         if ( topic === cal_consts.REQUEST_EVENT_TOPIC ) {
             this.user_manage_date('C',msg_obj)
@@ -91,6 +155,13 @@ class WSCalendarEndpoint extends WSServeMessageEndpoint {
             this.user_manage_date('U',msg_obj) 
         } else if ( topic === cal_consts.REQUEST_EVENT_DROP_TOPIC ) {
             this.user_manage_date('D',msg_obj) 
+        }
+
+        if ( this.unknown_topic(topic) ) {
+            if ( this.waiting_messages[topic] === undefined ) {
+                this.waiting_messages[topic] = []
+            }
+            this.waiting_messages[topic].push([Date.now(),msg_obj])
         }
     }
 
@@ -166,7 +237,16 @@ let endpoint = conf
 
 console.log(`Contact Server: PORT: ${endpoint.port} ADDRESS: ${endpoint.address}`)
 
-new WSCalendarEndpoint(endpoint)
+let ws_endpoint = new WSCalendarEndpoint(endpoint)
+let hit_count = 0
+process.on('SIGINT',() => {
+    if ( hit_count ) {
+        process.exit(0)
+    }
+    ws_endpoint.shutdown()
+    hit_count++
+    process.exit(0)
+})
 
 // ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- -------
 // (end file)

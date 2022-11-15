@@ -16,31 +16,40 @@ const TimeSlot = EventDays.TimeSlot
 //
 
 
+// 11. Local time
+// 17. off line subscribers (send when connected... )
+
 // 1. request chat works with more months shown (!1/2)
 // ! 2. serialize and deserialize here (server)
 // 3. ws server can set some config flags to false
 // 4. owner page in human frame ! 1/3
-// 4.a. transitions application runs in context
-// 4.b. transitions application sends timeline defs to the category server (calendar)
+    // 4.a. transitions application runs in context
+    // 4.b. transitions application sends timeline defs to the category server (calendar)
 // !* 5. a way to launch the page independently in the frame (human page has some tooling tab)
 // 6. update security keys (maybe tuesday)
 // ! 7. human frame retains session key and does not give it out ... gets it from login .. then uses other path.
-// 7.a. may need a secure worker to provide session to new tabs containing the session key (otherwise surf within human frame)
+    // 7.a. may need a secure worker to provide session to new tabs containing the session key (otherwise surf within human frame)
+    // 7.b. security key comes from main page in most cases, OK. (if main page closes, then need seconday openers)
 // 8. mini link server (serve months fluidly) -- 
+    // 8.a two servers (one is for the owner only ... security check searches... via transition server)
 // 9. visitor identity checking  (if not requiring UCWID, then what?)
 // 10. time line generation... really just redefines the static page for the day planner from the app level
-// 10.note: OK to load time slots
-// 10.note(2): timeline is truly a background decision filter (need to check on the server side)
-// 11. Local time
+    // 10.note: OK to load time slots
+    // 10.note(2): timeline is truly a background decision filter (need to check on the server side)
+
 // 12. keep request chat from over running
-// 12.a one way is that the events are conflicting... (all colored slots are blocked from scheduling)
+    // 12.a one way is that the events are conflicting... (all colored slots are blocked from scheduling)
 // 13. owner event subscription is only possible if verified
 // 14. is a sliding window necessary? (show previous months - past activity confidence)
+// 15. encrypt publication in all cases ... will send key (identity verification)
+    // 15.a identity is not for everyone to see (only owner search can have identity) (two calendar servers?)
+// 16. Store list of personal notifications -- notification window is like everyone else's.
+    // 16.a local DB for just that ... (need to all delete)
 
 const MINI_LINK_SERVER_ADD_TOPIC = "add-month"
 const MINI_LINK_SERVER_REMOVE_TOPIC = "remove-month"
 const MINI_LINK_ADMIN_PATH = 'admin-calendars'
-
+const MINI_LINK_ADMIN_PUBLIC_PATH = 'admin-public-calendars'
 
 // connect to a relay service...
 // set by configuration (only one connection, will have two paths.)
@@ -240,7 +249,6 @@ class MonthManagement extends PersistenceCategory {
         this.all_months = classless
     }
 
-
 }
 
 
@@ -332,6 +340,8 @@ class TransitionsContactEndpoint extends MonthManagement {
     }
 
 
+    // Two mini link servers are connected... 
+    // one is for public searches, the second is for owner/admin allowing for responses to user_id....
     publish_mini_link_server(topic,msg_obj) {
         msg_obj.client_name = this.client_name
         let pub = {
@@ -340,8 +350,15 @@ class TransitionsContactEndpoint extends MonthManagement {
             "client_name" : this.client_name
         }
         this.app_publish_on_path(topic,MINI_LINK_ADMIN_PATH,pub)
+        delete msg_obj.user_id
+        pub = {
+            "data" : JSON.stringify(msg_obj),
+            "_tracking" : msg_obj._tracking,
+            "client_name" : this.client_name
+        }
+        this.app_publish_on_path(topic,MINI_LINK_ADMIN_PUBLIC_PATH,pub)
     }
-
+    
 
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
