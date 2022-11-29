@@ -16,12 +16,16 @@ const TimeSlot = EventDays.TimeSlot
 //
 
 
-// 11. Local time
-// 17. off line subscribers (send when connected... )
+// 11. Local time  -- solution
+    // 11.a. solution:   store the blocking schedule and just load it onto the client page.
+    // 11.b. timestamps are stored (these convert to local time... the display is done in terms of local time and there array is
+    //         determined by my local clock... ) {{ test on the timezone -- show the clock and see the schedule update for the selected
+    //         timezone. Need modulo index intot the display array... }}
+// 17. off line subscribers (send when connected... )  (!1/2)
 
 // 1. request chat works with more months shown (!1/2)
 // ! 2. serialize and deserialize here (server)
-// 3. ws server can set some config flags to false
+// 3. ws server can set some config flags to false !* ... some methods don't have to be implemented
 // 4. owner page in human frame ! 1/3
     // 4.a. transitions application runs in context
     // 4.b. transitions application sends timeline defs to the category server (calendar)
@@ -45,6 +49,9 @@ const TimeSlot = EventDays.TimeSlot
     // 15.a identity is not for everyone to see (only owner search can have identity) (two calendar servers?)
 // 16. Store list of personal notifications -- notification window is like everyone else's.
     // 16.a local DB for just that ... (need to all delete)
+
+// 18. Updates show up (1. request update...  2. accept or reject a change 3. If accepted change on user page )
+// 19. https://github.com/Bunlong/svelte-clock
 
 const MINI_LINK_SERVER_ADD_TOPIC = "add-month"
 const MINI_LINK_SERVER_REMOVE_TOPIC = "remove-month"

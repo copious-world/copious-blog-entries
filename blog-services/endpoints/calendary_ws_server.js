@@ -122,7 +122,13 @@ class WSCalendarEndpoint extends TimeManagedData {
     // ----
     app_generate_tracking(p_obj) {
         if ( p_obj._tracking === undefined ) {
-            p_obj._tracking = p_obj.ucwid + '-' + Date.now()
+            if (  p_obj.ucwid ) {
+                p_obj._tracking = p_obj.ucwid + '-' + Date.now()
+            } else if (  p_obj.user_id ) {
+                p_obj._tracking = p_obj.user_id + '-' + Date.now()
+            } else {
+                p_obj._tracking = `${random_enough()-${Date.now()}}`
+            }
         }
         return p_obj._tracking
     }
@@ -196,23 +202,7 @@ class WSCalendarEndpoint extends TimeManagedData {
 
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-
-    async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
-        //
-        switch ( op ) {
-            case 'C' : {   // add a contact to the ledger
-                break;
-            }
-            case 'U' : {   // add a contact to the ledger
-                break;
-            }
-            case 'D' : {        // add a delete action to the ledger
-                break;
-            }
-        }
-    }
-
+    // ---- don't implement user_action_keyfile ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
  
     //
     // app_publish(topic,msg_obj)
