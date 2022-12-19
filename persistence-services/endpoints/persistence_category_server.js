@@ -323,7 +323,7 @@ class TransitionsPersistenceEndpoint extends PersistenceCategory {
         //if ( !app_meta_universe ) return;
         //
         let exclusion_fields = msg_obj.exclusion_fields         // exclusion_fields shall be an array
-        if ( ((exclusion_fields !== undefined) && exclusion_fields ) || non_stream_media(msg_obj) ) {   // the client decides which fields to remove from metat data before pushing to discovery systems...
+        if ( ((exclusion_fields !== undefined) && exclusion_fields ) || non_stream_media(msg_obj) ) {   // the client decides which fields to remove from meta data before pushing to discovery systems...
             let asset_type = msg_obj.asset_type         //  asset -type
             let media_type = msg_obj.media_type
             let projection = Object.assign({},msg_obj)  
