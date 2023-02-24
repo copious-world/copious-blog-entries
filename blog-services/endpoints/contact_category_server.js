@@ -1,4 +1,5 @@
-const {PersistenceCategory} = require("categorical-handlers")
+//
+const {TransitionsODBEndpoint} = require("odb-services")
 //
 const fs = require('fs')
 const crypto = require('crypto')
@@ -10,7 +11,7 @@ const crypto = require('crypto')
 // -- -- -- --
 // -- -- -- --
 //
-class TransitionsContactEndpoint extends PersistenceCategory {
+class TransitionsContactEndpoint extends TransitionsODBEndpoint {
 
     //
     constructor(conf) {
@@ -102,35 +103,6 @@ class TransitionsContactEndpoint extends PersistenceCategory {
         return(data)
     }
 
-    // ---- user_manage_date
-    // ---- ---- ---- ----   always call this before writing the file... The parent class should be like this.
-    user_manage_date(op,u_obj) {
-        switch ( op ) {
-            case 'C' : {
-                u_obj.dates = {         // creating the object... perhaps this overwrites something. But, as far as these services go, this is where this starts
-                    "created" : Date.now(),
-                    "updated" : Date.now()
-                }
-                break;
-            }
-            case 'U' :
-            default: {  // until someone thinks of another default
-                if ( u_obj.dates === undefined ) {  /// really it should be defined by the time this gets here... but maybe someone dropped something in a directory
-                    u_obj.dates = {         // creating the object... perhaps this overwrites something. But, as far as these services go, this is where this starts
-                        "created" : Date.now(),
-                        "updated" : Date.now()
-                    }    
-                } else {
-                    u_obj.dates.updated = Date.now()
-                    if ( u_obj.dates.created === undefined ) {       // in the event that the object is messed up somehow
-                        u_obj.dates.created = Date.now()
-                    }
-                }
-                break;
-            }
-        }
-    }
-
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
@@ -148,9 +120,6 @@ class TransitionsContactEndpoint extends PersistenceCategory {
     async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
         //
         let asset_info = u_obj[field]   // dashboard+striking@pp.com  profile+striking@pp.com
-        //
-        let user_path = this.user_directory
-        user_path += '/' + asset_info
         //
         switch ( op ) {
             case 'C' : {   // add a contact to the ledger

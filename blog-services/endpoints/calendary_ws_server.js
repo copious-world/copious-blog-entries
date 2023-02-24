@@ -171,35 +171,6 @@ class WSCalendarEndpoint extends TimeManagedData {
         }
     }
 
-    // ---- user_manage_date
-    // ---- ---- ---- ----   always call this before writing the file... The parent class should be like this.
-    user_manage_date(op,u_obj) {
-        switch ( op ) {
-            case 'C' : {
-                u_obj.dates = {         // creating the object... perhaps this overwrites something. But, as far as these services go, this is where this starts
-                    "created" : Date.now(),
-                    "updated" : Date.now()
-                }
-                break;
-            }
-            case 'U' :
-            default: {  // until someone thinks of another default
-                if ( u_obj.dates === undefined ) {  /// really it should be defined by the time this gets here... but maybe someone dropped something in a directory
-                    u_obj.dates = {         // creating the object... perhaps this overwrites something. But, as far as these services go, this is where this starts
-                        "created" : Date.now(),
-                        "updated" : Date.now()
-                    }    
-                } else {
-                    u_obj.dates.updated = Date.now()
-                    if ( u_obj.dates.created === undefined ) {       // in the event that the object is messed up somehow
-                        u_obj.dates.created = Date.now()
-                    }
-                }
-                break;
-            }
-        }
-    }
-
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---
     // ---- don't implement user_action_keyfile ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
