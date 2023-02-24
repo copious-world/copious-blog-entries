@@ -127,7 +127,7 @@ class WSCalendarEndpoint extends TimeManagedData {
             } else if (  p_obj.user_id ) {
                 p_obj._tracking = p_obj.user_id + '-' + Date.now()
             } else {
-                p_obj._tracking = `${random_enough()-${Date.now()}}`
+                p_obj._tracking = `${random_enough()}-${Date.now()}}`
             }
         }
         return p_obj._tracking

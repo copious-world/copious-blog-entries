@@ -25,14 +25,18 @@ let endpoint_procs = conf.launch_endpoints
 /*
 "launch_endpoints" : {
     "odb_endpoint" : [ "endpoints/odb_category_server", "relay-service.conf", "free" ]
+    "odb_repo_endpoint" : [ "endpoints/odb_category_repo_server", "relay-service.conf", "free" ]
 }
 */
 
-let endpoint = "odb_endpoint" 
+
+let use_repoc = process.argv[2]
+
+let endpoint =  (use_repoc === "repo") ? "odb_repo_endpoint" : "odb_endpoint" 
 
 let endpoint_args = endpoint_procs[endpoint]
 let conf_index = endpoint_args.indexOf(model_file)
-if ( conf_index > 0 ) {
+if ( conf_index > 0 ) {     // make an array of arguments for the spawn call. Use defaults if necessary
     endpoint_args[conf_index] = conf_file ? conf_file : model_file
 }
 

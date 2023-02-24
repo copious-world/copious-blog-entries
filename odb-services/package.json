@@ -1,16 +1,14 @@
 {
-  "name": "copious-endpoints",
-  "version": "1.2.2",
-  "description": "Endpoint servers providing disk interface and pub/sub interfaces to supported services, e.g search, counting, streaming, contacts, etc.",
+  "name": "odb-services",
+  "version": "0.9.9",
+  "description": "Object DB Endpoint servers providing disk interface and pub/sub interfaces to supported services, e.g search, counting, streaming, contacts, etc.",
   "main": "service.js",
   "directories": {
     "endpoints": "endpoints"
   },
   "bin": {
-    "copious-user": "./bin/endpoint-user.js",
-    "copious-contacts": "./bin/endpoint-contacts.js",
-    "copious-calendars": "./bin/endpoint-calendars.js",
-    "add-mini-links": "./bin/add-mini-links.js"
+    "copious-odb": "./bin/endpoint-odb.js",
+    "copious-odb-repo": "./bin/endpoint-odb.js reop"
   },
   "scripts": {
     "test": "ava --verbose",

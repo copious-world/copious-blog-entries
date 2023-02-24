@@ -1,5 +1,5 @@
 //
-const {PersistenceCategory} = require("categorical-handlers")
+const {TransitionsODBEndpoint} = require("odb-services")
 const {WSMessageRelayer} = require('message-relay-websocket')
 //
 
@@ -195,7 +195,7 @@ function months_from_data(cls_mo) {
 //      On WS paths, ws_action_keyfile take in updates to the month agendas. 
 
 
-class MonthManagement extends PersistenceCategory {
+class MonthManagement extends TransitionsODBEndpoint {
 
     constructor(conf) {
         super(conf)
