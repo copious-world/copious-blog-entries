@@ -1,0 +1,38 @@
+
+
+// 11. Local time  -- solution
+    // 11.a. solution:   store the blocking schedule and just load it onto the client page.
+    // 11.b. timestamps are stored (these convert to local time... the display is done in terms of local time and there array is
+    //         determined by my local clock... ) {{ test on the timezone -- show the clock and see the schedule update for the selected
+    //         timezone. Need modulo index intot the display array... }}
+// 17. off line subscribers (send when connected... )  (!1/2)
+
+// 1. request chat works with more months shown (!1/2)
+// ! 2. serialize and deserialize here (server)
+// 3. ws server can set some config flags to false !* ... some methods don't have to be implemented
+// 4. owner page in human frame ! 1/3
+    // 4.a. transitions application runs in context
+    // 4.b. transitions application sends timeline defs to the category server (calendar)
+// !* 5. a way to launch the page independently in the frame (human page has some tooling tab)
+// 6. update security keys (maybe tuesday)
+// ! 7. human frame retains session key and does not give it out ... gets it from login .. then uses other path.
+    // 7.a. may need a secure worker to provide session to new tabs containing the session key (otherwise surf within human frame)
+    // 7.b. security key comes from main page in most cases, OK. (if main page closes, then need seconday openers)
+// 8. mini link server (serve months fluidly) -- 
+    // 8.a two servers (one is for the owner only ... security check searches... via transition server)
+// 9. visitor identity checking  (if not requiring UCWID, then what?)
+// 10. time line generation... really just redefines the static page for the day planner from the app level
+    // 10.note: OK to load time slots
+    // 10.note(2): timeline is truly a background decision filter (need to check on the server side)
+
+// 12. keep request chat from over running
+    // 12.a one way is that the events are conflicting... (all colored slots are blocked from scheduling)
+// 13. owner event subscription is only possible if verified
+// 14. is a sliding window necessary? (show previous months - past activity confidence)
+// 15. encrypt publication in all cases ... will send key (identity verification)
+    // 15.a identity is not for everyone to see (only owner search can have identity) (two calendar servers?)
+// 16. Store list of personal notifications -- notification window is like everyone else's.
+    // 16.a local DB for just that ... (need to all delete)
+
+// 18. Updates show up (1. request update...  2. accept or reject a change 3. If accepted change on user page )
+// 19. https://github.com/Bunlong/svelte-clock
