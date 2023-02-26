@@ -1,5 +1,5 @@
 //
-const {WSServeMessageEndpoint} = require('message-relay-websocket')
+const {TimeManagedData} = require('time-managed-data')
 const fs = require('fs')
 
 
@@ -8,47 +8,6 @@ const fs = require('fs')
 
 const cal_consts = require('../defs/calendar-constants')
 
-
-class TimeManagedData extends WSServeMessageEndpoint {
-
-    constructor(conf) {
-        super(conf)
-        this.waiting_messages = {}
-        this.stored_message_path = conf.stored_message_file
-    }
-
-    // do this on command... this may happen every few days or so...
-    remove_old_messages(before_time) {
-        for ( let topic in this.waiting_messages ) {
-            let mlist = this.waiting_messages[topic]
-            while ( mlist.length ) {
-                let mobj_pair = mlist[0]
-                let tstamp = mobj_pair[0]
-                if ( tstamp < before_time ) {
-                    mlist.shift()
-                } else {
-                    break
-                }
-            }
-        }
-    }
-
-    serialize() {
-        try {
-            let output = JSON.stringify(this.waiting_messages)
-            fs.writeFileSync(this.stored_message_path,output)
-        } catch (e) {}
-    }
-
-    deserialize() {
-        try {
-            let data = fs.readFileSync(file_path)
-            let json = data.toString()
-            this.stored_message_path = JSON.parse(json)
-        } catch (e) {
-        }
-    }
-}
 
 // -- -- -- --
 // -- -- -- --
@@ -59,79 +18,22 @@ class WSCalendarEndpoint extends TimeManagedData {
     constructor(conf) {
         super(conf)
         //
-        this.all_months = {}
-        this.entries_file = `${conf.contacts_directory}/${Date.now()}.json`
-        this.entries_sep = ""
-        this.app_handles_subscriptions = true
-        this.app_can_block_and_respond = true
-        //
-        this.path = `${conf.address}:${conf.port}`
-        this.client_name = this.path
         //
         //  meta_publication not used for calendars
         //
-        this.app_subscriptions_ok = true
         // ---------------->>  topic, client_name, relayer  (when relayer is false, topics will not be written to self)
         this.add_to_topic(cal_consts.SUGGEST_CHANGE_EVENT_TOPIC,'self',false)
         this.add_to_topic(cal_consts.ACCEPT_EVENT_TOPIC,'self',false)
         this.add_to_topic(cal_consts.SCHEDULER_ACCEPTED_TOPIC,'self',false)
         this.add_to_topic(cal_consts.REJECT_EVENT_TOPIC,'self',false)
         //
-        this.add_to_topic(cal_consts.NOTIFY_TIMELINE_CHANGE,'self',false)
-        //
-        this.add_to_topic(cal_consts.TIMELINE_UPDATE_READY,'self',false)
-        this.add_to_topic(cal_consts.REQUEST_EVENT_TOPIC,'self',false)
-        this.add_to_topic(cal_consts.REQUEST_EVENT_CHANGE_TOPIC,'self',false)
-        this.add_to_topic(cal_consts.REQUEST_EVENT_DROP_TOPIC,'self',false)
-
         this.add_to_topic(cal_consts.APPRISE_NEW_MONTH_DATA,'self',false)
+        this.add_to_topic(cal_consts.NOTIFY_TIMELINE_CHANGE,'self',false)
+        this.add_to_topic(cal_consts.TIMELINE_UPDATE_READY,'self',false)
 
-        //
-        this.topic_producer = this.topic_producer_user
-        if ( conf.system_wide_topics ) {
-            this.topic_producer = this.topic_producer_system
-        }
-
-        this.restore_fields()
 
     }
 
-
-    shutdown() {
-        super.serialize()
-    }
-
-
-    restore_fields() {
-        super.deserialize()
-    }
-
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-    async app_message_handler(msg_obj) {
-        let op = msg_obj._tx_op
-        let result = "OK"
-        //
-        return({ "status" : result, "explain" : `${op} performed`, "when" : Date.now() })
-    }
-
-
-
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-
-    // ----
-    app_generate_tracking(p_obj) {
-        if ( p_obj._tracking === undefined ) {
-            if (  p_obj.ucwid ) {
-                p_obj._tracking = p_obj.ucwid + '-' + Date.now()
-            } else if (  p_obj.user_id ) {
-                p_obj._tracking = p_obj.user_id + '-' + Date.now()
-            } else {
-                p_obj._tracking = `${random_enough()}-${Date.now()}}`
-            }
-        }
-        return p_obj._tracking
-    }
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
@@ -143,32 +45,10 @@ class WSCalendarEndpoint extends TimeManagedData {
     }
 
     // ----
-    async app_post_start_subscription(topic,client_name,relayer) {
-        if ( this.waiting_messages[topic] !== undefined ) {
-            for ( let mobj_pair of this.waiting_messages[topic] ) {
-                let msg_obj = mobj_pair[1]   // timestamp of entry is in 0
-                this.send_to_one(relayer,msg_obj)
-            }
-        }
-    }
-
-    // ----
     app_publication_pre_fan_response(topic,msg_obj,ignore) {
-        if ( topic === cal_consts.REQUEST_EVENT_TOPIC ) {
-            this.user_manage_date('C',msg_obj)
-            this.app_generate_tracking(msg_obj)
-        } else if ( topic === cal_consts.REQUEST_EVENT_CHANGE_TOPIC ) {
-            this.user_manage_date('U',msg_obj) 
-        } else if ( topic === cal_consts.REQUEST_EVENT_DROP_TOPIC ) {
-            this.user_manage_date('D',msg_obj) 
-        }
-
-        if ( this.unknown_topic(topic) ) {
-            if ( this.waiting_messages[topic] === undefined ) {
-                this.waiting_messages[topic] = []
-            }
-            this.waiting_messages[topic].push([Date.now(),msg_obj])
-        }
+        //
+        super.app_publication_pre_fan_response(topic,msg_obj,ignore)
+        //
     }
 
 

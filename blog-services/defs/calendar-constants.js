@@ -13,5 +13,5 @@ module.exports = {
     REQUEST_EVENT_CHANGE_TOPIC : 'user-request-change-event-calendar',
     REQUEST_EVENT_DROP_TOPIC : 'user-request-drop-event-calendar',
     //
-    APPRIZE_NEW_MONTH_DATA : 'month-update-available'
+    APPRISE_NEW_MONTH_DATA : 'month-update-available'
 }

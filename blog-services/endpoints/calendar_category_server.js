@@ -20,6 +20,16 @@ const MINI_LINK_ADMIN_PUBLIC_PATH = 'admin-public-calendars'
 // set by configuration (only one connection, will have two paths.)
 
 
+function do_hash (text) {
+    const hash = crypto.createHash('sha256');
+    hash.update(text);
+    let ehash = hash.digest('base64');
+    ehash = ehash.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    return(ehash)
+}
+
+
+
 class SafeStorageAgenda extends TimeSlotAgenda {
 
     // ----
@@ -93,16 +103,13 @@ class SafeStorageAgenda extends TimeSlotAgenda {
     }
 
 
+    // the require method interfaces (implemented with methods germaine to the application)
+    add_proposed_data(s_req) {
+        this.add_slot_request(s_req)
+    }
+
     alter_propsed_data(s_req) {
         this.alter_request(s_req)
-    }
-
-    drop_published_data(s_req) {
-        this.cancel_scheduled(s_req)
-    }
-
-    add_data(s_req) {
-        this.add_slot_request(s_req)
     }
 
     drop_proposed_data(s_req) {
@@ -112,6 +119,13 @@ class SafeStorageAgenda extends TimeSlotAgenda {
     publish_data(s_req) {
         this.schedule_request(s_req)
     }
+
+    drop_published_data(s_req) {
+        this.cancel_scheduled(s_req)
+    }
+
+
+
 
 }
 
@@ -225,6 +239,13 @@ class TransitionsEventEndpoint extends MonthManagement {
         this.app_publish_on_path(topic,MINI_LINK_ADMIN_PUBLIC_PATH,pub)
     }
     
+
+    generate_month_tracking(mo) {
+        // use date and hash
+        let str = `${mo.start_time}-${mo.day}-${mo.year}`
+        return do_hash(str)
+    }
+
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----

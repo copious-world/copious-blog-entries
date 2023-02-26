@@ -1,20 +1,13 @@
-//
-const {TransitionsODBEndpoint} = require("odb-services")
-const {WSMessageRelayer} = require('message-relay-websocket')
-//
-
-const {FileOperationsCache} = require('extra-file-class')
-const cal_consts = require('../defs/calendar-constants')
-
+// 
 const month_utils = require('month-utils')
 const {EventDays} = require('event-days')
+const MonthManagement = require('./month_managment')
+const TimeManagedWSProxy = require('./time_managed_ws_proxy')
+
 
 // ----
-const MonthContainer = EventDays.MonthContainer
-const TimeSlotAgenda = EventDays.TimeSlotAgenda
 const TimeSlot = EventDays.TimeSlot
 //
-
 
 const MINI_LINK_SERVER_ADD_TOPIC = "add-month"
 const MINI_LINK_SERVER_REMOVE_TOPIC = "remove-month"
@@ -22,141 +15,10 @@ const MINI_LINK_SERVER_REMOVE_TOPIC = "remove-month"
 // connect to a relay service...
 // set by configuration (only one connection, will have two paths.)
 
-
-
-function do_hash (text) {
-    const hash = crypto.createHash('sha256');
-    hash.update(text);
-    let ehash = hash.digest('base64');
-    ehash = ehash.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-    return(ehash)
-}
-
-
-
-// -- -- -- --
-
-
-class SafeStorageAgendaInterface extends TimeSlotAgenda {
-
-    // ----
-    constructor(day,index) {
-        super(day,index)
-    }
-
-    alter_proposed_data(s_req) {
-        throw new Error("class needs to implement .. SafeStorageAgendaInterface and pass it in configuration.agenda_class for TimeManagedDataEndpoint subclasses")
-    }
-
-    drop_published_data(s_req) {
-        throw new Error("class needs to implement .. SafeStorageAgendaInterface and pass it in configuration.agenda_class for TimeManagedDataEndpoint subclasses")
-    }
-
-    add_data(s_req) {
-        throw new Error("class needs to implement .. SafeStorageAgendaInterface and pass it in configuration.agenda_class for TimeManagedDataEndpoint subclasses")
-    }
-
-    drop_proposed_data(s_req) {
-        throw new Error("class needs to implement .. SafeStorageAgendaInterface and pass it in configuration.agenda_class for TimeManagedDataEndpoint subclasses")
-    }
-
-    publish_data(s_req) {
-        throw new Error("class needs to implement .. SafeStorageAgendaInterface and pass it in configuration.agenda_class for TimeManagedDataEndpoint subclasses")
-    }
-
-}
-
-
-
-
-// MonthManagement --
-//      Update and create call user_action_keyfile -- 
-//      MonthManagement takes in the slot definitions and stores them as month objects.
-//      On WS paths, ws_action_keyfile take in updates to the month agendas. 
-
-
-class MonthManagement extends TransitionsODBEndpoint {
-
-    constructor(conf) {
-        super(conf)
-        //
-        this.agenda_class = conf.agenda_class ? conf.agenda_class : SafeStorageAgendaInterface
-        //
-        this.all_months = {}
-        this.planned_changes = {}
-        //
-        this.fos = new FileOperationsCache(conf.time_archived_data)
-    }
-
-    //
-    get_month_of_request(req) {
-        let start_time = month_utils.first_day_of_month_ts(req.start_time)
-        if ( this.all_months[start_time] === undefined ) {
-            this.all_months[start_time] = new MonthContainer(start_time)
-        }
-        return this.all_months[start_time]
-    }
-
-    //
-    get_agenda_of_request(req) {
-        let a_month = this.get_month_of_request(req)
-        if ( a_month ) {
-            let a_day = a_month.day_of(req.start_time)
-            let agenda = a_month.get_day_agenda(a_day)
-            return agenda ? agenda : false
-        }
-        return false
-    }
-
-    deserialize_month_filler(agenda,src_agenda) {
-        throw new Error("deserialize_month_filler in MonthManagement in time_managed_category_server must be implemented by descendant class")
-    }
-
-    months_from_data(cls_mo,agenda_class) {
-        let start_time = cls_mo.start_time
-        let mo = new MonthContainer(start_time,agenda_class)
-        //
-        let mo_cal = mo.cal.map
-        for ( let aky in mo_cal ) {
-            let agenda = mo_cal[aky]
-            let src_agenda = cls_mo[aky]
-            this.deserialize_month_filler(agenda,src_agenda)
-        }
-        return mo
-    }
-
-    async serialize(file_path) {
-        //
-        let storable = {
-            "all_months" : this.all_months,
-            "planned_changes" : this.planned_changes
-        }
-        //
-        await this.fos.output_json(file_path,storable)
-    }
-
-    async deserialize(file_path) {
-        let storable = await this.fos.load_json_at_path(file_path)
-        if ( storable ) {
-            this.planned_changes = storable.planned_changes
-            let classless = storable.all_months
-            for ( let cls_mo_ky in classless ) {
-                let cls_mo = classless[cls_mo_ky]
-                classless[cls_mo_ky] = this.months_from_data(cls_mo,this.agenda_class)
-
-            }
-            this.all_months = classless    
-        }
-    }
-
-}
-
-
-
 // Serializing collection in memory as a collection 
 // rather than serializing each object. 
 //
-class TimeManagedDataEndpoint extends MonthManagement {
+class TimeManagedDataEndpoint extends TimeManagedWSProxy {
     //
     constructor(conf) {
         super(conf)
@@ -182,16 +44,54 @@ class TimeManagedDataEndpoint extends MonthManagement {
             this.topic_producer = this.topic_producer_system
         }
         //
-        this.web_ws_proxy = new WSMessageRelayer(conf.ws_proxy)
-        this.web_ws_proxy.on('client-ready',() => {
-            this.web_socket_subscriptions()
-        })
-
         this.conf = conf
-
+        //
+        this.setup_time_element(conf)
+        //
         this.initalize(conf.slot_backup)
     }
 
+    setup_time_element(conf) {
+        let TimeClass = MonthManagement
+        if ( conf.time_element ) {
+            TimeClass = require(conf.time_element)
+        }
+        this.time_element = new TimeClass(conf)
+    }
+
+    // // ---- ---- ---- ---- ---- ---- ----
+
+    // descendant implements  TimeManagedWSProxy
+
+    get_agenda_of_request(req) {
+        if ( this.time_element )  {
+            return this.time_element.get_agenda_of_request(req)
+        }
+        return false
+    }
+
+    get_publishable(reg) {
+        if ( this.time_element )  {
+            return this.time_element.get_publishable(req)
+        }
+        return false
+    }
+
+    handle_no_date_data(message) {
+        if ( this.time_element ) this.time_element.handle_no_date_data(topic,message)
+    }
+
+    handle_inoperable(topic,message) {
+        if ( this.time_element ) this.time_element.handle_inoperable(topic,message)
+    }
+
+    ws_publisher(publishable) {
+        if ( this.time_element ) {
+            let [topic,message,pub_content] = this.time_element.ws_publisher(publishable)
+            this.web_ws_proxy.publish(topic,cal_consts.USER_CHAT_PATH,message)
+            this.publish_mini_link_server(MINI_LINK_SERVER_ADD_TOPIC,pub_content)
+        }
+    }
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
@@ -202,15 +102,35 @@ class TimeManagedDataEndpoint extends MonthManagement {
     }
 
     shutdown() {
-        this.deserialize(this.conf.slot_backup)
+        this.serialize(this.conf.slot_backup)
     }
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     make_path(msg_obj) {  // descendants have special cases
         return "./" + msg_obj._id
     }
 
 
+
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
+
+    async serialize(file_path) {
+        if ( this.time_element ) {
+            await this.time_element.serialize(file_path)
+        }
+    }
+
+
+    async deserialize(file_path) {
+        if ( this.time_element ) {
+            await this.time_element.deserialize(file_path)
+        }
+    }
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
     async app_message_handler(msg_obj) {
         let op = msg_obj._tx_op
         let result = "OK"
@@ -234,22 +154,6 @@ class TimeManagedDataEndpoint extends MonthManagement {
         }
         return p_obj._tracking
     }
-
-
-    generate_month_tracking(mo) {
-        // use date and hash
-        let str = `${mo.start_time}-${mo.day}-${mo.year}`
-        return do_hash(str)
-    }
-
-
-    // Two mini link servers are connected... 
-    // one is for public searches, the second is for owner/admin allowing for responses to user_id....
-    publish_mini_link_server(topic,msg_obj) {
-        // admin pulication -- may not be in every type of application
-    }
-    
-
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
@@ -277,7 +181,6 @@ class TimeManagedDataEndpoint extends MonthManagement {
         }
     }
 
-
     app_publication_pre_fan_response(topic,msg_obj,ignore) {
         if ( topic === 'publish-calendar' ) {
             this.user_manage_date('C',msg_obj)
@@ -291,7 +194,6 @@ class TimeManagedDataEndpoint extends MonthManagement {
     application_data_update(u_obj,data) {
         return(data)
     }
-
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
@@ -307,6 +209,8 @@ class TimeManagedDataEndpoint extends MonthManagement {
         await this.write_out_string(entries_file,entries_record_str,false)
         return entries_record_str
     }
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     slot_from_descr(slt) {
         //
@@ -325,9 +229,7 @@ class TimeManagedDataEndpoint extends MonthManagement {
         //
         return slot
     }
-    
-    
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---
+
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     generate_revised_months(mo_start,max_end,t_slots) {
@@ -347,7 +249,7 @@ class TimeManagedDataEndpoint extends MonthManagement {
             case 'C' : {   // add a item to the ledger
 
                 let min_start = u_obj.start_all_time
-                let max_end = u_obj.end_all_time
+                let max_end = u_obj.end_all_time ? u_obj.end_all_time : Infinity
 
                 let mo_start = month_utils.first_day_of_month_ts(min_start)
                 //
@@ -377,54 +279,6 @@ class TimeManagedDataEndpoint extends MonthManagement {
         }
     }
 
-
-    ws_publish_month(a_mo) {
-        //
-        let message = {
-            "start_time" : a_mo.start_time,
-            "year" : a_mo.year,
-            "month" : a_mo.month
-        }
-        //
-        this.web_ws_proxy.publish(cal_consts.APPRISE_NEW_MONTH_DATA,cal_consts.USER_CHAT_PATH,message)
-        this.publish_mini_link_server(MINI_LINK_SERVER_ADD_TOPIC,a_mo)
-    }
-
-
-    add_planned_change(req) {
-        this.planned_changes[req.begin_at] = req
-    }
-
-    ws_subscribe_and_handler(topic,agenda_op) {
-        let self = this
-        this.web_ws_proxy.subscribe(topic,cal_consts.USER_CHAT_PATH,(message) => {
-            let the_agenda = self.get_agenda_of_request(message)
-            let slot_req = message.slot_req
-            if ( the_agenda && slot_req && agenda_op(the_agenda,slot_req) ) {
-                let the_month = self.get_month_of_request(message)
-                self.ws_publish_month(the_month)
-            } else {
-                this.add_planned_change(slot_req)
-            }
-        })
-    }
-
-    // // ---- ---- ---- ---- ---- ---- ----
-    web_socket_subscriptions() {
-        //
-        this.ws_subscribe_and_handler(cal_consts.ACCEPT_EVENT_TOPIC,(the_agenda,slot_req) => { return the_agenda.publish_data(slot_req) })
-        this.ws_subscribe_and_handler(cal_consts.SCHEDULER_ACCEPTED_TOPIC,(the_agenda,slot_req) => { return the_agenda.publish_data(slot_req) })
-        //
-        this.ws_subscribe_and_handler(cal_consts.REJECT_DATA_TOPIC,(the_agenda,slot_req) => { return the_agenda.drop_proposed_data(slot_req) })
-        this.ws_subscribe_and_handler(cal_consts.ADD_DATA_EVENT_TOPIC,(the_agenda,slot_req) => { return the_agenda.add_data(slot_req) })
-        this.ws_subscribe_and_handler(cal_consts.DATA_EVENT_CHANGE_TOPIC,(the_agenda,slot_req) => { return the_agenda.alter_proposed_data(slot_req) })
-        this.ws_subscribe_and_handler(cal_consts.DATA_EVENT_DROP_TOPIC,(the_agenda,slot_req) => { return the_agenda.drop_published_data(slot_req) })
-        //
-    }
-
 }
 
-
 module.exports = TimeManagedDataEndpoint
-module.exports.SafeStorageAgendaInterface = SafeStorageAgendaInterface
-

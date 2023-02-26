@@ -46,7 +46,6 @@ class TimeManagedMessageQueue extends WSServeMessageEndpoint {
         this.waiting_messages = await this.fos.load_json_at_path(this.stored_message_path)
     }
 
-
 }
 
 // -- -- -- --
@@ -58,7 +57,6 @@ class TimeManagedData extends TimeManagedMessageQueue {
     constructor(conf) {
         super(conf)
         //
-        this.all_months = {}
         this.entries_file = `${conf.contacts_directory}/${Date.now()}.json`
         this.entries_sep = ""
         this.app_handles_subscriptions = true
@@ -74,18 +72,8 @@ class TimeManagedData extends TimeManagedMessageQueue {
         this.add_to_topic(cal_consts.ADD_DATA_EVENT_TOPIC,'self',false)
         this.add_to_topic(cal_consts.DATA_EVENT_CHANGE_TOPIC,'self',false)
         this.add_to_topic(cal_consts.DATA_EVENT_DROP_TOPIC,'self',false)
-        this.add_to_topic(cal_consts.APPRISE_NEW_MONTH_DATA,'self',false)
+        this.add_to_topic(cal_consts.REJECT_DATA_TOPIC,'self',false)
         //
-
-        // descedants should an in topics for the type of data and conversation they manage
-
-        //
-        this.topic_producer = this.topic_producer_user
-        if ( conf.system_wide_topics ) {
-            this.topic_producer = this.topic_producer_system
-        }
-
-        this.restore_fields()
 
     }
 
@@ -150,6 +138,11 @@ class TimeManagedData extends TimeManagedMessageQueue {
 
     // ----
     app_publication_pre_fan_response(topic,msg_obj,ignore) {
+
+        // blocking can happen --- check here for connectivity with a session....
+        // check for offensive content
+        // return true to block
+
         if ( topic === cal_consts.ADD_DATA_EVENT_TOPIC ) {           // manage date and tracking. for CRUD
             this.user_manage_date('C',msg_obj)
             this.app_generate_tracking(msg_obj)
@@ -166,6 +159,8 @@ class TimeManagedData extends TimeManagedMessageQueue {
             }
             this.waiting_messages[topic].push([Date.now(),msg_obj])
         }
+
+        return false  // return false to keep from blocking
     }
 
 
