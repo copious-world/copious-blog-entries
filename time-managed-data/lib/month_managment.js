@@ -23,14 +23,42 @@ class MonthManagement {
         this.agenda_class = conf.agenda_class ? conf.agenda_class : SafeStorageAgendaInterface
         //
         this.all_months = {}
-        this.planned_changes = {}
         //
         this.fos = new FileOperationsCache(conf.time_archived_data)
     }
 
 
+
+    // callouts wrapped by calling class
+
+    async serialize(file_path,storable) {
+        //
+        if ( file_path === undefined ) return false
+        if ( storable === undefined ) return false
+        storable.all_months = this.all_months
+        //
+        await this.fos.output_json(file_path,storable)
+    }
+
+    async deserialize(file_path) {
+        let storable = await this.fos.load_json_at_path(file_path)
+        if ( storable ) {
+            let classless = storable.all_months
+            for ( let cls_mo_ky in classless ) {
+                let cls_mo = classless[cls_mo_ky]
+                classless[cls_mo_ky] = this.months_from_data(cls_mo,this.agenda_class)
+
+            }
+            this.all_months = classless
+            return storable
+        }
+        return false
+    }
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
     add_planned_change(req) {
-        this.planned_changes[req.begin_at] = req
+        // implement in descendant
     }
 
 
@@ -71,7 +99,7 @@ class MonthManagement {
     }
 
     handle_inoperable(topic,req) {
-        this.add_planned_change(req)
+        // handle in descendant
     }
 
     handle_no_date_data(message) {
@@ -95,33 +123,6 @@ class MonthManagement {
             this.deserialize_month_filler(agenda,src_agenda)
         }
         return mo
-    }
-
-
-    // callouts wrapped by calling class
-
-    async serialize(file_path) {
-        //
-        let storable = {
-            "all_months" : this.all_months,
-            "planned_changes" : this.planned_changes
-        }
-        //
-        await this.fos.output_json(file_path,storable)
-    }
-
-    async deserialize(file_path) {
-        let storable = await this.fos.load_json_at_path(file_path)
-        if ( storable ) {
-            this.planned_changes = storable.planned_changes
-            let classless = storable.all_months
-            for ( let cls_mo_ky in classless ) {
-                let cls_mo = classless[cls_mo_ky]
-                classless[cls_mo_ky] = this.months_from_data(cls_mo,this.agenda_class)
-
-            }
-            this.all_months = classless    
-        }
     }
 
 }

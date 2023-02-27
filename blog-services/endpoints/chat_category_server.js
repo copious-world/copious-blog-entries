@@ -3,7 +3,7 @@ const {TimeManagedDataEndpoint,SafeStorageAgendaInterface,MonthManagement} = req
 //
 
 const fs = require('fs')
-const cal_consts = require('../defs/calendar-constants')
+const chat_consts = require('../defs/chat-constants')
 
 const month_utils = require('month-utils')
 const {EventDays} = require('event-days')
@@ -29,14 +29,12 @@ function do_hash (text) {
 
 
 
-class SafeStorageAgenda extends SafeStorageAgendaInterface {
+class ChatStorageAgenda extends SafeStorageAgendaInterface {
 
     // ----
     constructor(day,index) {
         super(day,index)
-        //
-        this.requested = {}     // For the event request system, there are two stages... request first
-        this.scheduled = {}     // then after approval, it may be moved into the scheduled list
+        this.flagged = {}   // possibly keeps record of chat entries that are not wanted
     }
 
     // ----
@@ -48,80 +46,54 @@ class SafeStorageAgenda extends SafeStorageAgendaInterface {
     // so, instead of searching for the slot, it will add it.
     // if there are conflicts, no calendar update will be offered to the public
     //
-    add_slot_request(s_req) {
-        if ( s_req.topic === cal_consts.ADD_DATA_EVENT_TOPIC ) {
+
+
+    // the require method interfaces (implemented with methods germaine to the application)
+    // ----
+    add_proposed_data(s_req) {
+        if ( s_req.topic === chat_consts.ADD_DATA_EVENT_TOPIC ) {
+            if ( s_req.when ) {
+                s_req.begin_at = s_req.when
+                s_req.end_at = s_req.when // may put in delta, forcing spacing between comments
+            }
             let cat_slot = this.add_slot(s_req)  // get the conflicts
-            if ( !(cat_slot) ) {
-                if ( cat_slot.use === s_req.use ) {
-                    this.requested[s_req.begin_at] = s_req
-                    return true
-                }
+            if ( !(cat_slot) ) {  // no conflic
+                return true
             }
         }
         return false
     }
 
-    schedule_request(s_req) {
-        let req = this.requested[s_req.begin_at]
-        if ( req ) {
-            delete this.requested[s_req.begin_at]
-            this.scheduled[req.begin_at] = s_req
-            return true
-        }
-        return false
-    }
-
-    drop_request(s_req) {
-        let req = this.requested[s_req.begin_at]
-        if ( req ) {
-            delete this.requested[s_req.begin_at]
-            return true
-        }
-        return false
-    }
-
-    cancel_scheduled(s_req) {
-        let req = this.scheduled[s_req.begin_at]
-        if ( req ) {
-            delete this.scheduled[s_req.begin_at]
-            return true
-        }
-        return false
-    }
-
-    alter_request(s_req) {
-        let req = this.requested[s_req.begin_at]
-        if ( req ) {
-          for ( let ky in s_req ) {
-            req[ky] = s_req[ky]
-          }
-          return true
-        }
-        return false
-    }
-
-    // the require method interfaces (implemented with methods germaine to the application)
-    add_proposed_data(s_req) {
-        return this.add_slot_request(s_req)
-    }
-
+    // ----
     alter_proposed_data(s_req) {
-        return this.alter_request(s_req)
+        return false
     }
 
+    // ----
     drop_proposed_data(s_req) {
-        return this.drop_request(s_req)
+        this.remove_slot(s_req)     // should have begin_at
+        return true                 // if it wasn't there, it's still true
     }
 
+    // ----
     publish_data(s_req) {
-        return this.schedule_request(s_req)
+        let ts = s_req.begin_at
+        let slot = this.find_slot(ts)
+        return (slot !== false)
     }
 
+    // ----
     drop_published_data(s_req) {
-        return this.cancel_scheduled(s_req)
+        this.remove_slot(s_req)     // should have begin_at
+        this.flagged[s_req.begin_at] = s_req
+        return true                 // if it wasn't there, it's still true
     }
+
 
 }
+
+
+
 
 
 // MonthManagement --
@@ -134,54 +106,45 @@ class AppMonthManagement extends MonthManagement {
 
     constructor(conf) {
         super(conf)
-        this.planned_changes = {}
     }
 
-    // callouts wrapped by calling class
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     async serialize(file_path) {
-        let storable = {
-            "planned_changes" : this.planned_changes    // implemented for this class
-        }
+        let storable = {}  // adding nothing on this level
         await super.serialize(file_path,storable)
     }
 
     async deserialize(file_path) {
-        let storable = await super.deserialize(file_path)
-        if ( storable ) {
-            this.planned_changes = storable.planned_changes
-        }
+        let storable = await super.deserialize(file_path)       // months only
         return storable
     }
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-    add_planned_change(req) {
-        this.planned_changes[req.begin_at] = req
-    }
+
 
     // hanlders for time managment ws proxy
     // ---------------------------------------------------------------------
 
-    handle_inoperable(topic,req) {
-        this.add_planned_change(req)
+    handle_inoperable(topic,s_req) {
+        let ag = this.get_day_agenda(s_req.index)
+        if ( ag ) {
+            ag.drop_published_data(s_req)
+        }
     }
 
     handle_no_date_data(message) {
         // ???
     }
 
-    ///
-
     deserialize_month_filler(agenda,src_agenda) {
         //
-        for ( let rky in agenda.requested ) {
-            let rq = agenda.requested[rky]
-            src_agenda.add_slot_request(rq)
-        }
-        //
-        for ( let sky in agenda.scheduled ) {
-            let rq = agenda.scheduled[sky]
+        let prevs = Object.assign({},agenda.all_day)
+        agenda.clear()
+        for ( let rky in prevs ) {
+            let rq = prevs[rky]
             src_agenda.add_slot_request(rq)
         }
         //
@@ -196,24 +159,12 @@ class AppMonthManagement extends MonthManagement {
     "slot_name" : "",
     "start_day" : "9/29",
     "end_day"  : "10/29",
-    "description" : "This is a test of tests",
+    "message" : "This is a test of tests",  // the chat message....  was description in calendar and other asset publishers
     //
     "start_time"  : 0,
     "end_time" : 0,
     "begin_at" : 0,
-    "end_at" : 0,
-    "pattern" : {
-        "sunday" :false,
-        "monday" :false,
-        "tuesday" :false,
-        "wednesday" :false,
-        "thursday" :false,
-        "friday" :false,
-        "staturday" :false
-    },
-    "activity" : USE_AS_OPEN,
-    "allow_in_person" : false,
-    "allow_zoom" : false
+    "end_at" : 0
 }
 */
 
@@ -225,7 +176,7 @@ class TransitionsEventEndpoint extends TimeManagedDataEndpoint {
     //
     constructor(conf) {
 
-        conf.agenda_class = SafeStorageAgenda
+        conf.agenda_class = ChatStorageAgenda
         conf.time_element = AppMonthManagement
 
         super(conf)  // handles much of the initizization
@@ -272,9 +223,6 @@ class TransitionsEventEndpoint extends TimeManagedDataEndpoint {
         return do_hash(str)
     }
 
-
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
 
 }

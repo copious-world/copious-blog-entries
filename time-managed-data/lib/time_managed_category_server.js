@@ -54,9 +54,28 @@ class TimeManagedDataEndpoint extends TimeManagedWSProxy {
     setup_time_element(conf) {
         let TimeClass = MonthManagement
         if ( conf.time_element ) {
-            TimeClass = require(conf.time_element)
+            if ( typeof conf.time_element === 'string' ) {
+                TimeClass = require(conf.time_element)
+            } else if ( typeof conf.time_element === 'function' ) {
+                TimeClass = conf.time_element
+            }
         }
         this.time_element = new TimeClass(conf)
+    }
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
+    async serialize(file_path) {
+        if ( this.time_element ) {
+            await this.time_element.serialize(file_path)
+        }
+    }
+
+
+    async deserialize(file_path) {
+        if ( this.time_element ) {
+            await this.time_element.deserialize(file_path)
+        }
     }
 
     // // ---- ---- ---- ---- ---- ---- ----
@@ -111,23 +130,6 @@ class TimeManagedDataEndpoint extends TimeManagedWSProxy {
         return "./" + msg_obj._id
     }
 
-
-
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-
-
-    async serialize(file_path) {
-        if ( this.time_element ) {
-            await this.time_element.serialize(file_path)
-        }
-    }
-
-
-    async deserialize(file_path) {
-        if ( this.time_element ) {
-            await this.time_element.deserialize(file_path)
-        }
-    }
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
@@ -233,9 +235,38 @@ class TimeManagedDataEndpoint extends TimeManagedWSProxy {
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     generate_revised_months(mo_start,max_end,t_slots) {
-        return this.all_months          // really stupid default
+        //
+        let revised_months = {}
+        while ( mo_start < max_end ) {
+            let mo = new MonthContainer(mo_start,this.agenda_class)
+            mo._tracking = this.generate_month_tracking(mo)
+            revised_months[mo_start] = mo
+            for ( let slt of t_slots ) {
+                mo.add_time_slot(slt)
+            }
+            mo_start = month_utils.first_day_of_next_month_ts(mo_start)
+        }
+        //
+        for ( let ky in this.all_months ) {
+            let prev_mo = this.all_months[ky]
+            let new_mo = revised_months[ky]
+            if ( new_mo === undefined ) {
+                revised_months[ky] = prev_mo
+            } else {
+                for ( let i = 0; i < 31; i++ ) {
+                    let ag = prev_mo.get_day_agenda(i)
+                    if ( ag ) {
+                        new_mo.add_agenda_list(ag)
+                    }
+                }
+            }
+        }
+
+        return revised_months
     }
 
+
+    
     // changes go into the timeline ---
     // the timeline has already been written to a file.
     async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
