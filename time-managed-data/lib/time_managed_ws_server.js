@@ -1,6 +1,7 @@
 //
 const {WSServeMessageEndpoint} = require('message-relay-websocket')
 const {FileOperationsCache} = require('extra-file-class')
+const {MessageRelayer} = require('message-relay-services')
 
 
 // connect to a relay service...
@@ -74,6 +75,10 @@ class TimeManagedData extends TimeManagedMessageQueue {
         this.add_to_topic(cal_consts.DATA_EVENT_DROP_TOPIC,'self',false)
         this.add_to_topic(cal_consts.REJECT_DATA_TOPIC,'self',false)
         //
+        this.session_check_relay = false
+        if ( conf.session_manager ) {
+            this.session_check_relay = this.init_session_management(conf.session_manager)
+        }
 
     }
 
@@ -95,6 +100,30 @@ class TimeManagedData extends TimeManagedMessageQueue {
         return({ "status" : result, "explain" : `${op} performed`, "when" : Date.now() })
     }
 
+
+
+    init_session_management(sess_conf) {
+        let relayer = new MessageRelayer(sess_conf)
+        relayer.on('client-ready',() => {
+            this.session_check_relay = relayer
+        })
+    }
+
+
+    async session_check(ucwid,sess_id) {
+        if ( this.session_check_relay ) {
+            let message = {
+                "ucwid" : ucwid,
+                "session" : sess_id,
+                "action" : 'session-check'
+            }
+            let response = this.session_check_relay.get_on_path(message,"session")
+            if ( response.OK == true ) {
+                return true
+            }
+        }
+        return false
+    }
 
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -137,11 +166,18 @@ class TimeManagedData extends TimeManagedMessageQueue {
     }
 
     // ----
-    app_publication_pre_fan_response(topic,msg_obj,ignore) {
+    async app_publication_pre_fan_response(topic,msg_obj,ignore) {
 
         // blocking can happen --- check here for connectivity with a session....
         // check for offensive content
         // return true to block
+
+        if ( this.session_check_relay ) {       // only restrict messaging to the session check if it is being used.
+            let session_ok = await this.session_check(msg_obj.ucwid,msg_obj.session)
+            if ( !session_ok ) return true
+            // otherwise keep going
+        }
+            
 
         if ( topic === cal_consts.ADD_DATA_EVENT_TOPIC ) {           // manage date and tracking. for CRUD
             this.user_manage_date('C',msg_obj)

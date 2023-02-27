@@ -4,12 +4,6 @@ const {TimeManagedDataEndpoint,SafeStorageAgendaInterface,MonthManagement} = req
 
 const fs = require('fs')
 const chat_consts = require('../defs/chat-constants')
-
-const month_utils = require('month-utils')
-const {EventDays} = require('event-days')
-
-// ----
-const MonthContainer = EventDays.MonthContainer
 //
 
 const MINI_LINK_ADMIN_PATH = 'admin-calendars'
@@ -91,8 +85,6 @@ class ChatStorageAgenda extends SafeStorageAgendaInterface {
 
 
 }
-
-
 
 
 
