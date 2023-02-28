@@ -190,6 +190,7 @@ class TimeManagedDataEndpoint extends TimeManagedWSProxy {
         } else if ( topic === 'delete-calendar' ) {
             this.user_manage_date('U',msg_obj) 
         }
+        return false
     }
 
     // ----

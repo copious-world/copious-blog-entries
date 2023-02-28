@@ -71,7 +71,8 @@ class MonthManagement {
         return this.all_months[start_time]
     }
 
-    // hanlders for time managment ws proxy
+
+    // handlers for time managment ws proxy
     // ---------------------------------------------------------------------
 
     //
@@ -86,10 +87,10 @@ class MonthManagement {
     }
     
     get_publishable(req) { 
-        return self.get_month_of_request(message)
+        return self.get_month_of_request(req)
     }
 
-    ws_publisher(the_month) {
+    ws_publisher(a_mo) {
         let message = {
             "start_time" : a_mo.start_time,
             "year" : a_mo.year,
