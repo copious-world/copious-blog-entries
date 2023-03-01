@@ -18,12 +18,32 @@ npm install -s time-managed-data
 
 ## Usage
 
-Coming soon
+This module can be used by creating subclasses of the classes, provided here, in an application.
 
+Several classes are provided. Two of the classes allow for the creation of endpoint servers that handle types of data structures useful for partitioning data into months and days. Two others provide the default and interface structure for managing data partitioned by days and months.
 
-## Configuring
+One endpoint server is a WebSocket server that allows for basic chat functionality. The WebSocket server's main job is to broadcast a client's publication of new entries to other clients. The chat functionality can be used in a number of ways, e.g. chat, claiming meeting dates, planning events, etc.
 
-Coming soon
+The flow of messages into a client and out to many others may be thought of as a chat stream.  The WebSocket server acts as one multiplexing point that has some filtering capability. The WebSocket server may, supply a second endpoint server messages from the chat stream. The second endpoint server can process the messages and store them in its database-like data structures set up by admin. It can also remove messages from publication.
+
+The WebSocket server moves messages from clients to clients delayed only by the latency of the server. But, it may send message to the other endpoint server, the data storage endpoint. The data storage endpoint, can store the messages within its data structures and also publish them to customized index servers.
+
+The data storage endpoint data structures are month containers that store agendas for each day. How chat messages are stored in each day depends on the applications implementation of the agendas. (When using this module, the application must supply an implementation of agenda, which will conform to the interface provided by *SafeStorageAgendaInterface* descendans.)
+
+The data storage endpoint month containers conform to the structrues provide by [event-days](). The data storage endpoint creates the month containers by processing *EventDate.TimeSlot* class instances. The time slots provide some limits on what chat messages may be stored by virtue of them covering a limited number of months. (More resrictions and dynamics of the slot definition is up to the application.) The data storage endpoint works with the month containers once they are created, adding, updating, deleting messages. Also, the data storage endpoint pubishes the message data to index servers by publishing the month containers themselves.
+
+For the most part, the data storage endpoint receives its time slot definitions from admin messages which travel along admin pub/sub pathways or from command messages, get, set, delete, etc. Application clients for admins may be used to make the slot definitions. Or, the slot definitions may be made by programs that are either external automation applications or they may be made by the application's data storage endpoint subclass methods.
+
+For example, there is an interface among the [svelte-blogs]() that allows an admin user to draw slot definitions and set up categories. That kind of interface allows the user set up schedules for meetings and the like. For another example, data logging may require a new month to advance the continuous input of new message. In this case, the application may override the message capture methods in order to add in triggers for extennding the list of month containers.
+
+This module already overrides the classes of EventDays in order to create storage objects for agendas. It also provides a class for managing months, which is part of the data storage endpointa activity.
+
+The month manager provides methods for accessing months, serializing them, etc. The manager will injecst the TimeSlot definitions required to create the lists of months needed for chat message storage. 
+
+Each month has an agenda for each day. This module provides the *SafeStorageAgendaInterface* as an agenda to be overriden. If this class, *SafeStorageAgendaInterface*, is used by default, the application will crash intentionally.  The application must override it to set up the handling of its specific kind of chat message.
+
+The rest of this document gives details on the classes this module provides. Each class is described and the methods are documented.
+
 
 ## Classes
 
