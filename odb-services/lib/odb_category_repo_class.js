@@ -1,5 +1,5 @@
 //
-const TransitionsODBRepoEndpoint = require("./odb_category_server")
+const TransitionsODBEndpoint = require("./odb_category_server")
 const Repository = require('repository-bridge')
 
 //
@@ -20,7 +20,7 @@ function terminus(obj,field_path) {
 
 // -- -- -- --
 //
-class TransitionsODBRepoEndpoint extends TransitionsODBRepoEndpoint {
+class TransitionsODBRepoEndpoint extends TransitionsODBEndpoint {
 
     //
     constructor(conf) {
