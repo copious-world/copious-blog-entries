@@ -100,3 +100,75 @@ let app = new TransitionsODBRepoEndpoint(conf)
 * **TransitionsODBEndpoint**
 * **TransitionsODBRepoEndpoint**
 
+
+## TransitionsODBEndpoint -- Class
+
+
+
+### Methods
+
+* **constructor**
+* **app\_generate\_tracking**
+* **make\_path**
+* **publish\_mini\_link\_server**
+* **application\_meta\_publication**
+* **application\_meta\_remove**
+* **app\_subscription\_handler**
+* **application\_data\_update**
+* **user\_manage\_date**
+* **get\_entries**
+* **get\_entries\_record**
+* **write\_entry\_file**
+* **create\_producer\_entry\_type**
+* **update\_producer\_entry\_type**
+* **update\_producer\_entry\_type\_field**
+* **delete\_producer\_entry\_type**
+* **user\_action\_keyfile**
+
+
+### Methods -- details
+
+
+#### constructor
+
+>
+
+**parameters**: (conf)
+
+* conf -- A configuration object.
+
+----
+
+
+
+## TransitionsODBRepoEndpoint -- Class
+
+
+
+### Methods
+
+* **constructor**
+* **repository\_initalizer**
+* **repo\_add**
+* **repo\_replace**
+* **repo\_remove**
+* **create\_producer\_entry\_type**
+* **update\_producer\_entry\_type**
+* **update\_producer\_entry\_type\_field**
+* **delete\_producer\_entry\_type**
+
+
+
+### Methods -- details
+
+
+#### constructor
+
+>
+
+**parameters**: (conf)
+
+* conf -- A configuration object.
+
+----
+
