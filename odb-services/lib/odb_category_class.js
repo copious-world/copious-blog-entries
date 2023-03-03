@@ -1,6 +1,7 @@
 const {PersistenceCategory} = require("categorical-handlers")
 //
 const crypto = require('crypto')
+const 
 
 
 // connect to a relay service...
@@ -302,17 +303,13 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     async get_entries(entries_file) {
-        try {
-            let entries_record =  await this.data_reader(entries_file)
-            entries_record = JSON.parse(entries_record.toString())
-            return entries_record    
-        } catch (e) {}
-        return false
+        let entries_record = await this.fos.load_json_data_at_path(entries_file)
+        return entries_record
     }
 
     async put_entries(entries_file,entries_record) {
         let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
-        await this.write_out_string(entries_file,entries_record_str,false)
+        await this.fos.output_string(entries_file,entries_record_str)
         return entries_record_str
     }
 
