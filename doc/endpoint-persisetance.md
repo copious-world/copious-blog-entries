@@ -84,8 +84,53 @@ The pub/sub pathway may capture publications (if so configured) and submit them 
 
 ### Third level: odb-persistence
 
-On this level, dynamically controlled manifests refering to persistence files can be managed. Also, it ther is an option for delivering large data objects to repositories via repository bridges.
+On this level, dynamically controlled manifests refering to persistence files can be managed. Applications can actively **publish** entries to search engines such as mini link servers. Also, there is an option for delivering large data objects to repositories via repository bridges.
+
+In the odb classes, the method `app_subscription_handler` is overridden, and no call is made to the super. Instead, when a message is taken from the pub/sub pathway, the pub/sub topic determines how the method `app_message_handler(msg_obj)` will be called.
 
 
 
+#### Set/Get Pathway
+
+On this level `app_message_handler(msg_obj)` operations 'G', 'S', 'D' will be the default established by the parent. However, on this level the method `user_action_keyfile` is implemented.
+
+When 'P' and 'U' operations are used in `app_message_handler(msg_obj)`, the `app_meta_universe` flag will be ignored and the meta actions will be taken. The 'P' operation results in a call to `publish_mini_link_server` for adding meta descriptors of data. The 'U' operation results in a call to `publish_mini_link_server` for removing meta descriptors of data. 
+`publish_mini_link_server` is a publication to mini link servers that have subscribed to receive new publication information. This is a pub/sub pathway hop.
+
+The mini link server publication is a message to those servers and does not touch the local publication directories.
+
+'G' the get operation prepares data to be sent to the client by calling `application_data_update`. On this level, the method is implemneted. On this level, certain fields are changed and the data object is wrapped in an Object with enough information that clients can figured out what they are getting. In particular, it tells the client it is getting the data as a JSON packet:
+
+```
+{
+	"mime_type" : "application/json",
+	"string" : JSON.stringify(d_obj)  // after alterations
+}
+```
+
+
+On this level the objects `user_action_keyfile(op,u_obj,field,value)` receives messages undergoing 'CRUD' operations and updates a manifest (table) containing meta records about the data. The table exists for audit and lookup.  It is stored at some interval of time in while the server runs.
+
+If the Repo version of the class is being used, `user_action_keyfile` will interact with the repository bridge when it alls on methods that update the entries table, the local file manifest.
+
+
+#### Publication Pathway
+
+The following topics map to their prescribed settings.
+
+* **command-publish** -> 'P' ... causes the file to be copied to the publication directory
+* **command-recind** -> 'U' ... causes the file to be removed from the publication directory
+* **command-delete** -> 'D' ... deletes the file from local storage
+
+
+The topics **command-publish** and **command-recind** both result in calls to the `user_action_keyfile` with a single field 'published' being updated in the object stored in the manifest table, the entries record in the entries file.
+
+
+#### summary
+
+As far as publication goes, specific topics will move and remove files in the publication directory. 
+
+Command based publication 'P' results in publication to mini link servers.
+
+When repository bridges are used, files may be ported to wide area P2P storage repositories at the time the manifest is updated.
 
