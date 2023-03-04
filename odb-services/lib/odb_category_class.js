@@ -85,7 +85,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     constructor(conf) {
         super(conf)
         //
-        g_type_to_producer = conf.entry_types_to_producers
+        g_type_to_producer = conf.entry_types_to_producers   // e.g. the types of file to a client interface (this has changed)
         //
         this.path = `${conf.address}:${conf.port}`
         this.client_name = this.path
