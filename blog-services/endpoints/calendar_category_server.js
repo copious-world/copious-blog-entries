@@ -5,13 +5,6 @@ const {TimeManagedDataEndpoint,SafeStorageAgendaInterface,MonthManagement} = req
 const fs = require('fs')
 const cal_consts = require('../defs/calendar-constants')
 
-const month_utils = require('month-utils')
-const {EventDays} = require('event-days')
-
-// ----
-const MonthContainer = EventDays.MonthContainer
-//
-
 const MINI_LINK_ADMIN_PATH = 'admin-calendars'
 const MINI_LINK_ADMIN_PUBLIC_PATH = 'admin-public-calendars'
 
