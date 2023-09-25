@@ -2,7 +2,6 @@
 const {TransitionsODBEndpoint} = require("odb-services")
 const {WSMessageRelayer} = require('message-relay-websocket')
 const cal_consts = require('../defs/calendar-constants')
-
 //
 
 
