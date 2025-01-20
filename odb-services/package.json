@@ -34,7 +34,8 @@
     "event-days": "^0.1.7",
     "message-relay-websocket": "^0.2.0",
     "month-utils": "^0.8.1",
-    "ucwid": "^0.2.9"
+    "ucwid": "^0.2.9",
+    "repository-bridge" : "^0.6.2"
   },
   "devDependencies": {
     "ava": "^4.3.3"
