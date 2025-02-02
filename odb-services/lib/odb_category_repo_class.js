@@ -30,7 +30,7 @@ class TransitionsODBRepoEndpoint extends TransitionsODBEndpoint {
 
     //
     async repository_initializer(conf) {
-        this.repository = new Repository(conf,['ipfs'])
+        this.repository = new Repository(conf,conf.supported_repo_types)
         await this.repository.init_repos()
     }
 

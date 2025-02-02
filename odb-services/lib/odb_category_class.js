@@ -405,6 +405,22 @@ class TransitionsODBEndpoint extends PersistenceCategory {
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
+    /**
+     * user_action_keyfile
+     * 
+     * Most of this has to do with the update of auditing data. A file introduced through this process, 
+     * if altered will move through upload channels, and the change will be recorded here. Records will be shared 
+     * via a process of publication with subscribed databases. 
+     * 
+     * In the case of a `repoisitory` based operation, a file may in fact move from one machine to another in order to pin it.
+     * Otherwise, if the repository is `local` the file will be stored at one disk location and the repository will 'pin' simply
+     * by marking the file as a keepsake, i.e. it may not be deleted.
+     * 
+     * @param {*} op 
+     * @param {*} u_obj 
+     * @param {*} field 
+     * @param {*} value 
+     */
     async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
         //
         let key_field = u_obj.key_field ? u_obj.key_field : u_obj._transition_path
