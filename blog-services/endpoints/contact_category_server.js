@@ -1,8 +1,6 @@
 //
 const {TransitionsODBEndpoint} = require("odb-services")
 //
-const fs = require('fs')
-
 
 // connect to a relay service...
 // set by configuration (only one connection, will have two paths.)
@@ -150,6 +148,7 @@ class TransitionsContactEndpoint extends TransitionsODBEndpoint {
 
 // ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- -------
 // ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- -------
+const fs = require('fs')
 
 
 let conf_file = 'contact-service.conf'
