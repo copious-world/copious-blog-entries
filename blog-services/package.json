@@ -32,13 +32,13 @@
   "author": "R. Leddy",
   "license": "ISC",
   "dependencies": {
-    "categorical-handlers": "^0.3.9",
-    "event-days": "^0.1.7",
-    "message-relay-websocket": "^0.2.0",
-    "month-utils": "^0.8.1",
-    "ucwid": "^0.2.9"
+    "categorical-handlers": "^0.4.10",
+    "event-days": "^0.1.8",
+    "message-relay-websocket": "^0.2.1",
+    "month-utils": "^0.8.2",
+    "ucwid": "^0.4.0"
   },
   "devDependencies": {
-    "ava": "^4.3.3"
+    "ava": "^6.2.0"
   }
 }
