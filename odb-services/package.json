@@ -29,10 +29,10 @@
   "author": "R. Leddy",
   "license": "ISC",
   "dependencies": {
-    "categorical-handlers": "^0.4.10",
+    "categorical-handlers": "^0.5.0",
     "repository-bridge" : "^0.8.6"
   },
   "devDependencies": {
-    "ava": "^4.3.3"
+    "ava": "^6.2.0"
   }
 }
