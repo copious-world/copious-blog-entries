@@ -1,6 +1,6 @@
 {
   "name": "odb-services",
-  "version": "0.9.12",
+  "version": "0.9.14",
   "description": "Object DB Endpoint servers providing disk interface and pub/sub interfaces to supported services, e.g search, counting, streaming, contacts, etc.",
   "main": "index.js",
   "directories": {
@@ -8,11 +8,10 @@
   },
   "bin": {
     "copious-odb": "./bin/endpoint-odb.js",
-    "copious-odb-repo": "./bin/endpoint-odb.js reop"
+    "copious-odb-repo": "./bin/endpoint-odb.js repo"
   },
   "scripts": {
-    "test": "ava --verbose",
-    "endpoints": "node endpoint-launcher.js relay-service.conf"
+    "test": "ava --verbose"
   },
   "keywords": [
     "endpoint-server",
@@ -31,10 +30,6 @@
   "license": "ISC",
   "dependencies": {
     "categorical-handlers": "^0.4.10",
-    "event-days": "^0.1.8",
-    "message-relay-websocket": "^0.2.1",
-    "month-utils": "^0.8.2",
-    "ucwid": "^0.4.0 ",
     "repository-bridge" : "^0.8.6"
   },
   "devDependencies": {
