@@ -1,5 +1,6 @@
 //
-const {PersistenceCategory} = require("categorical-handlers")//
+const {PersistenceCategory} = require("categorical-handlers")
+//
 
 // connect to a relay service...
 // set by configuration (only one connection, will have two paths.)
