@@ -12,6 +12,7 @@ function faux_random_enough() {
     return "dashing" + rr
 }
 
+
 function do_hash (text) {
     const hash = crypto.createHash('sha256');
     hash.update(text);
