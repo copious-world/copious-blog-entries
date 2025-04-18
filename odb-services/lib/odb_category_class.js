@@ -83,9 +83,10 @@ class TransitionsODBEndpoint extends PersistenceCategory {
 
     //
     constructor(conf) {
-        super(conf)
+        super(conf.persistence)
         //
-        g_type_to_producer = conf.entry_types_to_producers   // e.g. the types of file to a client interface (this has changed)
+        this.conf = conf.odb_endpoint
+        g_type_to_producer = this.conf.entry_types_to_producers   // e.g. the types of file to a client interface (this has changed)
         //
         this.path = `${conf.address}:${conf.port}`
         this.client_name = this.path
@@ -99,13 +100,14 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         this.add_to_topic("command-send",'self',false)
         //
         this.topic_producer = this.topic_producer_user
-        if ( conf.system_wide_topics ) {
+        if ( this.conf.system_wide_topics ) {
             this.topic_producer = this.topic_producer_system
         }
 
-        if ( (conf.multi_meta_hanlders !== undefined) && conf.multi_meta_hanlders ) {
-            this.all_meta_topics = conf.multi_meta_hanlders
+        if ( (this.conf.multi_meta_hanlders !== undefined) && this.conf.multi_meta_hanlders ) {
+            this.all_meta_topics = this.conf.multi_meta_hanlders
         }
+        //
     }
 
     //

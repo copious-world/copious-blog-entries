@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
+
 const {spawn} = require('child_process')
 const fs = require('fs')
 
-const model_file = "odb-service.conf"
-const conf_file = process.argv[2]
-const conf = (conf_file == undefined) ? JSON.parse(fs.readFileSync(model_file).toString()) : JSON.parse(fs.readFileSync(conf_file).toString())
+
 
 function spawn_node_file(endpoint_args) {
     let proc = spawn("node",endpoint_args)
@@ -20,6 +19,24 @@ function spawn_node_file(endpoint_args) {
     })
 }
 
+/// LOAD CONFIGURATION AND SEE IF THE REPO FLAG IS SET
+
+const model_file = "odb-service.conf"
+
+let use_repo_conf = process.argv[2]
+
+let f_index = 2
+if ( use_repo_conf === "repo" ) {
+    f_index = 3
+} else {
+    use_repo_conf = false
+}
+
+
+const conf_file = process.argv[f_index]
+const conf = (conf_file == undefined) ? JSON.parse(fs.readFileSync(model_file).toString()) : JSON.parse(fs.readFileSync(conf_file).toString())
+
+
 let endpoint_procs = conf.launch_endpoints
 
 /*
@@ -30,9 +47,8 @@ let endpoint_procs = conf.launch_endpoints
 */
 
 
-let use_repoc = process.argv[2]
 
-let endpoint =  (use_repoc === "repo") ? "odb_repo_endpoint" : "odb_endpoint" 
+let endpoint =  (use_repo_conf === "repo") ? "odb_repo_endpoint" : "odb_endpoint" 
 
 let endpoint_args = endpoint_procs[endpoint]
 let conf_index = endpoint_args.indexOf(model_file)

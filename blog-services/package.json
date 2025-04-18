@@ -11,8 +11,7 @@
     "copious-contacts": "./bin/endpoint-contacts.js",
     "copious-calendars": "./bin/endpoint-calendars.js",
     "copious-mail" : "./bin/endpoint-mail.js",
-    "copious-chat" : "./bin/endpoint-chat.js",
-    "add-mini-links": "./bin/add-mini-links.js"
+    "copious-chat" : "./bin/endpoint-chat.js"
   },
   "scripts": {
     "test": "ava --verbose",

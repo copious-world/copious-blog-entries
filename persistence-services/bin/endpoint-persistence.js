@@ -3,7 +3,7 @@
 const {spawn} = require('child_process')
 const fs = require('fs')
 
-const model_file = "relay-service.conf"
+const model_file = "persistence-service.conf"
 const conf_file = process.argv[2]
 const conf = (conf_file == undefined) ? JSON.parse(fs.readFileSync(model_file).toString()) : JSON.parse(fs.readFileSync(conf_file).toString())
 

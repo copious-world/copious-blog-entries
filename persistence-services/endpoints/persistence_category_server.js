@@ -3,7 +3,7 @@ const fs = require('fs')
 
 const TransitionsPersistenceEndpoint = require('../lib/persistence_category_class')
 
-let conf_file = 'relay-service.conf'
+let conf_file = 'persistence-service.conf'
 let conf_par = process.argv[2]
 if ( conf_par !== undefined ) {
     conf_file = conf_par

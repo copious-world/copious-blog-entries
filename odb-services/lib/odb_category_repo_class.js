@@ -25,12 +25,13 @@ class TransitionsODBRepoEndpoint extends TransitionsODBEndpoint {
     //
     constructor(conf) {
         super(conf)
-        this.repository_initalizer(conf)
+        this.conf = conf.odb_repo_endpoint
+        this.repository_initializer(this.conf.repository)
     }
 
     //
-    async repository_initializer(conf) {
-        this.repository = new Repository(conf,conf.supported_repo_types)
+    async repository_initializer(rconf) {
+        this.repository = new Repository(rconf,rconf.supported_repo_types)
         await this.repository.init_repos()
     }
 
