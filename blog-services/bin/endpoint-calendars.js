@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const {spawn} = require('child_process')
-const { resolve } = require('dns')
 const fs = require('fs')
 
 const model_file = "calendar-service.conf"
