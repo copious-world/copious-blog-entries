@@ -1,6 +1,6 @@
 {
   "name": "odb-services",
-  "version": "0.9.14",
+  "version": "0.9.15",
   "description": "Object DB Endpoint servers providing disk interface and pub/sub interfaces to supported services, e.g search, counting, streaming, contacts, etc.",
   "main": "index.js",
   "directories": {
@@ -29,8 +29,8 @@
   "author": "R. Leddy",
   "license": "ISC",
   "dependencies": {
-    "categorical-handlers": "^0.5.0",
-    "repository-bridge" : "^0.8.6"
+    "categorical-handlers": "^0.7.5",
+    "repository-bridge" : "^0.9.9"
   },
   "devDependencies": {
     "ava": "^6.2.0"
