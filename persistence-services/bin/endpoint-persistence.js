@@ -19,6 +19,7 @@ function spawn_node_file(endpoint_args) {
         console.log(chunk.toString())
     })
 }
+ 
 
 let endpoint_procs = conf.launch_endpoints
 
@@ -30,35 +31,22 @@ let endpoint_procs = conf.launch_endpoints
 }
 */
 
-let endpoint = "persistence_endpoint" 
+for ( let endpoint in endpoint_procs ) {
 
-if ( endpoint_procs !== undefined ) {
-    let endpoint_args = endpoint_procs[endpoint]
-    if ( endpoint_args !== undefined ) {
+    if ( endpoint !== undefined ) {
+        let endpoint_args = endpoint_procs[endpoint]
         let conf_index = endpoint_args.indexOf(model_file)
         if ( conf_index > 0 ) {
             endpoint_args[conf_index] = conf_file ? conf_file : model_file
         }
-
-        endpoint_args[0] = __dirname + '/../' + endpoint_args[0]
-        
-        spawn_node_file(endpoint_args)    
-    }
-}
-
-endpoint = "paid_persistence_endpoint"
-
-if ( endpoint_procs !== undefined ) {
-
-    let endpoint_args = endpoint_procs[endpoint]
-    if ( endpoint_args !== undefined ) {
-        let conf_index = endpoint_args.indexOf(model_file)
-        if ( conf_index > 0 ) {
-            endpoint_args[conf_index] = conf_file ? conf_file : model_file
+    
+        if ( endpoint_args[0].indexOf("--inspect") === 0 ) {
+            endpoint_args[1] = __dirname + '/../' + endpoint_args[1]
+        } else {
+            endpoint_args[0] = __dirname + '/../' + endpoint_args[0]
         }
         
-        endpoint_args[0] = __dirname + '/../' + endpoint_args[0]
-
         spawn_node_file(endpoint_args)
     }
 }
+
