@@ -145,5 +145,5 @@ class TransitionsODBRepoEndpoint extends TransitionsODBEndpoint {
 
 
 
-module.exports.TransitionsODBRepoEndpoint = TransitionsODBRepoEndpoint
+module.exports = TransitionsODBRepoEndpoint
 

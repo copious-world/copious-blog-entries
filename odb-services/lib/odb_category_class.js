@@ -482,4 +482,4 @@ class TransitionsODBEndpoint extends PersistenceCategory {
 
 
 
-module.exports.TransitionsODBEndpoint = TransitionsODBEndpoint
+module.exports = TransitionsODBEndpoint
