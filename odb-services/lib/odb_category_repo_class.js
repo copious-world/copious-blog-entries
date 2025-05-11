@@ -1,5 +1,5 @@
 //
-const TransitionsODBEndpoint = require("./odb_category_server")
+const TransitionsODBEndpoint = require("./odb_category_class")
 const Repository = require('repository-bridge')
 
 //
