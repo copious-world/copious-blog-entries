@@ -1,6 +1,6 @@
 {
   "name": "persistence-endpoints",
-  "version": "1.1.4",
+  "version": "1.1.8",
   "description": "Endpoint servers providing disk interface and pub/sub interfaces to supporting services, e.g search, counting, streaming, contacts, etc.",
   "main": "index.js",
   "bin": {
@@ -32,7 +32,7 @@
   "author": "R. Leddy",
   "license": "ISC",
   "dependencies": {
-    "odb-services": "^0.9.16"
+    "odb-services": "^0.9.22"
   },
   "devDependencies": {
     "ava": "^6.2.0"
