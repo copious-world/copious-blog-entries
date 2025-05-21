@@ -45,7 +45,7 @@ class TransitionsPersistenceEndpoint extends TransitionsODBRepoEndpoint {
         //
         let counting_service_links = "false"
         switch ( op ) {         // from web client 
-            case 'KP' : {
+            case 'KP' : {           // List the counting services
                 if ( this.counting_service ) {
                     counting_service_links = this.counting_service_list
                 } else {
