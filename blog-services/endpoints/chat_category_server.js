@@ -224,7 +224,7 @@ class TransitionsEventEndpoint extends TimeManagedDataEndpoint {
 // ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- ------- -------
 
 
-let conf_file = 'calendar-service.conf'
+let conf_file = 'chat-service.conf'
 let conf_par = process.argv[2]
 if ( conf_par !== undefined ) {
     conf_file = conf_par

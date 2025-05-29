@@ -1,5 +1,4 @@
-//
-const {PersistenceCategory} = require("categorical-handlers")
+const {TransitionsODBEndpoint} = require("odb-services")
 //
 
 // connect to a relay service...
@@ -8,7 +7,7 @@ const {PersistenceCategory} = require("categorical-handlers")
 // -- -- -- --
 // -- -- -- --
 //
-class TransitionsMailEndpoint extends PersistenceCategory {
+class TransitionsMailEndpoint extends TransitionsODBEndpoint {
 
     //
     constructor(conf) {
@@ -19,9 +18,6 @@ class TransitionsMailEndpoint extends PersistenceCategory {
         this.entries_sep = ""
         this.app_handles_subscriptions = true
         this.app_can_block_and_respond = true
-        //
-        this.path = `${conf.address}:${conf.port}`
-        this.client_name = this.path
         //
         //  meta_publication not used for contacts
         //
@@ -161,7 +157,7 @@ if ( conf_par !== undefined ) {
 let conf = JSON.parse(fs.readFileSync(conf_file).toString())
 let endpoint = conf
 
-console.log(`Contact Server: PORT: ${endpoint.port} ADDRESS: ${endpoint.address}`)
+console.log(`Mail Server: PORT: ${endpoint.persistence.port} ADDRESS: ${endpoint.persistence.address}`)
 
 new TransitionsMailEndpoint(endpoint)
 

@@ -6,7 +6,7 @@ let g_loaded_targets = false
 const fs = require('fs')
 const crypto = require('crypto')
 
-let conf_file = 'relay-service.conf'
+let conf_file = 'user-service.conf'
 let conf_par = process.argv[2]
 if ( conf_par !== undefined ) {
     conf_file = conf_par
@@ -29,7 +29,7 @@ function do_hash (text) {
 class TransitionsUserEndpoint extends UserCategory {
 
     constructor(conf) {
-        super(conf)
+        super(conf.user_category)
         this.user_tracking_table = {}        // keep track of all the user registration files.
         this.new_tracking = {}
         this.gen_targets = g_loaded_targets
@@ -143,11 +143,11 @@ function load_generators() {
 }
 
 
-console.log(`User Server: PORT: ${conf.user_endpoint.port} ADDRESS: ${conf.user_endpoint.address}`)
+console.log(`User Server: PORT: ${conf.user_category.port} ADDRESS: ${conf.user_category.address}`)
 
 load_generators()
 //
-let tue = new TransitionsUserEndpoint(conf.user_endpoint)
+let tue = new TransitionsUserEndpoint(conf)
 
 // prevent duplicates
 tue._startup_track_users_from_directory()
