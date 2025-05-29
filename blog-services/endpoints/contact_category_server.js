@@ -157,7 +157,7 @@ if ( conf_par !== undefined ) {
 let conf = JSON.parse(fs.readFileSync(conf_file).toString())
 let endpoint = conf
 
-console.log(`Contact Server: PORT: ${endpoint.port} ADDRESS: ${endpoint.address}`)
+console.log(`Contact Server: PORT: ${endpoint.persistence.port} ADDRESS: ${endpoint.persistence.address}`)
 
 new TransitionsContactEndpoint(endpoint)
 
