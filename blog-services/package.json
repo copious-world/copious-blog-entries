@@ -1,6 +1,6 @@
 {
   "name": "copious-endpoints",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "Endpoint servers providing disk interface and pub/sub interfaces to supported services, e.g search, counting, streaming, contacts, etc.",
   "main": "service.js",
   "directories": {
@@ -15,7 +15,7 @@
   },
   "scripts": {
     "test": "ava --verbose",
-    "endpoints": "node endpoint-launcher.js relay-service.conf"
+    "endpoints": "node bin/endpoint-launcher.js relay-service.conf"
   },
   "keywords": [
     "endpoint-server",
@@ -33,12 +33,12 @@
   "author": "R. Leddy",
   "license": "ISC",
   "dependencies": {
-    "categorical-handlers": "^0.7.7",
+    "categorical-handlers": "^0.7.8",
     "com_link_manager": "^0.1.14",
     "event-days": "^0.1.8",
     "message-relay-websocket": "^0.2.1",
     "month-utils": "^0.8.2",
-    "odb-services": "^0.9.23",
+    "odb-services": "^0.9.24",
     "ucwid": "^0.4.1"
   },
   "devDependencies": {
