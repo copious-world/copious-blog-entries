@@ -88,7 +88,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         this.conf = conf.odb_endpoint
         g_type_to_producer = this.conf.entry_types_to_producers   // e.g. the types of file to a client interface (this has changed)
         //
-        this.path = `${conf.address}:${conf.port}`
+        this.path = `${conf.persistence.address}:${conf.persistence.port}`
         this.client_name = this.path
         //
         this.app_subscriptions_ok = true
@@ -100,7 +100,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         this.add_to_topic("command-send",'self',false)
         //
         this.topic_producer = this.topic_producer_user
-        if ( this.conf.system_wide_topics ) {
+        if ( conf.system_wide_topics ) {
             this.topic_producer = this.topic_producer_system
         }
 

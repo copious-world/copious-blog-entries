@@ -20,9 +20,6 @@ class TransitionsContactEndpoint extends TransitionsODBEndpoint {
         this.app_handles_subscriptions = true
         this.app_can_block_and_respond = true
         //
-        this.path = `${conf.address}:${conf.port}`
-        this.client_name = this.path
-        //
         //  meta_publication not used for contacts
         //
         this.app_subscriptions_ok = true
