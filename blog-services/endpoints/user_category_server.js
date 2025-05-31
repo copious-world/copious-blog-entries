@@ -127,18 +127,19 @@ class TransitionsUserEndpoint extends UserCategory {
 
 function load_generators() {
     //
-    let gen_dir = conf.generator_directory ? conf.generator_directory : "../generators"
-    //
-    try {
-        g_loaded_targets = {}
-        let gen_files = fs.readdirSync(gen_dir)
-        for ( let file of gen_files ) {
-            try {
-                let gen_func = require(file).generator
-                g_loaded_targets[file] = gen_func    
-            } catch (e) {}
-        }    
-    } catch (e) {}
+    if ( typeof conf.generator_directory === "string" ) {
+        let gen_dir = conf.generator_directory
+        try {
+            g_loaded_targets = {}
+            let gen_files = fs.readdirSync(gen_dir)
+            for ( let file of gen_files ) {
+                try {
+                    let gen_func = require(file).generator
+                    g_loaded_targets[file] = gen_func    
+                } catch (e) {}
+            }    
+        } catch (e) {}
+    }
     //
 }
 
