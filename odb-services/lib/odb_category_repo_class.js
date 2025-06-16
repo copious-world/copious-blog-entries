@@ -134,7 +134,7 @@ class TransitionsODBRepoEndpoint extends TransitionsODBEndpoint {
 
 
     delete_producer_entry_type(entry_obj,entries_record,entry_type) {
-        let status = super. delete_producer_entry_type(entry_obj,entries_record,entry_type)
+        let status = super.delete_producer_entry_type(entry_obj,entries_record,entry_type)
         if ( status ) {
             this.repo_remove(entry_obj)
         }

@@ -220,7 +220,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
 
     // app_subscription_handler
     //  -- Handle state changes...
-    // this is the handler for the topics added directoy above in the constructor
+    // this is the handler for the topics added directly above in the constructor
     app_subscription_handler(topic,msg_obj) {
         //
         if ( topic === 'command-publish' ) {
@@ -304,6 +304,12 @@ class TransitionsODBEndpoint extends PersistenceCategory {
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
+    /**
+     * get_entries
+     * 
+     * @param {string} entries_file - the name of a file containing a map of object ids to objects
+     * @returns object - the map object
+     */
     async get_entries(entries_file) {
         let entries_record = await this.fos.load_json_data_at_path(entries_file)
         return entries_record
@@ -312,11 +318,23 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     async put_entries(entries_file,entries_record) {
         let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
         await this.fos.output_string(entries_file,entries_record_str)
-        return entries_record_str
     }
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
+    /**
+     * get_entries_record
+     * 
+     * The assumes that the user will have a table of entries in a file. 
+     * And, more than one type of asset may be in the table. The file name of the type of asset 
+     * is determined. And, that file is loaded by `get_entries`.
+     * 
+     * 
+     * 
+     * @param {string} user_path - a user directory for all 
+     * @param {string} entry_type - the kind of asset being entered into the tables 
+     * @returns triple - object map, the cluster name for the objects, the file path
+     */
     async get_entries_record(user_path,entry_type) {
         let producer_of_type = map_entry_type_to_producer(entry_type)
         let entries_file = user_path + `/${producer_of_type}.json`
@@ -327,19 +345,46 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         return [false,false,false]
     }
 
-    async write_entry_file(entries_file,entries_record,producer_of_type,user_id) {
-        let entries_record_str = await this.put_entries(entries_file,entries_record)
+    /**
+     * pulish_entry
+     * 
+     * This makes the topic having to do with the update of this media so that the data 
+     * (not filtered data as for mini-linke-service) can be published to subscribers.
+     * 
+     * Most subcribers will be admin and couting services.
+     * 
+     * This method publishes the new/updated record to subscibers (counting services)
+     * 
+     * @param {string} entries_file - the name of the file that holds the entries record
+     * @param {object} entries_record - a single meta record for a larger media file
+     * @param {string} producer_of_type - has to do with file naming and topic string generation
+     * @param {string} user_id - the user id of the owner/creator of the media
+     */
+    async pulish_entry(u_obj,producer_of_type,user_id) {
         let topic = this.topic_producer(producer_of_type,user_id)
         let pub_obj = {
             "_id" : user_id
         }
-        pub_obj[producer_of_type] = encodeURIComponent(entries_record_str)        
+        pub_obj[producer_of_type] = encodeURIComponent(JSON.stringify(u_obj))        
         this.app_publish(topic,pub_obj)     // send the dashboard or profile back to DB closers to the UI client
     }
 
 
+
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
+    /**
+     * create_producer_entry_type
+     * 
+     * the entries record is a log in some sense (as it is now.)
+     * 
+     * Puts the new meta object into the table of entries
+     * 
+     * @param {object} entry_obj - the new meta object coming into the system 
+     * @param {string} user_path - file naem for the particular entry object under the user (creator)
+     * @param {object} entries_record - the record map for the entry type
+     * @param {string} entry_type - the entry type
+     */
     create_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] === undefined ) {
@@ -411,6 +456,8 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     /**
      * user_action_keyfile
      * 
+     * This updates the general log table for a user's meta descriptions. And, it manages subscription publication.
+     * 
      * Most of this has to do with the update of auditing data. A file introduced through this process, 
      * if altered will move through upload channels, and the change will be recorded here. Records will be shared 
      * via a process of publication with subscribed databases. 
@@ -418,6 +465,28 @@ class TransitionsODBEndpoint extends PersistenceCategory {
      * In the case of a `repoisitory` based operation, a file may in fact move from one machine to another in order to pin it.
      * Otherwise, if the repository is `local` the file will be stored at one disk location and the repository will 'pin' simply
      * by marking the file as a keepsake, i.e. it may not be deleted.
+     * 
+     * 
+     * Each object that comes in should have a `_transition_path` or a `key_field` field.
+     * This field will be a filed that names another filed to find a structured string wtih three parts delimited by '+'.
+     * The string is separated into three parts from left to right.
+     * The first part is a user id, the second part is an entry type (a media type), the third and final part
+     * is a string refered to as the `asset file base`, which will either be a name or a key field for the data object.
+     * This will be used to find the object when it is lated requested. 
+     * 
+     * The `asset file base` is usually the ucwid of the file, which is a sha255 hash of other hashes made from hashing the file and
+     * some other versions of it.
+     * 
+     * Each operation, C, U, F, D first gets the entries record for the type associated with the user.
+     * The user ID part is the directory under the configured `user_directory` where the types of data will be found.
+     * This path is given to `get_entries_record`.
+     * 
+     * The operation can make changes to the table, etc.
+     * Then, the `user_action_keyfile` method writes the table to the directory (immediate update per user... might be more graceful)
+     * 
+     * This method `user_action_keyfile` does not (DOES NOT) write the record to the file ( that is done by the caller for each operation)
+     * 
+     * So, this only updates the general log table. And, it manages subscription publication.
      * 
      * @param {*} op 
      * @param {*} u_obj 
@@ -444,7 +513,9 @@ class TransitionsODBEndpoint extends PersistenceCategory {
                 //
                 this.create_producer_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
+                await this.put_entries(entries_file,entries_record)
+                //
+                await this.pulish_entry(u_obj,producer_of_type,user_id)
                 break;
             }
             case 'U' : {    // update (read asset_file_base, change, write new)
@@ -454,7 +525,9 @@ class TransitionsODBEndpoint extends PersistenceCategory {
                 //
                 this.update_producer_entry_type(u_obj,user_path,entries_record,entry_type)
                 //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
+                await this.put_entries(entries_file,entries_record)
+                //
+                await this.pulish_entry(u_obj,producer_of_type,user_id)
                 break;
             }
             case 'F' : {        // change one field
@@ -464,7 +537,9 @@ class TransitionsODBEndpoint extends PersistenceCategory {
                 //
                 this.update_producer_entry_type_field(u_obj,user_path,entries_record,entry_type,field)
                 //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
+                await this.put_entries(entries_file,entries_record)
+                //
+                await this.pulish_entry(u_obj,producer_of_type,user_id)
                 break;
             }
             case 'D' : {
@@ -473,7 +548,9 @@ class TransitionsODBEndpoint extends PersistenceCategory {
                 //
                 this.delete_producer_entry_type(u_obj,entries_record,entry_type)
                 //
-                await this.write_entry_file(entries_file,entries_record,producer_of_type,user_id)
+                await this.put_entries(entries_file,entries_record)
+                //
+                await this.pulish_entry(u_obj,producer_of_type,user_id)
                 break;
             }
         }
