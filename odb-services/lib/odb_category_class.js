@@ -167,6 +167,14 @@ class TransitionsODBEndpoint extends PersistenceCategory {
 
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+    /**
+     * publish_mini_link_server
+     * 
+     * invokes `app_publish_on_path` which sends a message to all subscribers
+     * 
+     * @param {string} topic 
+     * @param {object} msg_obj - the searchable media meta descriptor
+     */
     publish_mini_link_server(topic,msg_obj) {
         msg_obj.client_name = this.client_name
         let pub = {
@@ -180,15 +188,31 @@ class TransitionsODBEndpoint extends PersistenceCategory {
 
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-    application_meta_publication(msg_obj,app_meta_universe) {        // publications going to mini link servers
+    /**
+     * application_meta_publication
+     * 
+     * called as as of result of a publication message being sent to the endpoint
+     * 
+     * `app_message_handler` calls `publish` which in turn calls this method, `application_meta_publication`
+     * 
+     * Operates on the meta-object. The meta-object may have fields that should be removed from a search facility.
+     * The searcher will not need such things as public keys. That will be required in a counting serivce, but
+     * the general public would not need to have them and they add extra weight to the data size.
+     * 
+     * calls needs_media_type if the asset type should be further distinguished
+     * 
+     * @param {object} meta_obj 
+     * @param {boolean} app_meta_universe  -- ignored
+     */
+    application_meta_publication(meta_obj,app_meta_universe) {        // publications going to mini link servers
         //
         //if ( !app_meta_universe ) return;
         //
-        let exclusion_fields = msg_obj.exclusion_fields         // exclusion_fields shall be an array
-        if ( ((exclusion_fields !== undefined) && exclusion_fields ) || non_stream_media(msg_obj) ) {   // the client decides which fields to remove from meta data before pushing to discovery systems...
-            let asset_type = msg_obj.asset_type         //  asset -type
-            let media_type = msg_obj.media_type
-            let projection = Object.assign({},msg_obj)  
+        let exclusion_fields = meta_obj.exclusion_fields         // exclusion_fields shall be an array
+        if ( ((exclusion_fields !== undefined) && exclusion_fields ) || non_stream_media(meta_obj) ) {   // the client decides which fields to remove from meta data before pushing to discovery systems...
+            let asset_type = meta_obj.asset_type         //  asset -type
+            let media_type = meta_obj.media_type
+            let projection = Object.assign({},meta_obj)  
             if ( exclusion_fields ) {
                 for ( let field_path of exclusion_fields ) {
                     terminus_unlink(projection,field_path)
@@ -196,7 +220,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
                 delete projection.exclusion_fields
             }
             //
-            let topic = `add_${this.all_meta_topics["meta"]}_${asset_type}`
+            let topic = `add_${this.all_meta_topics["meta"]}_${asset_type}`   // mini link server subscribes to this
             if ( needs_media_type(asset_type) ) {
                 topic += '_' + media_type
             }
@@ -206,21 +230,37 @@ class TransitionsODBEndpoint extends PersistenceCategory {
 
 
     // ----
-    application_meta_remove(msg_obj,app_meta_universe) {
-        let asset_type = msg_obj.asset_type
-        let media_type = msg_obj.media_type
+    /**
+     * application_meta_remove
+     * 
+     * 
+     * calls needs_media_type if the asset type should be further distinguished
+     * 
+     * @param {object} msg_obj 
+     * @param {boolean} app_meta_universe 
+     */
+    application_meta_remove(meta_obj,app_meta_universe) {
+        let asset_type = meta_obj.asset_type
+        let media_type = meta_obj.media_type
         //if ( !app_meta_universe ) return;
         let topic = `remove_${this.all_meta_topics["meta"]}_${asset_type}`
         if ( needs_media_type(asset_type) ) {
             topic += '_' + media_type
         }
-        this.publish_mini_link_server(topic,msg_obj)
+        this.publish_mini_link_server(topic,meta_obj)
     }
 
 
-    // app_subscription_handler
-    //  -- Handle state changes...
-    // this is the handler for the topics added directly above in the constructor
+    /**
+     * app_subscription_handler
+     * 
+     *  -- Handle state changes...
+     * 
+     * this is the handler for the topics added directly above in the constructor
+     * 
+     * @param {string} topic 
+     * @param {object} msg_obj 
+     */
     app_subscription_handler(topic,msg_obj) {
         //
         if ( topic === 'command-publish' ) {
@@ -242,32 +282,47 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     }
 
     // ----
-    application_data_update(u_obj,data) {
+    /**
+     * application_data_update
+     * 
+     * A user sends a get message. 
+     * As a result requested data will be loaded.
+     * This method allows for modifications to the record being sent. 
+     * 
+     * For instance, the message may be sent by a different owner than the one stored.
+     * (Usually this helps if those fields were omitted when stored. But, usually they should be the same)
+     * 
+     * The object returned is one that can be sent to a web browser that handles the meta descriptors.
+     * 
+     * @param {object} msg_obj - the operation object sent by the user
+     * @param {object} d_obj - the meta data descriptor of interest to subscribers
+     * @returns object
+     */
+    application_data_update(msg_obj,d_obj) {       // data is passed as an object d_obj
         try {
-            let d_obj = JSON.parse(data)
             //
-            let key_field = u_obj.key_field ?  u_obj.key_field : u_obj._transition_path
-            let asset_info = u_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
+            let key_field = msg_obj.key_field ?  msg_obj.key_field : msg_obj._transition_path
+            let asset_info = msg_obj[key_field]   // dashboard+striking@pp.com  profile+striking@pp.com
             if ( asset_info )  {
                 asset_info = asset_info.split('+')
                 let user_id = asset_info.pop()
                 d_obj.owner = user_id
                 d_obj.info = asset_info
-                d_obj.id = user_id
+                d_obj._id = user_id
                 let path_key = d_obj.path_key
                 if ( path_key ) {
                     d_obj[`which_${path_key}`] = faux_random_enough()  // a name for the application tab...
                 } else {
                     d_obj.which_tab_name = faux_random_enough()
                 }
-                data = {
+                let data = {
                     "mime_type" : "application/json",
                     "string" : JSON.stringify(d_obj)
                 }
                 data = JSON.stringify(data)
             }
         } catch (e) {
-            return(data)
+            return(JSON.stringify(d_obj))
         }
         return(data)
     }
@@ -315,9 +370,14 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         return entries_record
     }
 
+    /**
+     * put_entries
+     * 
+     * @param {string} entries_file -- the path to the entries file
+     * @param {obj} entries_record 
+     */
     async put_entries(entries_file,entries_record) {
-        let entries_record_str = JSON.stringify(entries_record)         // STORE AS STRING
-        await this.fos.output_string(entries_file,entries_record_str)
+        await this.fos.write_out_json(entries_file,entries_record)
     }
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -346,7 +406,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     }
 
     /**
-     * pulish_entry
+     * publish_entry
      * 
      * This makes the topic having to do with the update of this media so that the data 
      * (not filtered data as for mini-linke-service) can be published to subscribers.
@@ -360,7 +420,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
      * @param {string} producer_of_type - has to do with file naming and topic string generation
      * @param {string} user_id - the user id of the owner/creator of the media
      */
-    async pulish_entry(u_obj,producer_of_type,user_id) {
+    async publish_entry(u_obj,producer_of_type,user_id) {
         let topic = this.topic_producer(producer_of_type,user_id)
         let pub_obj = {
             "_id" : user_id
@@ -394,6 +454,18 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     }
 
 
+    /**
+     * update_producer_entry_type
+     * 
+     * This does a clumsy linear search for the object
+     * swaps it out
+     * 
+     * @param {object} entry_obj 
+     * @param {string} user_path 
+     * @param {object} entries_record 
+     * @param {string} entry_type 
+     * @returns pair -- <a copy of the entry obj as stored, the entry obj sent by update>, [false,false] on failure
+     */
     update_producer_entry_type(entry_obj,user_path,entries_record,entry_type) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] !== undefined ) {
@@ -411,6 +483,20 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     }
 
 
+    /**
+     * update_producer_entry_type_field
+     * 
+     * This does a clumsy linear search for the object
+     * 
+     * changes the one field indicated by the field string parameter
+     * 
+     * @param {object} entry_obj 
+     * @param {string} user_path 
+     * @param {object} entries_record 
+     * @param {string} entry_type 
+     * @param {string} field 
+     * @returns pair -- <a copy of the entry obj as stored, the entry obj sent by update>, [false,false] on failure
+     */
     update_producer_entry_type_field(entry_obj,user_path,entries_record,entry_type,field) {
         entry_obj.file_name = user_path
         if ( entries_record.entries[entry_type] !== undefined ) {
@@ -429,6 +515,17 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     }
 
 
+    /**
+     * delete_producer_entry_type
+     * 
+     * This does a clumsy linear search for the object
+     * removes it from the array by splicing
+     * 
+     * @param {object} entry_obj 
+     * @param {object} entries_record 
+     * @param {string} entry_type 
+     * @returns  boolean
+     */
     delete_producer_entry_type(entry_obj,entries_record,entry_type) {
         //
         if ( entries_record.entries[entry_type] !== undefined ) {
@@ -488,10 +585,17 @@ class TransitionsODBEndpoint extends PersistenceCategory {
      * 
      * So, this only updates the general log table. And, it manages subscription publication.
      * 
-     * @param {*} op 
-     * @param {*} u_obj 
-     * @param {*} field 
-     * @param {*} value 
+     * 
+     * Call path: PersistenceMessageEndpoint::app_message_handler (on receipt of message to endpoint {message-relay-services})
+     * Operation 'op' is 'S' with 'action' in {create,update}. OR 'op' is 'D' 
+     * `app_message_handler` calls `create_entry_type`, `update_entry_type` -> `user_action_keyfile`
+     * `app_message_handler` calls `delete` -> `user_action_keyfile`
+     * 
+     * 
+     * @param {string} op 
+     * @param {object} u_obj - the message object bearing meta data for a media asset
+     * @param {string} field 
+     * @param {object} value -- included for regularity (other uses use value)
      */
     async user_action_keyfile(op,u_obj,field,value) {  // items coming from the editor  (change editor information and publish it back to consumers)
         //
@@ -515,7 +619,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
                 //
                 await this.put_entries(entries_file,entries_record)
                 //
-                await this.pulish_entry(u_obj,producer_of_type,user_id)
+                await this.publish_entry(u_obj,producer_of_type,user_id)
                 break;
             }
             case 'U' : {    // update (read asset_file_base, change, write new)
@@ -527,7 +631,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
                 //
                 await this.put_entries(entries_file,entries_record)
                 //
-                await this.pulish_entry(u_obj,producer_of_type,user_id)
+                await this.publish_entry(u_obj,producer_of_type,user_id)
                 break;
             }
             case 'F' : {        // change one field
@@ -539,7 +643,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
                 //
                 await this.put_entries(entries_file,entries_record)
                 //
-                await this.pulish_entry(u_obj,producer_of_type,user_id)
+                await this.publish_entry(u_obj,producer_of_type,user_id)
                 break;
             }
             case 'D' : {
@@ -550,7 +654,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
                 //
                 await this.put_entries(entries_file,entries_record)
                 //
-                await this.pulish_entry(u_obj,producer_of_type,user_id)
+                await this.publish_entry(u_obj,producer_of_type,user_id)
                 break;
             }
         }
