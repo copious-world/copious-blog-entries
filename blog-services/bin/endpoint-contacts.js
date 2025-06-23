@@ -24,10 +24,7 @@ let endpoint_procs = conf.launch_endpoints
 
 /*
 "launch_endpoints" : {
-    "contact_endpoint" : [ "endpoints/contact_category_server", "contact-service.conf" ], 
-    "user_endpoint" : [ "endpoints/user_category_server", "relay-service.conf" ], 
-    "persistence_endpoint" : [ "endpoints/persistence_category_server", "relay-service.conf", "free" ], 
-    "paid_persistence_endpoint" : [ "endpoints/persistence_category_server", "relay-service.conf", "paid" ]
+    "contact_endpoint" : [ "endpoints/contact_category_server", "contact-endpoint.conf" ]
 }
 */
 

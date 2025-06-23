@@ -1,8 +1,7 @@
 {
   "name": "copious-endpoints",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "Endpoint servers providing disk interface and pub/sub interfaces to supported services, e.g search, counting, streaming, contacts, etc.",
-  "main": "service.js",
   "directories": {
     "endpoints": "endpoints"
   },

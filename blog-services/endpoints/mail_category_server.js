@@ -148,7 +148,7 @@ class TransitionsMailEndpoint extends TransitionsODBEndpoint {
 const fs = require('fs')
 
 
-let conf_file = 'mail-service.conf'
+let conf_file = 'mail-endpoint.conf'
 let conf_par = process.argv[2]
 if ( conf_par !== undefined ) {
     conf_file = conf_par
