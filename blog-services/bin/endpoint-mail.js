@@ -3,7 +3,7 @@
 const {spawn} = require('child_process')
 const fs = require('fs')
 
-const model_file = "user-service.conf"
+const model_file = "mail-endpoint.conf"
 const conf_file = process.argv[2]
 const conf = (conf_file == undefined) ? JSON.parse(fs.readFileSync(model_file).toString()) : JSON.parse(fs.readFileSync(conf_file).toString())
 
@@ -25,11 +25,11 @@ let endpoint_procs = conf.launch_endpoints
 
 /*
 "launch_endpoints" : {
-    "user_endpoint" : [ "endpoints/user_category_server", "relay-service.conf" ]
+    "user_endpoint" : [ "endpoints/user_category_server", "mail-endpoint.conf" ]
 }
 */
 
-let endpoint = "user_endpoint" 
+let endpoint = "mail_endpoint" 
 
 let endpoint_args = endpoint_procs[endpoint]
 let conf_index = endpoint_args.indexOf(model_file)

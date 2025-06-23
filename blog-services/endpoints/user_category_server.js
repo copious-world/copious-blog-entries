@@ -6,7 +6,7 @@ let g_loaded_targets = false
 const fs = require('fs')
 const crypto = require('crypto')
 
-let conf_file = 'user-service.conf'
+let conf_file = 'user-endpoint.conf'
 let conf_par = process.argv[2]
 if ( conf_par !== undefined ) {
     conf_file = conf_par
