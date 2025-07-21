@@ -53,7 +53,7 @@ class TransitionsPersistenceEndpoint extends TransitionsODBRepoEndpoint {
                 }
                 break
             }
-            
+
             case 'AKP' : {   // admin method .... add a counting service
                 if ( this.counting_service_security_check(msg_obj) ) {
                     this.counting_service_list.push(msg_obj.counting_service)
