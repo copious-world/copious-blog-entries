@@ -22,6 +22,12 @@ function do_hash (text) {
 }
 
 
+/**
+ * 
+ * @param {obj} obj 
+ * @param {string} field_path - dotted string providing a path to the fields to be eliminated
+ * @returns 
+ */
 function terminus_unlink(obj,field_path) {
     let fpath = field_path.split('.')
     let tobj = obj
@@ -34,7 +40,7 @@ function terminus_unlink(obj,field_path) {
         if ( tobj === undefined ) return false
     }
     if ( f && parent ) {
-        parent[f] = undefined
+        parent[f] = undefined       // unlink here
     }
     return tobj
 }
@@ -101,11 +107,7 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         //
         this.full_entry_consumer_type = conf.full_entry_consumer_type ? conf.full_entry_consumer_type : "full_meta"
         //
-        this.topic_consumer = this.topic_consumer_user
-        if ( conf.system_wide_topics ) {
-            this.topic_consumer = this.topic_consumer_system
-        }
-
+        //
         if ( (this.conf.multi_meta_hanlders !== undefined) && this.conf.multi_meta_hanlders ) {
             this.all_meta_topics = this.conf.multi_meta_hanlders
         }
@@ -114,16 +116,6 @@ class TransitionsODBEndpoint extends PersistenceCategory {
 
     //
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-
-    // ----
-    topic_consumer_user(consumer_of_type,user_id) {
-        return  `user-${consumer_of_type}-${user_id}`
-    }
-
-    // ----
-    topic_consumer_system(consumer_of_type,user_id) {
-        return `user-${consumer_of_type}`
-    }
 
     // ----
     app_generate_tracking(p_obj) {
@@ -238,7 +230,6 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     }
 
 
-    // ----
     /**
      * application_meta_remove
      * 
@@ -290,7 +281,6 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         }
     }
 
-    // ----
     /**
      * application_data_update
      * 
@@ -336,8 +326,15 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         return(data)
     }
 
-    // ---- user_manage_date
-    // ---- ---- ---- ----   always call this before writing the file... The parent class should be like this.
+    /**
+     * user_manage_date
+     * 
+     * 
+     * always call this before writing the file... The parent class should be like this.
+     * 
+     * @param {string} op 
+     * @param {object} u_obj 
+     */
     user_manage_date(op,u_obj) {
         switch ( op ) {
             case 'C' : {
@@ -365,8 +362,6 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         }
     }
 
-
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     /**
      * get_entries
@@ -414,7 +409,13 @@ class TransitionsODBEndpoint extends PersistenceCategory {
         return [false,false]
     }
 
-
+    /**
+     * get_consumer_list
+     * 
+     * 
+     * @param {string} pub_type 
+     * @returns 
+     */
     get_consumer_list(pub_type) {
         let consumer_of_type = map_entry_type_to_consumer(pub_type)
         if ( !(Array.isArray(consumer_of_type)) ) {
@@ -590,7 +591,6 @@ class TransitionsODBEndpoint extends PersistenceCategory {
     }
 
 
-    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     /**
      * user_action_keyfile
