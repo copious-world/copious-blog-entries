@@ -1,6 +1,6 @@
 {
   "name": "odb-services",
-  "version": "0.9.25",
+  "version": "0.10.0",
   "description": "Object DB Endpoint servers providing disk interface and pub/sub interfaces to supported services, e.g search, counting, streaming, contacts, etc.",
   "main": "index.js",
   "directories": {
