@@ -1,40 +1,41 @@
 {
-  "name": "copious-blog-entries",
-  "version": "1.0.1",
-  "description": "The endpoint project with a clients (focusing on NW.js client) for storing meta data about user-business relationships and user assets.",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "cluster" : "bash test/run_cluster.sh",
-    "halt" : "pkill -x node; sudo nginx -s stop",
-    "configs" : "bash ./tools/configs.sh"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/copious-world/copious-blog-entries.git"
-  },
-  "keywords": [
-    "NW-app",
-    "meta",
-    "data",
-    "management",
-    "asset-management"
-  ],
-  "author": "R. Leddy",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/copious-world/copious-blog-entries/issues"
-  },
-  "homepage": "https://github.com/copious-world/copious-blog-entries#readme",
-  "dependencies": {
-    "categorical-handlers": "^0.3.6",
-    "crypto-wraps": "^1.1.1",
-    "cwid": "^1.0.2",
-    "ipfs": "^0.55.4",
-    "repository-bridge": "^0.6.0",
-    "ucwid": "^0.2.5"
-  }
+    "name": "copious-blog-entries",
+    "version": "1.0.1",
+    "description": "The endpoint project with a clients (focusing on NW.js client) for storing meta data about user-business relationships and user assets.",
+    "main": "index.js",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "cluster": "bash test/run_cluster.sh",
+        "halt": "pkill -x node; sudo nginx -s stop",
+        "configs": "bash ./tools/configs.sh",
+        "gen-docs": "jsdoc --configure ./tools/jsdoc.conf -a all -R README.md --verbose"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/copious-world/copious-blog-entries.git"
+    },
+    "keywords": [
+        "NW-app",
+        "meta",
+        "data",
+        "management",
+        "asset-management"
+    ],
+    "author": "R. Leddy",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/copious-world/copious-blog-entries/issues"
+    },
+    "homepage": "https://github.com/copious-world/copious-blog-entries#readme",
+    "dependencies": {
+        "categorical-handlers": "^0.3.6",
+        "crypto-wraps": "^1.1.1",
+        "cwid": "^1.0.2",
+        "ipfs": "^0.55.4",
+        "repository-bridge": "^0.6.0",
+        "ucwid": "^0.2.5"
+    }
 }
