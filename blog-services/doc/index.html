@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>Home - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    
+    <h2><a href="index.html">Overview</a></h2><h2><a href="https://github.com/copious-world/blog-services" target="_blank" class="menu-item" id="repository" >Github repo</a></h2><h2><a href="https://www.npmjs.com/package/blog-services" target="_blank" class="menu-item" id="package" >Npm package</a></h2>
+    
+</nav>
+
+<div id="main">
+    
+
+    
+
+
+
+    
+
+
+    <section class="package">
+        <h3> </h3>		
+    </section>
+
+
+
+
+
+
+
+
+
+    
+
+
+
+    <section class="readme usertext">
+        <article><h1>copious-endpoints</h1>
+<p>This module is from the github repository for <a href="https://github.com/copious-world/copious-blog-entries">copious-blog-entries</a>.  This is a subdirectory and its own project.</p>
+<p>This module provides servers that enter bloggable content into directories and other stores for access by <strong>mini-link-server</strong> applications which present media links to blog interfaces and their search mechanism.</p>
+<p>Two kinds of command line interfaces are provided:</p>
+<ul>
+<li><strong>copious-users</strong></li>
+<li><strong>copious-contacts</strong></li>
+</ul>
+<p>A third kind service has been moved. The service copious-persistence will have its own repository and package since it requires larger libraries such as IPFS.</p>
+<p>User applications store records which aid in associating a kind of user identity with assets. This is for the operation of the system as an asset tracker and has little to do with authorization which is handled elsewhere by making use of distributed identities.</p>
+<p>Persistence applications manage assets and provide the means of managing asset publication and linking assets with counting services, which provide mechanisms for paying asset creators.</p>
+<h2>Installation</h2>
+<pre class="prettyprint source"><code>npm install -g copious-endpoints
+</code></pre>
+<blockquote>
+<p><strong>Note</strong>: npm has been touchy about installation. Please refer to this article for a smoother installation process: <a href="https://dev.to">my article</a></p>
+</blockquote>
+<h2>Running</h2>
+<p>Once the module is installed, you can run the programs from the command line. Use the two commands as follows:</p>
+<pre class="prettyprint source"><code>copious-users relay-service.conf
+</code></pre>
+<pre class="prettyprint source"><code>copious-contacts contact-service.conf
+</code></pre>
+<p>The first command will launch the user record managment service. This service is fairly local to the server. It will look for keys in <strong>keys</strong> directory.</p>
+<p>The second command will launch all the differents kinds of persistence services that are specified in the configureations. It will also look for keys in <strong>keys</strong> directory.</p>
+<p>Some other directories may need to be created on the top level. It may help to issue the following commands prior to running the services.</p>
+<pre class="prettyprint source"><code>mkdir users
+mkdir assets
+mkdir data
+</code></pre>
+<h2>Configuring</h2>
+<p>The following configuration file is for three services, a relay service that switches packets to endpoints from any number clients, a user manager services, and a persistence service. (The contact service configuration is follows after it.) The configuration file specifies all that will be needed to make connections, startup as a server, idenitify directories for storage, etc.  Here is an example of the configuration file:</p>
+<pre class="prettyprint source"><code>
+{
+    &quot;port&quot; : 5112,
+    &quot;address&quot; : &quot;localhost&quot;,
+    &quot;path_types&quot; : {
+        &quot;outgo_email&quot; : {
+            &quot;relay&quot; : {
+                &quot;files_only&quot; : true,
+                &quot;file_per_message&quot; : false,
+                &quot;output_dir&quot; : &quot;mail&quot;,
+                &quot;output_file&quot; : &quot;outgoing&quot;,
+                &quot;wrap_limit&quot; : 50
+            }
+        },
+        &quot;contact&quot; : {
+            &quot;relay&quot; : {
+                &quot;files_only&quot; : true,
+                &quot;file_per_message&quot; : false, 
+                &quot;output_dir&quot; :  &quot;contacts&quot;,
+                &quot;output_file&quot; : &quot;contacts&quot;,
+                &quot;wrap_limit&quot; : 50
+            }
+        },
+        &quot;user&quot; : {
+            &quot;relay&quot; : {
+                &quot;files_only&quot; : false,
+                &quot;output_dir&quot; : &quot;fail_over_user&quot;,
+                &quot;output_file&quot; : &quot;/user_data.json&quot;,
+                &quot;port&quot; : 5114,
+                &quot;address&quot; : &quot;localhost&quot;,
+                &quot;max_pending_messages&quot; : false,
+                &quot;file_shunting&quot; : false,
+                &quot;max_reconnect&quot; : 24,
+                &quot;reconnect_wait&quot; : 5,
+                &quot;attempt_reconnect&quot; : true
+            }
+        },
+        &quot;persistence&quot; : {
+            &quot;relay&quot; : {
+                &quot;files_only&quot; : false,
+                &quot;output_dir&quot; : &quot;fail_over_persistence&quot;,
+                &quot;output_file&quot; : &quot;/user_data.json&quot;,
+                &quot;port&quot; : 5116,
+                &quot;address&quot; : &quot;localhost&quot;,
+                &quot;max_pending_messages&quot; : false,
+                &quot;file_shunting&quot; : false,
+                &quot;max_reconnect&quot; : 24,
+                &quot;reconnect_wait&quot; : 5,
+                &quot;attempt_reconnect&quot; : true
+            },
+            &quot;types&quot; : [ &quot;assets&quot;, &quot;blog&quot;, &quot;demo&quot;, &quot;ownership&quot;, &quot;stream&quot; ]
+        },
+        &quot;paid-persistence&quot; : {
+            &quot;relay&quot; : {
+                &quot;files_only&quot; : false,
+                &quot;output_dir&quot; : &quot;fail_over_persistence&quot;,
+                &quot;output_file&quot; : &quot;/user_data.json&quot;,
+                &quot;port&quot; : 5117,
+                &quot;address&quot; : &quot;localhost&quot;,
+                &quot;max_pending_messages&quot; : false,
+                &quot;file_shunting&quot; : false,
+                &quot;max_reconnect&quot; : 24,
+                &quot;reconnect_wait&quot; : 5,
+                &quot;attempt_reconnect&quot; : true
+            },
+            &quot;types&quot; : [ &quot;assets&quot;, &quot;blog&quot;, &quot;demo&quot;, &quot;ownership&quot;, &quot;stream&quot; ]
+        }
+    },
+    &quot;launch_endpoints&quot; : {
+        &quot;user_endpoint&quot; : [ &quot;endpoints/user_category_server&quot;, &quot;relay-service.conf&quot; ], 
+        &quot;persistence_endpoint&quot; : [ &quot;endpoints/persistence_category_server&quot;, &quot;relay-service.conf&quot;, &quot;free&quot; ], 
+        &quot;paid_persistence_endpoint&quot; : [ &quot;endpoints/persistence_category_server&quot;, &quot;relay-service.conf&quot;, &quot;paid&quot; ]
+    },
+    &quot;user_endpoint&quot; : {
+        &quot;port&quot; : 5114,
+        &quot;address&quot; : &quot;localhost&quot;,
+        &quot;app_handles_subscriptions&quot; : true,
+        &quot;user_directory&quot; :  &quot;test/assets/users&quot;,
+        &quot;directories&quot; : [ &quot;blog&quot;, &quot;stream&quot;, &quot;demo&quot;, &quot;links&quot; , &quot;ownership&quot;, &quot;wallet&quot;, &quot;assets&quot;  ],
+        &quot;create_OK&quot; : true,
+        &quot;remove_OK&quot; : true,
+        &quot;all_users&quot; : &quot;test/users&quot;,
+        &quot;_gen_targets&quot; : [&quot;dashboard&quot;, &quot;profile&quot;],
+        &quot;user_file_sep&quot; : &quot;+&quot;,
+        &quot;tls&quot; : {
+            &quot;server_key&quot; : &quot;keys/ec_key.pem&quot;,
+            &quot;server_cert&quot; : &quot;keys/ec_crt.crt&quot;,
+            &quot;client_cert&quot; : &quot;keys/cl_ec_crt.crt&quot;
+        }
+    },
+    &quot;persistence_endpoint&quot; : {
+        &quot;port&quot; : 5116,
+        &quot;address&quot; : &quot;localhost&quot;,
+        &quot;user_directory&quot; : &quot;test/assets/users&quot;,
+        &quot;directories&quot; : [ &quot;blog&quot;, &quot;stream&quot;, &quot;demo&quot;, &quot;links&quot; , &quot;ownership&quot;, &quot;wallet&quot;, &quot;assets&quot;  ],
+        &quot;counting_service&quot; : &quot;localhost:6767&quot;,
+        &quot;multi_meta_hanlders&quot; : {
+           &quot;meta&quot; : &quot;meta_searching&quot;,
+           &quot;counting&quot; : &quot;counting_service&quot; 
+        },
+        &quot;tls&quot; : {
+            &quot;server_key&quot; : &quot;keys/ec_key.pem&quot;,
+            &quot;server_cert&quot; : &quot;keys/ec_crt.crt&quot;,
+            &quot;client_cert&quot; : &quot;keys/cl_ec_crt.crt&quot;
+        },
+        &quot;ucwid&quot; : {
+            &quot;pk_str&quot;: &quot;public key&quot;,
+            &quot;priv_key&quot;: &quot;private key&quot;
+        },
+        &quot;ipfs&quot;: {
+            &quot;dir&quot; : &quot;persistence-ipfs-repo&quot;,
+            &quot;swarm_tcp&quot; : 4026,
+            &quot;swarm_ws&quot; : 4027,
+            &quot;api_port&quot; : 5026,
+            &quot;tcp_gateway&quot; : 9294
+        },
+        &quot;publication_directories&quot; : {
+            &quot;blog&quot; :  &quot;test/persistence/blog&quot;,
+            &quot;stream&quot; :  &quot;test/persistence/stream&quot;,
+            &quot;demo&quot; :  &quot;test/persistence/demo&quot;,
+            &quot;links&quot; :  &quot;test/persistence/links&quot;,
+            
+            &quot;contacts&quot; : &quot;test/persistence/links&quot;,
+            &quot;ownership&quot; : &quot;test/persistence/ownership&quot;,
+            &quot;wallet&quot; : &quot;test/persistence/wallet&quot;,
+            &quot;assets&quot; :  &quot;test/persistence/assets&quot;
+        },
+        &quot;entry_types_to_producers&quot; : {
+            &quot;blog&quot; :    &quot;dashboard&quot;,
+            &quot;stream&quot; :  &quot;dashboard&quot;,
+            &quot;demo&quot; :    &quot;dashboard&quot;,
+            &quot;links&quot; :   &quot;dashboard&quot;,
+
+            &quot;contacts&quot; :    &quot;profile&quot;,
+            &quot;ownership&quot; :   &quot;profile&quot;,
+            &quot;wallet&quot; :      &quot;profile&quot;,
+            &quot;assets&quot; :      &quot;profile&quot;
+        },
+        &quot;all_users&quot; : &quot;test/users&quot;,
+        &quot;create_OK&quot; : true,
+        &quot;remove_OK&quot; : true
+    },
+    &quot;paid_persistence_endpoint&quot; : {
+        &quot;port&quot; : 5117,
+        &quot;address&quot; : &quot;localhost&quot;,
+        &quot;user_directory&quot; : &quot;test/assets/users&quot;,
+        &quot;directories&quot; : [ &quot;blog&quot;, &quot;stream&quot;, &quot;demo&quot;, &quot;links&quot; , &quot;ownership&quot;, &quot;wallet&quot;, &quot;assets&quot;  ],
+        &quot;counting_service&quot; : &quot;localhost:6767&quot;,
+        &quot;multi_meta_hanlders&quot; : {
+           &quot;meta&quot; : &quot;meta_searching&quot;,
+           &quot;counting&quot; : &quot;counting_service&quot; 
+        },
+        &quot;tls&quot; : {
+            &quot;server_key&quot; : &quot;keys/ec_key.pem&quot;,
+            &quot;server_cert&quot; : &quot;keys/ec_crt.crt&quot;,
+            &quot;client_cert&quot; : &quot;keys/cl_ec_crt.crt&quot;
+        },
+        &quot;ucwid&quot; : {
+            &quot;pk_str&quot;: &quot;public key&quot;,
+            &quot;priv_key&quot;: &quot;private key&quot;
+        },
+        &quot;ipfs&quot;: {
+            &quot;dir&quot; : &quot;paid-persistence-ipfs-repo&quot;,
+            &quot;swarm_tcp&quot; : 4028,
+            &quot;swarm_ws&quot; : 4029,
+            &quot;api_port&quot; : 5028,
+            &quot;tcp_gateway&quot; : 9296
+        },
+        &quot;publication_directories&quot; : {
+            &quot;blog&quot; :  &quot;test/paid-persistence/blog&quot;,
+            &quot;stream&quot; :  &quot;test/paid-persistence/stream&quot;,
+            &quot;demo&quot; :  &quot;test/paid-persistence/demo&quot;,
+            &quot;links&quot; :  &quot;test/persistence/links&quot;,
+            
+            &quot;contacts&quot; : &quot;test/paid-persistence/links&quot;,
+            &quot;ownership&quot; : &quot;test/paid-persistence/ownership&quot;,
+            &quot;wallet&quot; : &quot;test/paid-persistence/wallet&quot;,
+            &quot;assets&quot; :  &quot;test/paid-persistence/assets&quot;
+        },
+        &quot;entry_types_to_producers&quot; : {
+            &quot;blog&quot; :    &quot;dashboard&quot;,
+            &quot;stream&quot; :  &quot;dashboard&quot;,
+            &quot;demo&quot; :    &quot;dashboard&quot;,
+            &quot;links&quot; :   &quot;dashboard&quot;,
+
+            &quot;contacts&quot; :    &quot;profile&quot;,
+            &quot;ownership&quot; :   &quot;profile&quot;,
+            &quot;wallet&quot; :      &quot;profile&quot;,
+            &quot;assets&quot; :      &quot;profile&quot;
+        },
+        &quot;all_users&quot; : &quot;test/users&quot;,
+        &quot;create_OK&quot; : true,
+        &quot;remove_OK&quot; : true
+    }
+}
+
+
+</code></pre>
+<h3>contact configuration</h3>
+<p>Here is a configuration file for <strong>copious-contacts</strong>:</p>
+<pre class="prettyprint source"><code>{
+    &quot;port&quot; : 5336,
+    &quot;address&quot; : &quot;localhost&quot;,
+    &quot;user_directory&quot; : &quot;./assets/users&quot;,
+    &quot;contacts_directory&quot; : &quot;./contacts&quot;,
+    &quot;directories&quot; : [ &quot;contacts&quot;  ],
+    &quot;multi_meta_hanlders&quot; : {
+        &quot;meta&quot; : &quot;meta_searching&quot;
+    },
+    &quot;tls&quot; : {
+        &quot;server_key&quot; : &quot;keys/ec_key.pem&quot;,
+        &quot;server_cert&quot; : &quot;keys/ec_crt.crt&quot;,
+        &quot;client_cert&quot; : &quot;keys/cl_ec_crt.crt&quot;
+    },
+    &quot;ucwid&quot; : {
+            &quot;pk_str&quot;: &quot;public key&quot;,
+            &quot;priv_key&quot;: &quot;private key&quot;
+    },
+    &quot;publication_directories&quot; : {
+        &quot;contact&quot; :  &quot;./contact&quot;
+    },
+    &quot;entry_types_to_producers&quot; : {
+        &quot;contacts&quot; :    &quot;profile&quot;
+    },
+    &quot;all_users&quot; : &quot;./users&quot;,
+    &quot;create_OK&quot; : true,
+    &quot;remove_OK&quot; : true,
+    &quot;launch_endpoints&quot; : {
+        &quot;contact_endpoint&quot; : [ &quot;endpoints/contact_category_server&quot;, &quot;contact-service.conf&quot; ]
+    }
+}
+
+
+</code></pre>
+<h5>NOTE:</h5>
+<p><em>All crypto keys in this repository are for examples only. Do not expect them to work on any data stored and retrievable by these tools.</em></p>
+<h2>blog-services a.k.a. copious-endpoints</h2>
+<p>Theses services run a tpc/ip service built on top of node.js, making use of the <strong>net</strong> module and its TLS provisions. This service derives from <a href="https://www.github.com/cooious-world/categorical-handlers">categorical-handlers</a>, which is a specialization of the endpoint class from the <a href="https://www.github.com/cooious-world/message-relay-services">message-relay-services</a> package.</p>
+<p>The entries, these applications make, are the JSON objects containing the link and other meta data about the links.</p>
+<p>For instance, the persistence services interact with the mini-link-servers, which provide asset searching, with blogs and streamers, and with counting services.</p>
+<p>See for example:</p>
+<ul>
+<li><a href="https://www.github.com/copious-world/svelte-blogs">svelte-blogs</a></li>
+<li><a href="https://www.github.com/copious-world/mini_link_servers">mini-link-servers</a></li>
+</ul>
+<h2>client examples</h2>
+<p>Some of the client operations that interact with these services can be found in the desktop application provided by <a href="https://github.com/copious-world/copious-blog-entries/tree/main/NW-app">copious-blog-entries desktop tool</a></p>
+<p>The NW app will actually load files into IPFS. But, the blog services will only accept persistence record entries with IPFS CIDs in fields. The blog services may make sure the content identified by a CIDs are available for presentation by blog interfaces.</p>
+<p>The contact services client is being used by the <em>basic</em> version of <a href="https://www.npmjs.com/package/captcha-igid"><strong>captcha-igid</strong></a> which is one of the <a href="https://github.com/copious-world/copious-transition-apps">copious-transition-apps</a>.</p>
+<h2>A note on generating keys</h2>
+<p>Here is an article about generating keys for these applications: <a href="https://dev.to/rleddy/elliptic-curve-tlsv1-3-for-node-js-16mm">Elliptic Curve TLSv1.3</a>.</p>
+<p>You can see above, that for the contact example, the tls field is as follows:</p>
+<pre class="prettyprint source"><code>    &quot;tls&quot; : {
+        &quot;server_key&quot; : &quot;keys/ec_key.pem&quot;,
+        &quot;server_cert&quot; : &quot;keys/ec_crt.crt&quot;,
+        &quot;client_cert&quot; : &quot;keys/cl_ec_crt.crt&quot;
+    }
+</code></pre>
+<p>When you run the commands shown in the article with an empty <strong>keys</strong> directory, you will only get two keys.</p>
+<p>Here are the commands again:</p>
+<pre class="prettyprint source"><code>$ openssl ecparam -name secp384r1 -genkey -out keys/ec_key.pem
+$ openssl req -new -x509 -key keys/ec_key.pem -sha256 -nodes -out keys/ec_crt.crt -days 365
+
+</code></pre>
+<p>After running these commands, there are just two files in the <strong>keys</strong> directory:</p>
+<ul>
+<li>ec_key.pem</li>
+<li>ec_crt.crt</li>
+</ul>
+<p>In the test directory, there is a client.js that publishes messages to the contact server. Here is the configuration found in the javascript code:</p>
+<pre class="prettyprint source"><code>{
+    &quot;port&quot; : 5336,
+    &quot;address&quot; : &quot;localhost&quot;,
+    &quot;files_only&quot; : false,
+    &quot;output_dir&quot; : &quot;fail_over_persistence&quot;,
+    &quot;output_file&quot; : &quot;./user_data.json&quot;,
+    &quot;max_pending_messages&quot; : false,
+    &quot;file_shunting&quot; : false,
+    &quot;max_reconnect&quot; : 24,
+    &quot;reconnect_wait&quot; : 5,
+    &quot;attempt_reconnect&quot; : true,
+    &quot;tls&quot; : {
+        &quot;client_key&quot; : &quot;ckeys/ec_key.pem&quot;,
+        &quot;client_cert&quot; : &quot;ckeys/ec_crt.crt&quot;,
+        &quot;server_cert&quot; : &quot;ckeys/srv_ec_crt.crt&quot;
+    }
+}
+</code></pre>
+<p>Notice that for the client, another directory <strong>ckeys</strong>, has been made, The client has its own .pem and .cert files  But, it refers to <code>ckeys/srv_ec_crt.crt</code>.  And, the server had these fields: <code>&quot;client_cert&quot; : &quot;keys/cl_ec_crt.crt&quot;</code>.</p>
+<p>Where did these files come from? Well... they are just copies.</p>
+<p>Here are *nix copy commands that put the certs into the right directories:</p>
+<pre class="prettyprint source"><code>$cp keys/ec_crt.crt ckeys/srv_ec_crt.crt
+$cp ckeys/ec_crt.crt keys/cl_ec_crt.crt
+</code></pre>
+<p>Sometimes its easy to forget this simple state of affairs.</p>
+<p>Just keep in mind that you will want to copy srv_ec_crt.crt to all the key directories of clients.</p></article>
+    </section>
+
+
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> on Thu Jul 16 2026 23:04:23 GMT-0700 (Pacific Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>

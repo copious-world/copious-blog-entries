@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>Home - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    
+    <h2><a href="index.html">Overview</a></h2><h2><a href="https://github.com/copious-world/time-managed-data" target="_blank" class="menu-item" id="repository" >Github repo</a></h2><h2><a href="https://www.npmjs.com/package/time-managed-data" target="_blank" class="menu-item" id="package" >Npm package</a></h2>
+    
+</nav>
+
+<div id="main">
+    
+
+    
+
+
+
+    
+
+
+    <section class="package">
+        <h3> </h3>		
+    </section>
+
+
+
+
+
+
+
+
+
+    
+
+
+
+    <section class="readme usertext">
+        <article><h1>time managed data</h1>
+<p>This module provide classes that address the creation of a complex of endpoint servers that work together to move data through Web Sockets types of interfaces to clients, admins, and logging databases.</p>
+<p>The classes provide methods for storing data in buckets assigned to days of months. As data is stored, the month buckets will be published or updated via publication to index servers for which there are user interfaces for perusing and searching the data.</p>
+<h2>Purpose</h2>
+<p>This module began with some classes for managing scheduling future events. It can also be used in conjunction with message logging, time stamped message history, chats, etc. That is, it also works with the past and its record of events passing through channels established by application servers utilitizing these classes.</p>
+<h2>Installation</h2>
+<pre class="prettyprint source"><code>npm install -s time-managed-data
+</code></pre>
+<h2>Usage</h2>
+<p>This module can be used by creating subclasses of the classes, provided here, in an application.</p>
+<p>Several classes are provided. Two of the classes allow for the creation of endpoint servers that handle types of data structures useful for partitioning data into months and days. Two others provide the default and interface structure for managing data partitioned by days and months.</p>
+<p>One endpoint server is a WebSocket server that allows for basic chat functionality. The WebSocket server's main job is to broadcast a client's publication of new entries to other clients. The chat functionality can be used in a number of ways, e.g. chat, claiming meeting dates, planning events, etc.</p>
+<p>The flow of messages into a client and out to many others may be thought of as a chat stream.  The WebSocket server acts as one multiplexing point that has some filtering capability. The WebSocket server may, supply a second endpoint server messages from the chat stream. The second endpoint server can process the messages and store them in its database-like data structures set up by admin. It can also remove messages from publication.</p>
+<p>The WebSocket server moves messages from clients to clients delayed only by the latency of the server. But, it may send message to the other endpoint server, the data storage endpoint. The data storage endpoint, can store the messages within its data structures and also publish them to customized index servers.</p>
+<p>The data storage endpoint data structures are month containers that store agendas for each day. How chat messages are stored in each day depends on the applications implementation of the agendas. (When using this module, the application must supply an implementation of agenda, which will conform to the interface provided by <em>SafeStorageAgendaInterface</em> descendans.)</p>
+<p>The data storage endpoint month containers conform to the structrues provide by <a href="">event-days</a>. The data storage endpoint creates the month containers by processing <em>EventDate.TimeSlot</em> class instances. The time slots provide some limits on what chat messages may be stored by virtue of them covering a limited number of months. (More resrictions and dynamics of the slot definition is up to the application.) The data storage endpoint works with the month containers once they are created, adding, updating, deleting messages. Also, the data storage endpoint pubishes the message data to index servers by publishing the month containers themselves.</p>
+<p>For the most part, the data storage endpoint receives its time slot definitions from admin messages which travel along admin pub/sub pathways or from command messages, get, set, delete, etc. Application clients for admins may be used to make the slot definitions. Or, the slot definitions may be made by programs that are either external automation applications or they may be made by the application's data storage endpoint subclass methods.</p>
+<p>For example, there is an interface among the <a href="">svelte-blogs</a> that allows an admin user to draw slot definitions and set up categories. That kind of interface allows the user set up schedules for meetings and the like. For another example, data logging may require a new month to advance the continuous input of new message. In this case, the application may override the message capture methods in order to add in triggers for extennding the list of month containers.</p>
+<p>This module already overrides the classes of EventDays in order to create storage objects for agendas. It also provides a class for managing months, which is part of the data storage endpointa activity.</p>
+<p>The month manager provides methods for accessing months, serializing them, etc. The manager will injecst the TimeSlot definitions required to create the lists of months needed for chat message storage.</p>
+<p>Each month has an agenda for each day. This module provides the <em>SafeStorageAgendaInterface</em> as an agenda to be overriden. If this class, <em>SafeStorageAgendaInterface</em>, is used by default, the application will crash intentionally.  The application must override it to set up the handling of its specific kind of chat message.</p>
+<p>The rest of this document gives details on the classes this module provides. Each class is described and the methods are documented.</p>
+<h2>Classes</h2>
+<p>There are four basic classes that are provided by this module. Applications should override these classes and follow the API format they provide.</p>
+<ul>
+<li><strong>TimeManagedData</strong></li>
+<li><strong>TimeManagedDataEndpoint</strong></li>
+<li><strong>MonthManagement</strong></li>
+<li><strong>SafeStorageAgendaInterface</strong></li>
+</ul>
+<p>Two of the class form the basis of server implementations. These are <strong>TimeManagedData</strong> and <strong>TimeManagedDataEndpoint</strong>. <strong>TimeManagedData</strong> is a web socket server that provides flow through publication to peer clients. <strong>TimeManagedDataEndpoint</strong> is a client of the <strong>TimeManagedData</strong>  and provides data caching, logging, and filtering. <strong>TimeManagedData</strong> also has the option of connecting to a <a href="https://www.npmjs.com/package/copious-transitions">copious-transitions</a> application that performs session validation before message are forwarded on the publication pathways.</p>
+<p>Two classes are exemplary and are not part of the server hierarchy. There are <strong>MonthManagement</strong> and <strong>SafeStorageAgendaInterface</strong>.</p>
+<p>The <strong>MonthManagement</strong> provides some default behavior for the time element required in the configuration of <strong>TimeManagedDataEndpoint</strong> instances. <strong>MonthManagement</strong> has member fields that derived from EventDays.MonthContainer from the <a href="https://www.npmjs.com/package/event-days">event-days</a> module. The <strong>MonthManagement</strong> provides a set of methods that classes should use or override in order to be used by <strong>TimeManagedDataEndpoint</strong> instances.</p>
+<p>In turn, <strong>MonthManagement</strong> makes use of extensions of EventDays.TimeSlotAgenda derived from <strong>SafeStorageAgendaInterface</strong>. The <strong>SafeStorageAgendaInterface</strong> provides a set of methods which are triggered to crash the application is they are not overridden by applciation versions. The class is set up to force the override as an abstract class would stop complication without implementations. <strong>SafeStorageAgendaInterface</strong> follows a method API that allows processes to store data in the days of the months according to timestamps.</p>
+<h2>TimeManagedData -- Class</h2>
+<p>This class is a descendant of <strong>WSServeMessageEndpoint</strong> from <a href="https://www.npmjs.com/package/message-relay-websocket">message-relay-websocket</a>. Write descendant of this class in order to set up a WS Server.</p>
+<p>This class provides its own serialization and moves messages between clients and to the <strong>TimeManagedDataEndpoint</strong> instances.</p>
+<p>The constructor of this class set up pub/sub relays for the following topics:</p>
+<ul>
+<li>ADD_DATA_EVENT_TOPIC</li>
+<li>DATA_EVENT_CHANGE_TOPIC</li>
+<li>DATA_EVENT_DROP_TOPIC</li>
+<li>REJECT_DATA_TOPIC</li>
+</ul>
+<p>This class also provides the option of working with a session checking server. The methods, init_session_management and session_check, are provided for this purpose.</p>
+<h3>Methods</h3>
+<ul>
+<li><strong>remove_old_messages</strong></li>
+<li><strong>serialize</strong></li>
+<li><strong>deserialize</strong></li>
+<li><strong>shutdown</strong>			-- calls serialize</li>
+<li><strong>restore_fields</strong>	-- calls deserialize</li>
+<li><strong>app_message_handler</strong></li>
+<li><strong>init_session_management</strong></li>
+<li><strong>session_check</strong></li>
+<li><strong>app_generate_tracking</strong></li>
+<li><strong>app_subscription_handler</strong></li>
+<li><strong>app_post_start_subscription</strong></li>
+<li><strong>app_publication_pre_fan_response</strong></li>
+</ul>
+<h3>Methods -- details</h3>
+<h4>remove_old_messages</h4>
+<blockquote>
+<p>This method provides the service of removing messages from its in RAM caches of messages if they are old. This class does not set up any calls to this method. Application or descendants of this class should decide when to call this method.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>before_time -- Removes messages older than this parameter</li>
+</ul>
+<hr>
+<h4>serialize</h4>
+<blockquote>
+<p>Provides serialization for this class. For this class, this is the set of messages that are waiting to be published or that are being reserved for some time for new client sessions</p>
+</blockquote>
+<p><strong>no parameters</strong>:</p>
+<hr>
+<h4>deserialize</h4>
+<blockquote>
+<p>Restores the list of waiting messages.</p>
+</blockquote>
+<p><strong>no parameters</strong>:</p>
+<hr>
+<h4>app_message_handler</h4>
+<blockquote>
+<p>This is an override of the endpoint method, expected of endpoint subclasses. The implementation actually removes any activity of the handler and echoes back to clients. Removing message handling in this method essentially restricts the service to WS messages that are on publication pathways.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>msg_obj -- a message from the client (such as a browser)</li>
+</ul>
+<hr>
+<h4>init_session_management</h4>
+<blockquote>
+<p>This method is called if the conf parameter of the constructor has a field <code>session_manager</code> set to the configuration object for the session manager operations. The field, <code>session_manager</code>, should be a configuration parameter for the class <em>MessageRelayer</em> from <a href="https://www.npmjs.com/package/message-relay-services">message-relay-services</a>.</p>
+<p>Constructs a <em>MessageRelayer</em> making a connection with a backend session checking service.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>sess_conf -- a configuration object for a <em>MessageRelayer</em> class instance.</li>
+</ul>
+<hr>
+<h4>session_check</h4>
+<blockquote>
+<p>Calls out to a session checking service to see if a session is current for the user and session id.</p>
+<p>The message sent to the service will be of this form:</p>
+</blockquote>
+<pre class="prettyprint source"><code>    let message = {
+        &quot;ucwid&quot; : ucwid,
+        &quot;session&quot; : sess_id,
+        &quot;action&quot; : 'session-check'
+    }
+</code></pre>
+<p><strong>parameters</strong>: (ucwid,sess_id)</p>
+<ul>
+<li>ucwid -- a user identity</li>
+<li>sess_id -- a session identity</li>
+</ul>
+<hr>
+<h4>app_generate_tracking</h4>
+<blockquote>
+<p>An override of a method from the original <em>ServeMessageEndpoint</em> from <a href="https://www.npmjs.com/package/message-relay-services">message-relay-services</a>. Adds a <code>_tracking</code> field to the object being relayed in case it does not exist.</p>
+<p>This is similar to other tracking methods found in other modules, except that the tracking field has the date attached to the end. E.g. <code>&lt;ucwis&gt;-&lt;date&gt;</code>.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>pub_obj -- An object passing through publication or being &quot;set&quot;.</li>
+</ul>
+<hr>
+<h4>app_subscription_handler</h4>
+<blockquote>
+<p>An override of a method from the original <em>ServeMessageEndpoint</em> from <a href="https://www.npmjs.com/package/message-relay-services">message-relay-services</a>. This is the handler for the topics added by the constructor; it is called post publication by endpoints in send_to_all. In this class, it is left as a stub, and descendants may decide to implement it.</p>
+</blockquote>
+<p><strong>parameters</strong>: (topic,pub_obj)</p>
+<ul>
+<li>topic -- the topic being subscribed to by some client</li>
+<li>pub_obj -- An object passing through publication or being &quot;set&quot;.</li>
+</ul>
+<hr>
+<h4>app_post_start_subscription</h4>
+<blockquote>
+<p>An override of a method from the original <em>ServeMessageEndpoint</em> from <a href="https://www.npmjs.com/package/message-relay-services">message-relay-services</a>. This method is implemented, in this class, so that pending messages may be sent to a newly subscribed client. The messages will likley be those that are still relevant at the time a client subscribes to the topic. As such, fairly recent messages will be sent to a client, while some messages will have been pruned away and will never be sent. However, clients may use an interface to a type of little searcher that offers historical data in search results.</p>
+</blockquote>
+<p><strong>parameters</strong>: (topic,client_name,relayer)</p>
+<ul>
+<li>topic -- the topic being subscribed to by some client</li>
+<li>client_name -- a key to the client subscriber data structures</li>
+<li>relayer -- a communicaiton object that may be used to write to a client</li>
+</ul>
+<hr>
+<h4>app_publication_pre_fan_response</h4>
+<blockquote>
+<p>An override of a method from the original <em>ServeMessageEndpoint</em> from <a href="https://www.npmjs.com/package/message-relay-services">message-relay-services</a>.  This method has the capacity to block the publication of a message passing through the pub/sub channels.</p>
+<p>Often, this method is used just to setup date for creation and update. This implementation offers the option of checking the message for session permission and also offers a chance to save a message if it is publishing a topic still waiting for subscriptions.</p>
+</blockquote>
+<p><strong>parameters</strong>: (topic,pub_obj,ignore)</p>
+<ul>
+<li>topic -- the topic being subscribed to by some client</li>
+<li>pub_obj -- An object passing through publication or being &quot;set&quot;.</li>
+<li>ignore -- from the caller, the caller is not sending a message to connection associated with the <code>ignore</code> parameter.</li>
+</ul>
+<hr>
+<h2>TimeManagedDataEndpoint -- Class</h2>
+<p>This class is a descendant of <strong>TimeManagedWSProxy</strong>, which in turn is a descendant of <strong>TransitionsODBEndpoint</strong>, from <a href="https://www.npmjs.com/package/odb-services">odb-services</a>. Write descendant of this class in order to set up an endpoint server for working with admin, publication, and persistant storage such as a database.</p>
+<h3>Methods</h3>
+<p>Methods for initialization.</p>
+<ul>
+<li><strong>setup_time_element</strong></li>
+<li><strong>web_socket_subscriptions</strong></li>
+<li><strong>ws_subscribe_and_handler</strong></li>
+<li><strong>serialize</strong></li>
+<li><strong>deserialize</strong></li>
+</ul>
+<p>Methods related to endpoint usage.</p>
+<ul>
+<li><strong>app_generate_tracking</strong></li>
+<li><strong>app_subscription_handler</strong></li>
+<li><strong>app_publication_pre_fan_response</strong></li>
+<li><strong>put_entries</strong></li>
+<li><strong>put_entries_array</strong></li>
+<li><strong>slot_from_descr</strong></li>
+<li><strong>generate_revised_months</strong></li>
+<li><strong>user_action_keyfile</strong></li>
+</ul>
+<p>Methods for handling the timed requests</p>
+<ul>
+<li><strong>get_agenda_of_request</strong></li>
+<li><strong>get_publishable</strong></li>
+<li><strong>handle_no_date_data</strong></li>
+<li><strong>handle_inoperable</strong></li>
+<li><strong>ws_publisher</strong></li>
+</ul>
+<h3>Methods -- details</h3>
+<p><em><strong>Methods for initialization</strong></em>.</p>
+<h4>setup_time_element</h4>
+<blockquote>
+<p>Creates a time-element or defaults to making a MonthManagement instance. The class is implemented with a field <code>time_element</code> that refers to this object.</p>
+<p>Applications that have their own version of a MonthManagment implementation shoud specify a <code>time_element</code> field in the class configuration. The field will either <code>require</code> the time element or use it as a constructor if its type is 'function'.</p>
+<p>The time element constructor will be passed the conf object passed to the constructor of this class.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>web_socket_subscriptions</h4>
+<blockquote>
+<p>This method is an initialization method. It calls upon <code>ws_subscribe_and_handler</code> for a number of topics that are default subscriptions for this class. These are the following:</p>
+</blockquote>
+<ul>
+<li>ACCEPT_EVENT_TOPIC</li>
+<li>FILTER_ACCEPTED_TOPIC</li>
+<li>REJECT_DATA_TOPIC</li>
+<li>ADD_DATA_EVENT_TOPIC</li>
+<li>DATA_EVENT_CHANGE_TOPIC</li>
+<li>DATA_EVENT_DROP_TOPIC</li>
+</ul>
+<p>Each of these topic is assigned a data handling method to be used within a generic callback use by <code>ws_subscribe_and_handler</code></p>
+<p><strong>no parameters</strong>:</p>
+<hr>
+<h4>ws_subscribe_and_handler</h4>
+<blockquote>
+<p>This method general subscription handling for a number of topcis. (See <em>web_socket_subscriptions</em>).</p>
+<p>Here is the body of the handler this method assigns to publication responses:</p>
+</blockquote>
+<pre class="prettyprint source"><code>(message) => {
+    let the_agenda = self.get_agenda_of_request(message)
+    let slot_req = message.slot_req
+    if ( the_agenda && slot_req && agenda_op(the_agenda,slot_req) ) {
+        let publishable = self.get_publishable(message)
+        if ( publishable ) {
+            self.ws_publisher(publishable)
+        }
+    } else {
+        if ( !(the_agenda )) self.handle_no_date_data(message)
+        else self.handle_inoperable(topic,slot_req)
+    }
+}
+</code></pre>
+<p>Note that this method calls <code>agenda_op</code> which is the specific handler associated with a topic. The following is a mapping of the topics provided to the handlers provided by application dependent agenda methods:</p>
+<ul>
+<li>ACCEPT_EVENT_TOPIC -- <code>publish_data(slot_req)</code></li>
+<li>FILTER_ACCEPTED_TOPIC -- <code>publish_data(slot_req)</code></li>
+<li>REJECT_DATA_TOPIC -- <code>drop_proposed_data(slot_req)</code></li>
+<li>ADD_DATA_EVENT_TOPIC -- <code>add_proposed_data(slot_req)</code></li>
+<li>DATA_EVENT_CHANGE_TOPIC -- <code>alter_proposed_data(slot_req)</code></li>
+<li>DATA_EVENT_DROP_TOPIC -- <code>drop_published_data(slot_req)</code></li>
+</ul>
+<p><strong>no parameters</strong>:</p>
+<hr>
+<h4>serialize</h4>
+<blockquote>
+<p>Calls on the time-element method of the same name.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>deserialize</h4>
+<blockquote>
+<p>Calls on the time-element method of the same name.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<p><em><strong>Methods related to endpoint usage.</strong></em></p>
+<h4>app_generate_tracking</h4>
+<blockquote>
+<p>if <code>_tracking</code> is not defined for the object this will be the ucwid with the server date appended: <code>&lt;ucwid&gt;-&lt;date&gt;</code>.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>app_subscription_handler</h4>
+<p>An override of a method from the original <em>ServeMessageEndpoint</em> from <a href="https://www.npmjs.com/package/message-relay-services">message-relay-services</a>.</p>
+<blockquote>
+<p>This method takes pub/sub messages out of the publication channel, updates fields, and then sends them along to mini link servers. Calls the user action key file method for making changes to local databases that track the messages sent through the endpoint.</p>
+</blockquote>
+<p><strong>parameters</strong>: (topic,msg_obj)</p>
+<ul>
+<li>topic - the topic of the request that failed</li>
+<li>pub_obj -- An object passing through publication.</li>
+</ul>
+<hr>
+<h4>app_publication_pre_fan_response</h4>
+<blockquote>
+<p>For this class, the method just addresses date management and <code>_tracking</code>.</p>
+</blockquote>
+<p><strong>parameters</strong>: (topic,pub_obj,ignore)</p>
+<ul>
+<li>topic -- the topic being subscribed to by some client</li>
+<li>pub_obj -- An object passing through publication or being &quot;set&quot;.</li>
+<li>ignore -- from the caller, the caller is not sending a message to connection associated with the <code>ignore</code> parameter.</li>
+</ul>
+<hr>
+<h4>put_entries</h4>
+<blockquote>
+<p>For this class, this method writes out all the entries (message passing through with some changes) stored in the memory. This method does not write files per entry.</p>
+</blockquote>
+<p><strong>parameters</strong>: (entries_file,entries_record)</p>
+<ul>
+<li>entries_file -- the file that will stored the entries</li>
+<li>entries_record -- the complete set of entries managed by instances of this class</li>
+</ul>
+<hr>
+<h4>put_entries_array</h4>
+<blockquote>
+<p>The method takes the values of a map of entries, and then write the array to the file.</p>
+</blockquote>
+<p><strong>parameters</strong>:(entries_file,entries_record)</p>
+<ul>
+<li>entries_file -- the file that will stored the entries</li>
+<li>entries_record -- the complete set of entries managed by instances of this class</li>
+</ul>
+<hr>
+<h4>slot_from_descr</h4>
+<blockquote>
+<p>This method takes a slot from a list of slots born by a message. This mehtod turns the slot into a <em>EventDays.TimeSlot</em>. This method is used by <em>user_action_keyfile</em>. The nessage bearing the slot list would be a message coming from communication, publication or set or update. The message will be a JavaScript object, but it will reside in memory stores as a class instance within an agenda.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>generate_revised_months</h4>
+<blockquote>
+<p>Given a list of slots generated by slot_from_descr and a time interval (passed as two parameters), this generates the data structures that server to contain the messages arriving from clients. This is in some sense a structuring of the database of data entries.</p>
+<p>All the slots that are sent in a list cut up days into sections over a span of months.</p>
+</blockquote>
+<p><strong>parameters</strong>: (mo_start,max_end,t_slots)</p>
+<ul>
+<li>mo_start -- a timestamp that will occur in the first month of a list of months this method makes.</li>
+<li>max_end -- the method makes months in a list up to the final included timestamp.</li>
+<li>t_slots -- a list of slots that will be placed in the months</li>
+</ul>
+<hr>
+<h4>user_action_keyfile</h4>
+<blockquote>
+<p>This method either creates or deletes a structure of slots over a number of months forming a substrate of months that can hold timed entries.</p>
+<p>The intention of this endpoint method implementation is to allow an administrator to command layout of the data store for timed data coming from clients.</p>
+</blockquote>
+<p><strong>parameters</strong>: (op,pub_obj)</p>
+<ul>
+<li>op -- 'C' for create, 'D' for delete</li>
+<li>pub_obj -- a communication object normalized by methods on the publication pathways that will contain a list of slots froming or changing the structure of data containers for timed data.</li>
+</ul>
+<hr>
+<p><em><strong>Methods for handling the timed requests</strong></em></p>
+<h4>get_agenda_of_request</h4>
+<blockquote>
+<p>Calls on the time-element method of the same name.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>get_publishable</h4>
+<blockquote>
+<p>Calls on the time-element method of the same name. The time-element method should add any fields germaine to the application.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>handle_no_date_data</h4>
+<blockquote>
+<p>Calls on the time-element method of the same name</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>handle_inoperable</h4>
+<blockquote>
+<p>Calls on the time-element method of the same name</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>ws_publisher</h4>
+<blockquote>
+<p>Calls on the time-element method of the same name to construct a message to send out to interested parties. Publishes the message on pub/sub paths to the subscribing clients. Sends the asset descriptor retrieved from the time element to mini link servers.</p>
+<p>The data publishable object should contain fields indicating user identitity (ucwid), year and month at the very least.</p>
+<p>The publishable will have been returned by get_publishable(message), where message is the pub/sub message.</p>
+</blockquote>
+<p><strong>parameters</strong>:(publishable)</p>
+<ul>
+<li>publishable -- a data object that is passing through the pub/sub paths.</li>
+</ul>
+<hr>
+<h2>MonthManagement -- Class</h2>
+<h3>Methods</h3>
+<ul>
+<li><strong>serialize</strong></li>
+<li><strong>deserialize</strong></li>
+<li><strong>get_agenda_of_request</strong></li>
+<li><strong>get_publishable</strong></li>
+<li><strong>ws_publisher</strong></li>
+<li><strong>handle_inoperable</strong></li>
+<li><strong>handle_no_date_data</strong></li>
+<li><strong>deserialize_month_filler</strong></li>
+<li><strong>months_from_data</strong></li>
+<li><strong>get_month_of_request</strong></li>
+<li><strong>add_planned_change</strong></li>
+</ul>
+<h3>Methods -- details</h3>
+<h4>async serialize(file_path,storable)</h4>
+<p>Required of a <code>time_element</code> belonging to a <strong>TimeManagedDataEndpoint</strong> instances.</p>
+<p>Use or override and call to super.</p>
+<blockquote>
+<p>Takes a path to a file that will hold the data. Before writing the object to the file, adds a field <code>all_months</code> to the object. The field <code>all_months</code> holds all the month objects created to hold data that has passed into the dominion of the instances of this class.</p>
+<p>Subclasses should call this method from the <code>super</code> class after adding their own data. As such:</p>
+</blockquote>
+<pre class="prettyprint source"><code>	let storable = {}
+	storable.my_data = this.gen_my_data() // or whatever the app requires
+	await super.serialize(file_name,storable)
+</code></pre>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>file_path -- A path to a file that will hold the serialized data</li>
+<li>storable -- the object to be serialized -- will be read in by deserialize</li>
+</ul>
+<hr>
+<h4>async deserialize(file_path)</h4>
+<p>Required of a <code>time_element</code> belonging to a <strong>TimeManagedDataEndpoint</strong> instances.</p>
+<p>Use or override and call to super.</p>
+<blockquote>
+<p>Reads the data from the file. This method restores the <code>all_months</code> field. There are methods that help convert the month object into a class instance, and those methods can be overridden.</p>
+<p>Methods that override this class should use the restored object that this method returns in order to convert any other data from a storage format to one needed by the program.</p>
+</blockquote>
+<pre class="prettyprint source"><code>	let restored = await super.deserialize(file_name)
+	this.deserialize_more(restored) // or whatever the application uses
+</code></pre>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>file_path -- A path to a file that will hold the serialized data</li>
+</ul>
+<hr>
+<h4>get_agenda_of_request(req)</h4>
+<p>Required of a <code>time_element</code> belonging to a <strong>TimeManagedDataEndpoint</strong> instances.</p>
+<blockquote>
+<p>This method is called by the <strong>TimeManagedDataEndpoint</strong> instances. This method returns an angenda of a data (or log of a day) indicated by the <code>start_time</code> provided by the request.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>get_publishable(req)</h4>
+<p>Required of a <code>time_element</code> belonging to a <strong>TimeManagedDataEndpoint</strong> instances.</p>
+<blockquote>
+<p>Returns the data that may be published by an endpoint. In most cases, this will be the month container, an <em>EventDays.MonthContainer</em>. However, the application may have its own object.</p>
+<p>The default implementation calls <em>get_month_of_request</em>.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>ws_publisher(publishable)</h4>
+<p>Required of a <code>time_element</code> belonging to a <strong>TimeManagedDataEndpoint</strong> instances.</p>
+<blockquote>
+<p>This method uses a publishable, a month container object in the default case, to create new message object containing the year, the month, and the start time of the data. This method of the default class returns a tripple containing the topic, the new message object and the month that was passed.</p>
+<p>The returns tripple should be of this form <code>[topic,message,pub_content]</code>. The <code>pub_content</code> will be sent to a mini link server. It does not have to be the same as the value that was passed.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>handle_inoperable(topic,req)</h4>
+<p>Required of a <code>time_element</code> belonging to a <strong>TimeManagedDataEndpoint</strong> instances.</p>
+<blockquote>
+<p>When some filtering process rejects the use of the data, <strong>TimeManagedDataEndpoint</strong> instances call this method. The object being used as the <code>time_element</code> may use this call to mark data as undesirable, remove it or plan to use it at a later date.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>topic - the topic of the request that failed</li>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>handle_no_date_data(message)</h4>
+<p>Required of a <code>time_element</code> belonging to a <strong>TimeManagedDataEndpoint</strong> instances.</p>
+<blockquote>
+<p>If the mesage cannot be used to ascertain what time slot this message belongs, the <strong>TimeManagedDataEndpoint</strong> instances call this method. The object being used as the <code>time_element</code> may use this call in anyway the application defines the handling of out of band data.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>message -- a request</li>
+</ul>
+<hr>
+<h4>deserialize_month_filler(agenda,src_agenda)</h4>
+<p>Override -- descendants must override this class.</p>
+<blockquote>
+<p>Performs application specific data internalization into fields of the application specific agenda instance, a instance of a descendat of <strong>EventDays.TimeSlotAgenda</strong>.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>agenda -- an instance of a EventDays.TimeSlotAgenda descendant</li>
+<li>src_agenda -- agenda data from deserialized storage</li>
+</ul>
+<hr>
+<h4>months_from_data(cls_mo,agenda_class)</h4>
+<blockquote>
+<p>This method is used in initialization for deserialization. This method calls upon <em>deserialize_month_filler</em> to put existing data into a class instnace of the provided <em>agenda_class</em>.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>cls_mo -- a month container made by instantiating a class</li>
+<li>agenda_class -- an instance of EventDays.TimeSlotAgenda</li>
+</ul>
+<hr>
+<h4>get_month_of_request(req)</h4>
+<blockquote>
+<p>Finds the month container stored by this month manager and returns it for use by other methods. Uses the <code>start_time</code> of the request to find the month that contains it.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h4>add_planned_change(req)</h4>
+<blockquote>
+<p>This method is provided in the default class. Planned changes are for future updates, the kind that an event schedular requires. This method does not have to be implmented by descendant classes. However, applications that use future planning may use it if that works for them.</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>req -- a request</li>
+</ul>
+<hr>
+<h2>SafeStorageAgendaInterface -- Class</h2>
+<p>Methods for handling the recording of data with connection list keepers or databases.  This class is a subclass of TimeSlotAgenda from the module <a href="https://www.npmjs.com/package/event-days">even-days</a>.</p>
+<h3>Override this Class</h3>
+<p>This is an interface class. In JavaScript, this is a class that has a set of methods, all of which throw exceptions on call. Override this class to make a working application.</p>
+<h3>Methods</h3>
+<ul>
+<li><strong>add_proposed_data</strong></li>
+<li><strong>alter_proposed_data</strong></li>
+<li><strong>drop_proposed_data</strong></li>
+<li><strong>publish_data</strong></li>
+<li><strong>drop_ published_data</strong></li>
+</ul>
+<h3>Methods -- details</h3>
+<h4>add_proposed_data</h4>
+<blockquote>
+<p>Add a request to store data in some DB structure.</p>
+<p>DB structed depends on the application impelementation</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>s_req -- A time slot request object -- application dependent</li>
+</ul>
+<hr>
+<h4>alter_proposed_data</h4>
+<blockquote>
+<p>Change data that is waiting to be stored in some DB structure.</p>
+<p>DB structed depends on the application impelementation</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>s_req -- A time slot request object -- application dependent</li>
+</ul>
+<hr>
+<h4>drop_proposed_data</h4>
+<blockquote>
+<p>Delete data that is waiting to be stored in some DB structure. Consequently, it will not be stored.</p>
+<p>DB structed depends on the application impelementation</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>s_req -- A time slot request object -- application dependent</li>
+</ul>
+<hr>
+<h4>publish_data</h4>
+<blockquote>
+<p>Permit the storage of data and send it through to the application DB.  At the same time, publish the data for public consumption</p>
+<p>DB structed depends on the application impelementation</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>s_req -- A time slot request object -- application dependent</li>
+</ul>
+<hr>
+<h4>drop_ published_data</h4>
+<blockquote>
+<p>Delete data that has already been published. Alert any search engines that the data is gone. Remove from the applicatiob database.</p>
+<p>DB structed depends on the application impelementation</p>
+</blockquote>
+<p><strong>parameters</strong>:</p>
+<ul>
+<li>s_req -- A time slot request object -- application dependent</li>
+</ul>
+<hr></article>
+    </section>
+
+
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> on Thu Jul 16 2026 23:04:23 GMT-0700 (Pacific Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>

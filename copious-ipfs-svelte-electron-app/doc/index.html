@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>Home - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    
+    <h2><a href="index.html">Overview</a></h2><h2><a href="https://github.com/copious-world/copious-ipfs-svelte-electron-app" target="_blank" class="menu-item" id="repository" >Github repo</a></h2><h2><a href="https://www.npmjs.com/package/copious-ipfs-svelte-electron-app" target="_blank" class="menu-item" id="package" >Npm package</a></h2><h3>Global</h3><ul><li><a href="global.html#fs">fs</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+
+    
+
+
+
+    
+
+
+    <section class="package">
+        <h3> </h3>		
+    </section>
+
+
+
+
+
+
+
+
+
+    
+
+
+
+    <section class="readme usertext">
+        <article><div align="center">
+<img alt="Electron Svelte Crossover Banner" src="https://raw.githubusercontent.com/soulehshaikh99/assets/master/create-electron-framework-app/readme/svg/Electron_Svelte.svg" width="580" />
+</div>
+<br />
+The boilerplate code to get started creating Cross-platform Desktop Apps with Electron and Svelte as front-end technology.
+<br />
+<br />
+<div align="center">
+<p><a href="http://forthebadge.com"><img src="http://forthebadge.com/images/badges/built-by-developers.svg" alt="forthebadge"></a>    <a href="http://forthebadge.com"><img src="http://forthebadge.com/images/badges/makes-people-smile.svg" alt="forthebadge"></a><br /></p>
+<p><a href="http://forthebadge.com"><img src="http://forthebadge.com/images/badges/uses-html.svg" alt="forthebadge"></a>   <a href="http://forthebadge.com"><img src="http://forthebadge.com/images/badges/uses-css.svg" alt="forthebadge"></a>   <a href="http://forthebadge.com"><img src="http://forthebadge.com/images/badges/uses-js.svg" alt="forthebadge"></a></p>
+<p><a href="https://github.com/feross/standard"><img src="https://cdn.rawgit.com/feross/standard/master/badge.svg" alt="js-standard-style"></a></p>
+</div>
+<h2>✒️ Overview</h2>
+<p>The aim of this project is to provide Web Developers using <code>svelte</code> the power to create cross-platform desktop apps using <code>electron</code>.</p>
+<h4>🧐 What packages does the project use?</h4>
+<p><strong><code>electron</code></strong> enables you to create desktop applications with pure JavaScript by providing a runtime with rich native (operating system) APIs. You could see it as a variant of the Node.js runtime that is focused on desktop applications instead of web servers.</p>
+<p><strong><code>electron-builder</code></strong> is used as a complete solution to package and build a ready for distribution (supports Numerous target formats) Electron app with &quot;auto update&quot; support out of the box.</p>
+<p><strong><code>electron-serve</code></strong> is used for Static file serving for Electron apps.</p>
+<p><strong><code>svelte</code></strong> is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the browser, Svelte shifts that work into a compile step that happens when you build your app. Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.</p>
+<p><strong><code>concurrently</code></strong> is used to run multiple commands concurrently.</p>
+<p><strong><code>wait-on</code></strong> is used as it can wait for sockets, and http(s) resources to become available.
+<br /></p>
+<h2>🚀 Getting Started</h2>
+<p><strong>Note:</strong> If you wish to use npm over yarn then modify <code>package.json</code> by replacing <code>yarn</code> with <code>npm</code> in <code>electron-dev</code> and <code>preelectron-pack</code> scripts.
+But I strongly recommend using <em>yarn</em> as it is a better choice when compared to <em>npm</em>.</p>
+<h3>🤓 Use this boilerplate</h3>
+<pre class="prettyprint source lang-bash"><code># Clone the Project
+
+# Use degit scaffolding tool
+$ npx degit soulehshaikh99/create-svelte-electron-app create-svelte-electron-app
+# or GitHub CLI Users
+$ gh repo clone https://github.com/soulehshaikh99/create-svelte-electron-app.git
+# or Normal Git Users
+$ git clone https://github.com/soulehshaikh99/create-svelte-electron-app.git
+
+# Switch location to the cloned directory
+$ cd create-svelte-electron-app
+
+# Install dependencies
+$ yarn # or npm install
+
+# Run your app
+$ yarn electron-dev # or npm run electron-dev
+
+# Package Your App
+$ yarn electron-pack # or npm run electron-pack
+</code></pre>
+<h3>💫 Create this boilerplate from scratch (Manual Setup)</h3>
+<h4>1) Use degit scaffolding tool to get started with svelte template.</h4>
+<pre class="prettyprint source lang-bash"><code>$ npx degit sveltejs/template create-svelte-electron-app
+</code></pre>
+<h4>2) Switch to project directory</h4>
+<pre class="prettyprint source lang-bash"><code>$ cd create-svelte-electron-app
+</code></pre>
+<h4>3) Move all dependencies to devDependencies using IDE / Text Editor</h4>
+<pre class="prettyprint source lang-bash"><code># It should look something like this
+&quot;dependencies&quot;: {},
+&quot;devDependencies&quot;: {
+  &quot;@rollup/plugin-commonjs&quot;: &quot;^17.0.0&quot;,
+  &quot;@rollup/plugin-node-resolve&quot;: &quot;^11.0.0&quot;,
+  &quot;rollup&quot;: &quot;^2.3.4&quot;,
+  &quot;rollup-plugin-css-only&quot;: &quot;^3.1.0&quot;,
+  &quot;rollup-plugin-livereload&quot;: &quot;^2.0.0&quot;,
+  &quot;rollup-plugin-svelte&quot;: &quot;^7.0.0&quot;,
+  &quot;rollup-plugin-terser&quot;: &quot;^7.0.0&quot;,
+  &quot;sirv-cli&quot;: &quot;^1.0.0&quot;,
+  &quot;svelte&quot;: &quot;^3.0.0&quot;,
+}
+</code></pre>
+<h4>4) Install Dependencies</h4>
+<pre class="prettyprint source lang-bash"><code>$ yarn # or npm install
+</code></pre>
+<h4>5) Install Development Dependencies</h4>
+<pre class="prettyprint source lang-bash"><code>$ yarn add --dev electron electron-builder wait-on concurrently
+# npm i -D electron electron-builder wait-on concurrently
+</code></pre>
+<h4>6) Install Production Dependency</h4>
+<pre class="prettyprint source lang-bash"><code>$ yarn add electron-serve # or npm i electron-serve
+</code></pre>
+<h4>7) Your dependencies should look something like this</h4>
+<pre class="prettyprint source lang-json"><code>&quot;dependencies&quot;: {
+  &quot;electron-serve&quot;: &quot;^1.1.0&quot;
+},
+&quot;devDependencies&quot;: {
+  &quot;@rollup/plugin-commonjs&quot;: &quot;^17.0.0&quot;,
+  &quot;@rollup/plugin-node-resolve&quot;: &quot;^11.0.0&quot;,
+  &quot;concurrently&quot;: &quot;^6.0.2&quot;,
+  &quot;electron&quot;: &quot;^12.0.6&quot;,
+  &quot;electron-builder&quot;: &quot;^22.10.5&quot;,
+  &quot;rollup&quot;: &quot;^2.3.4&quot;,
+  &quot;rollup-plugin-css-only&quot;: &quot;^3.1.0&quot;,
+  &quot;rollup-plugin-livereload&quot;: &quot;^2.0.0&quot;,
+  &quot;rollup-plugin-svelte&quot;: &quot;^7.0.0&quot;,
+  &quot;rollup-plugin-terser&quot;: &quot;^7.0.0&quot;,
+  &quot;sirv-cli&quot;: &quot;^1.0.0&quot;,
+  &quot;svelte&quot;: &quot;^3.0.0&quot;,
+  &quot;wait-on&quot;: &quot;^5.3.0&quot;
+}
+</code></pre>
+<h4>8) Download the app icon</h4>
+<p><a href="https://raw.githubusercontent.com/soulehshaikh99/assets/master/framework-icons/svelte/favicon.png">favicon.png</a> and place it in the public directory, overwriting the original (the original one is too small for packaging app, electron-builder will raise an error).</p>
+<h4>9) Create main.js file (serves as entry point for Electron App's Main Process)</h4>
+<pre class="prettyprint source lang-bash"><code># Windows Users
+$ fsutil file createnew main.js 0
+# notepad main.js 
+
+# Linux and macOS Users
+$ touch main.js
+</code></pre>
+<h4>10) Paste the below code in main.js file</h4>
+<pre class="prettyprint source lang-js"><code>// Modules to control application life and create native browser window
+const { app, BrowserWindow, dialog } = require('electron');
+const path = require('path');
+const serve = require('electron-serve');
+const loadURL = serve({ directory: 'public' });
+
+// Keep a global reference of the window object, if you don't, the window will
+// be closed automatically when the JavaScript object is garbage collected.
+let mainWindow;
+
+function isDev() {
+    return !app.isPackaged;
+}
+
+function createWindow() {
+    // Create the browser window.
+    mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+            nodeIntegration: true,
+            // enableRemoteModule: true,
+            // contextIsolation: false
+        },
+        // Use this in development mode.
+        icon: isDev() ? path.join(process.cwd(), 'public/favicon.png') : path.join(__dirname, 'public/favicon.png'),
+        // Use this in production mode.
+        // icon: path.join(__dirname, 'public/favicon.png'),
+        show: false
+    });
+
+    // This block of code is intended for development purpose only.
+    // Delete this entire block of code when you are ready to package the application.
+    if (isDev()) {
+        mainWindow.loadURL('http://localhost:5000/');
+    } else {
+        loadURL(mainWindow);
+    }
+    
+    // Uncomment the following line of code when app is ready to be packaged.
+    // loadURL(mainWindow);
+
+    // Open the DevTools and also disable Electron Security Warning.
+    // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = true;
+    // mainWindow.webContents.openDevTools();
+
+    // Emitted when the window is closed.
+    mainWindow.on('closed', function () {
+        // Dereference the window object, usually you would store windows
+        // in an array if your app supports multi windows, this is the time
+        // when you should delete the corresponding element.
+        mainWindow = null
+    });
+
+    // Emitted when the window is ready to be shown
+    // This helps in showing the window gracefully.
+    mainWindow.once('ready-to-show', () => {
+        mainWindow.show()
+    });
+}
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.on('ready', createWindow);
+
+// Quit when all windows are closed.
+app.on('window-all-closed', function () {
+    // On macOS it is common for applications and their menu bar
+    // to stay active until the user quits explicitly with Cmd + Q
+    if (process.platform !== 'darwin') app.quit()
+});
+
+app.on('activate', function () {
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if (mainWindow === null) createWindow()
+});
+// In this file you can include the rest of your app's specific main process
+// code. You can also put them in separate files and require them here.
+</code></pre>
+<h4>11) Update the script section of <code>package.json</code></h4>
+<pre class="prettyprint source lang-bash"><code># Add this scripts
+&quot;electron&quot;: &quot;wait-on http://localhost:5000 && electron .&quot;,
+&quot;electron-dev&quot;: &quot;concurrently \&quot;yarn run dev\&quot; \&quot;yarn run electron\&quot;&quot;,
+&quot;preelectron-pack&quot;: &quot;yarn run build&quot;,
+&quot;electron-pack&quot;: &quot;electron-builder&quot;
+
+# You should end up with something similar
+&quot;scripts&quot;: {
+  &quot;build&quot;: &quot;rollup -c&quot;,
+  &quot;dev&quot;: &quot;rollup -c -w&quot;,
+  &quot;start&quot;: &quot;sirv public --no-clear&quot;,
+  &quot;electron&quot;: &quot;wait-on http://localhost:5000 && electron .&quot;,
+  &quot;electron-dev&quot;: &quot;concurrently \&quot;yarn run dev\&quot; \&quot;yarn run electron\&quot;&quot;,
+  &quot;preelectron-pack&quot;: &quot;yarn run build&quot;,
+  &quot;electron-pack&quot;: &quot;electron-builder&quot;
+}
+</code></pre>
+<h4>12) Add the following configuration in <code>package.json</code></h4>
+<p><strong>Note:</strong> build configuration is used by electron-builder, modify it if you wish to add more packaging and native distribution options for different OS Platforms.</p>
+<pre class="prettyprint source lang-bash"><code>&quot;name&quot;: &quot;create-svelte-electron-app&quot;,   # By default it is svelte-app
+&quot;main&quot;: &quot;main.js&quot;,  # Application Entry Point, please verify entry point is set to main.js 
+&quot;build&quot;: {
+  &quot;icon&quot;: &quot;public/favicon.png&quot;,
+  &quot;productName&quot;: &quot;Svelte and Electron App&quot;,
+  &quot;files&quot;: [
+    &quot;public/**/*&quot;,
+    &quot;main.js&quot;
+  ],
+  &quot;win&quot;: {},  # Windows Specific Configuration
+  &quot;linux&quot;: {},  # Linux Specific Configuration
+  &quot;mac&quot;: {}  # MacOs Specific Configuration
+}
+</code></pre>
+<h4>14) Test drive your app</h4>
+<pre class="prettyprint source lang-bash"><code># Run your app
+$ yarn electron-dev # or npm run electron-dev
+
+# Package Your App
+$ yarn electron-pack # or npm run electron-pack
+</code></pre>
+<h3>💯 Result</h3>
+<div align="center">
+<img alt="Electron Svelte Window Screeenshot" src="https://raw.githubusercontent.com/soulehshaikh99/assets/master/create-electron-framework-app/readme/png/create-svelte-electron-app.png" />
+</div>
+<h3>😍 Made with ❤️ from Souleh</h3>
+<p><a href="http://forthebadge.com"><img src="http://forthebadge.com/images/badges/built-with-love.svg" alt="forthebadge"></a>
+<br/></p>
+<h3>📋 License: </h3>
+Licensed under the <a href="https://github.com/soulehshaikh99/create-svelte-electron-app/blob/master/LICENSE">MIT License</a>.</article>
+    </section>
+
+
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> on Thu Jul 16 2026 23:04:21 GMT-0700 (Pacific Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>

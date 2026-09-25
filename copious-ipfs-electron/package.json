@@ -1,34 +1,35 @@
 {
-  "name": "example-js-ipfs-in-electron",
-  "description": "A minimal Electron application with js-ipfs",
-  "version": "1.0.0",
-  "main": "main.js",
-  "private": true,
-  "scripts": {
-    "start": "electron .",
-    "test": "test-ipfs-example"
-  },
-  "keywords": [
-    "Electron",
-    "IPFS",
-    "Example"
-  ],
-  "author": "David Dias <daviddias@ipfs.io>",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^11.2.1",
-    "electron-rebuild": "^2.3.5",
-    "ipfs": "^0.54.4",
-    "test-ipfs-example": "^3.0.0"
-  },
-  "greenkeeper": {
-    "ignore": [
-      "electron"
-    ]
-  },
-  "dependencies": {
-    "categorical-handlers": "^0.1.5",
-    "file-type": "^16.3.0",
-    "nanoid": "^3.1.23"
-  }
+    "name": "example-js-ipfs-in-electron",
+    "description": "A minimal Electron application with js-ipfs",
+    "version": "1.0.0",
+    "main": "main.js",
+    "private": true,
+    "scripts": {
+        "start": "electron .",
+        "test": "test-ipfs-example",
+        "gen-docs": "jsdoc --configure ./tools/jsdoc.conf -a all -R README.md --verbose"
+    },
+    "keywords": [
+        "Electron",
+        "IPFS",
+        "Example"
+    ],
+    "author": "David Dias <daviddias@ipfs.io>",
+    "license": "MIT",
+    "devDependencies": {
+        "electron": "^11.2.1",
+        "electron-rebuild": "^2.3.5",
+        "ipfs": "^0.54.4",
+        "test-ipfs-example": "^3.0.0"
+    },
+    "greenkeeper": {
+        "ignore": [
+            "electron"
+        ]
+    },
+    "dependencies": {
+        "categorical-handlers": "^0.1.5",
+        "file-type": "^16.3.0",
+        "nanoid": "^3.1.23"
+    }
 }

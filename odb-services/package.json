@@ -1,38 +1,39 @@
 {
-  "name": "odb-services",
-  "version": "0.10.0",
-  "description": "Object DB Endpoint servers providing disk interface and pub/sub interfaces to supported services, e.g search, counting, streaming, contacts, etc.",
-  "main": "index.js",
-  "directories": {
-    "endpoints": "endpoints"
-  },
-  "bin": {
-    "copious-odb": "./bin/endpoint-odb.js",
-    "copious-odb-repo": "./bin/endpoint-odb.js repo"
-  },
-  "scripts": {
-    "test": "ava --verbose"
-  },
-  "keywords": [
-    "endpoint-server",
-    "user-records",
-    "contact-records"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/copious-world/copious-blog-entries.git"
-  },
-  "funding": {
-    "type": "GitHub Sponsors",
-    "url": "https://github.com/sponsors/copious-world"
-  },
-  "author": "R. Leddy",
-  "license": "ISC",
-  "dependencies": {
-    "categorical-handlers": "^0.7.9",
-    "repository-bridge": "^0.9.24"
-  },
-  "devDependencies": {
-    "ava": "^6.2.0"
-  }
+    "name": "odb-services",
+    "version": "0.10.0",
+    "description": "Object DB Endpoint servers providing disk interface and pub/sub interfaces to supported services, e.g search, counting, streaming, contacts, etc.",
+    "main": "index.js",
+    "directories": {
+        "endpoints": "endpoints"
+    },
+    "bin": {
+        "copious-odb": "./bin/endpoint-odb.js",
+        "copious-odb-repo": "./bin/endpoint-odb.js repo"
+    },
+    "scripts": {
+        "test": "ava --verbose",
+        "gen-docs": "jsdoc --configure ./tools/jsdoc.conf -a all -R README.md --verbose"
+    },
+    "keywords": [
+        "endpoint-server",
+        "user-records",
+        "contact-records"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/copious-world/copious-blog-entries.git"
+    },
+    "funding": {
+        "type": "GitHub Sponsors",
+        "url": "https://github.com/sponsors/copious-world"
+    },
+    "author": "R. Leddy",
+    "license": "ISC",
+    "dependencies": {
+        "categorical-handlers": "^0.7.9",
+        "repository-bridge": "^0.9.24"
+    },
+    "devDependencies": {
+        "ava": "^6.2.0"
+    }
 }

@@ -1,40 +1,41 @@
 {
-  "name": "persistence-endpoints",
-  "version": "1.1.11",
-  "description": "Endpoint servers providing disk interface and pub/sub interfaces to supporting services, e.g search, counting, streaming, contacts, etc.",
-  "main": "index.js",
-  "bin": {
-    "copious-persistence": "./bin/endpoint-persistence.js"
-  },
-  "directories": {
-    "endpoints": "endpoints"
-  },
-  "scripts": {
-    "test": "ava --verbose",
-    "endpoints": "node endpoint-launcher.js relay-service.conf"
-  },
-  "keywords": [
-    "endpoint-server",
-    "media-records",
-    "asset-records",
-    "upload",
-    "publish",
-    "repository"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/copious-world/copious-blog-entries.git"
-  },
-  "funding": {
-    "type": "GitHub Sponsors",
-    "url": "https://github.com/sponsors/copious-world"
-  },
-  "author": "R. Leddy",
-  "license": "ISC",
-  "dependencies": {
-    "odb-services": "^0.10.0"
-  },
-  "devDependencies": {
-    "ava": "^6.2.0"
-  }
+    "name": "persistence-endpoints",
+    "version": "1.1.11",
+    "description": "Endpoint servers providing disk interface and pub/sub interfaces to supporting services, e.g search, counting, streaming, contacts, etc.",
+    "main": "index.js",
+    "bin": {
+        "copious-persistence": "./bin/endpoint-persistence.js"
+    },
+    "directories": {
+        "endpoints": "endpoints"
+    },
+    "scripts": {
+        "test": "ava --verbose",
+        "endpoints": "node endpoint-launcher.js relay-service.conf",
+        "gen-docs": "jsdoc --configure ./tools/jsdoc.conf -a all -R README.md --verbose"
+    },
+    "keywords": [
+        "endpoint-server",
+        "media-records",
+        "asset-records",
+        "upload",
+        "publish",
+        "repository"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/copious-world/copious-blog-entries.git"
+    },
+    "funding": {
+        "type": "GitHub Sponsors",
+        "url": "https://github.com/sponsors/copious-world"
+    },
+    "author": "R. Leddy",
+    "license": "ISC",
+    "dependencies": {
+        "odb-services": "^0.10.0"
+    },
+    "devDependencies": {
+        "ava": "^6.2.0"
+    }
 }

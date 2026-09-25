@@ -1,40 +1,40 @@
 {
-  "name": "time-managed-data",
-  "version": "0.9.1",
-  "description": "Endpoint classes for handling reports of data from a variety of source type applications.",
-  "directories": {
-    "endpoints": "endpoints"
-  },
-  "scripts": {
-    "test": "ava --verbose"
-  },
-  "keywords": [
-    "endpoint-server",
-    "user-records",
-    "contact-records"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/copious-world/copious-blog-entries.git"
-  },
-  "funding": {
-    "type": "GitHub Sponsors",
-    "url": "https://github.com/sponsors/copious-world"
-  },
-  "author": "R. Leddy",
-  "license": "ISC",
-  "dependencies": {
-    "categorical-handlers": "^0.7.9",
-    "event-days": "^0.1.8",
-    "message-relay-websocket": "^0.2.1",
-    "message-relay-services" : "^0.9.29",
-    "month-utils": "^0.8.2",
-    "ucwid": "^0.2.9",
-    "extra-file-class" : "^0.9.20",
-    "odb-services" : "^0.10.0"
-  },
-  
-  "devDependencies": {
-    "ava": "^4.3.3"
-  }
+    "name": "time-managed-data",
+    "version": "0.9.1",
+    "description": "Endpoint classes for handling reports of data from a variety of source type applications.",
+    "directories": {
+        "endpoints": "endpoints"
+    },
+    "scripts": {
+        "test": "ava --verbose",
+        "gen-docs": "jsdoc --configure ./tools/jsdoc.conf -a all -R README.md --verbose"
+    },
+    "keywords": [
+        "endpoint-server",
+        "user-records",
+        "contact-records"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/copious-world/copious-blog-entries.git"
+    },
+    "funding": {
+        "type": "GitHub Sponsors",
+        "url": "https://github.com/sponsors/copious-world"
+    },
+    "author": "R. Leddy",
+    "license": "ISC",
+    "dependencies": {
+        "categorical-handlers": "^0.7.9",
+        "event-days": "^0.1.8",
+        "message-relay-websocket": "^0.2.1",
+        "message-relay-services": "^0.9.29",
+        "month-utils": "^0.8.2",
+        "ucwid": "^0.2.9",
+        "extra-file-class": "^0.9.20",
+        "odb-services": "^0.10.0"
+    },
+    "devDependencies": {
+        "ava": "^4.3.3"
+    }
 }
