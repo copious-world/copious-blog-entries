@@ -103,7 +103,7 @@ class TransitionsContactEndpoint extends TransitionsODBEndpoint {
     async put_entries(entries_file,entries_record) {
         let entries_record_str = this.entries_sep + JSON.stringify(entries_record) +'\n'    // STORE AS STRING
         this.entries_sep = ','
-        await this.write_append_string(entries_file,entries_record_str,false)
+        await this.fos.write_append_string(entries_file,entries_record_str,false)
         return entries_record_str
     }
 
